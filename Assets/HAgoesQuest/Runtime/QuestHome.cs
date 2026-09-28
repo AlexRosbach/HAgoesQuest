@@ -24,6 +24,8 @@ namespace HAgoesQuest
         string placing;
         float placementDistance;
         bool handPlacement;
+        bool placementFrozen;
+        float freeDistance = 1;
         bool placementReadOnly;
         readonly HandPlacement placement = new HandPlacement();
         Vector3 heldPosition;
@@ -73,8 +75,7 @@ namespace HAgoesQuest
             if (bindings.ResetForServer(ha.ServerIdentity) && Application.platform == RuntimePlatform.Android) _ = bindings.Load();
         }
 
-        static bool HandReady(OVRHand hand) => hand && hand.IsTracked &&
-            hand.HandConfidence == OVRHand.TrackingConfidence.High && !hand.IsSystemGestureInProgress;
+        static bool HandReady(OVRHand hand) => hand && hand.IsTracked && !hand.IsSystemGestureInProgress;
 
         void Update()
         {
@@ -123,7 +124,7 @@ namespace HAgoesQuest
                 if (!localized) continue;
                 card.GetComponent<Collider>().enabled = !menu && !operationBusy && placing == null;
                 card.Face(head);
-                card.SetNearby(Vector3.Distance(head.position, card.transform.position) <= 0.30f);
+                card.SetDistance(Vector3.Distance(head.position, card.transform.position));
                 if (ha.Entities.TryGetValue(pair.Key, out var entity))
                 {
                     string value = ha.Fresh ? entity.DisplayValue : "Veraltet · " + entity.DisplayValue;
@@ -143,26 +144,20 @@ namespace HAgoesQuest
             focused = null;
             string key = null;
             bool placementValid = false;
-            if (placing != null && handPlacement)
+            if (placing != null && handPlacement && !placementFrozen)
             {
                 bool positionTracked = TryHandPosition(out var pinchPoint);
-                placement.Step(positionTracked && inputAllowed, down);
-                if (placement.Phase == PlacementPhase.Holding || placement.Phase == PlacementPhase.Ready)
-                    heldPosition = pinchPoint;
+                if (positionTracked && inputAllowed)
+                    heldPosition = Vector3.Lerp(heldPosition, pinchPoint + head.forward * 0.10f, 1 - Mathf.Exp(-12 * Time.unscaledDeltaTime));
                 aim = heldPosition;
                 preview.transform.position = heldPosition;
                 preview.Face(head);
                 preview.Label.text = !positionTracked ? "Rechte Hand ins Sichtfeld halten" :
-                    placement.Phase == PlacementPhase.Holding ? "Bewegen · Loslassen zum Ablegen" : "Rechts greifen und an deinen Wunschort bewegen";
-                if (placement.Phase == PlacementPhase.Confirm && !menu) ConfirmHandPlacement();
-                if (menu && Physics.Raycast(ray, out var confirmHit, 8))
-                {
-                    var candidate = confirmHit.collider.GetComponent<WorldCard>();
-                    if (candidate && candidate.Interactable && candidate.Press != null) { focused = candidate; focused.Focus(true); key = candidate.Key; }
-                    aim = confirmHit.point;
-                }
+                    "Hand zum Wunschort bewegen\nEinmal pinchen: Position festhalten";
+                placementValid = positionTracked;
+                key = placementValid ? "place:" + placing : null;
             }
-            else if (placing != null)
+            else if (placing != null && !placementFrozen)
             {
                 if (placementDistance > 0)
                 {
@@ -180,7 +175,7 @@ namespace HAgoesQuest
                 }
                 preview.transform.position = aim;
                 preview.Face(head);
-                preview.Label.text = placementValid ? "Hier platzieren\nRechts pinchen · Links: zurück" : "Keine Scanfläche\nLinks pinchen: zurück";
+                preview.Label.text = placementValid ? "Hier platzieren\nEinmal pinchen: Position festhalten" : "Keine Scanfläche\nLinks pinchen: zurück";
                 key = placementValid ? "place:" + placing : null;
             }
             else if (!operationBusy && Physics.Raycast(ray, out var cardHit, 8))
@@ -198,7 +193,7 @@ namespace HAgoesQuest
             reticle.Face(head);
             reticle.Focus(key != null);
             reticle.gameObject.SetActive(inputAllowed && (focused || placing != null));
-            pointer.enabled = inputAllowed && tracked && focused && placing == null &&
+            pointer.enabled = inputAllowed && tracked && (focused || (placing != null && !placementFrozen)) &&
                 (!hand || (RightHand.IsPointerPoseValid && RightHand.PointerPose));
             if (pointer.enabled)
             {
@@ -210,7 +205,7 @@ namespace HAgoesQuest
             }
             if (gate.Step(key, down, tracked && !operationBusy && inputAllowed, Time.realtimeSinceStartup))
             {
-                if (placing != null && placementValid) Place(aim);
+                if (placing != null && placementValid) FreezePlacement(aim);
                 else if (focused) focused.Activate();
             }
         }
@@ -255,6 +250,7 @@ namespace HAgoesQuest
             Button(2, "Wohnung erfassen & Karte ansehen", MapMenu, "map");
             Button(3, "Gespeicherte Positionen wiederfinden", LoadBindings, "map");
             Button(4, "Menü schließen · Linker Pinch öffnet es", CloseMenu);
+            Button(5, "Platzierte Entitäten verwalten / löschen", () => PlacedMenu(0));
         }
 
         void ConnectionMenu()
@@ -427,25 +423,26 @@ namespace HAgoesQuest
         void Details(HaEntity entity)
         {
             NewMenu(Short(entity.Name, 45) + "\n" + entity.Id);
-            if (bindings.Contains(entity.Id))
+            if (bindings.Contains(entity.Id) || markers.ContainsKey(entity.Id))
             {
                 Button(0, "Zuordnung entfernen", async () =>
                 {
                     if (operationBusy) return;
                     operationBusy = true;
-                    try { await bindings.Remove(entity.Id); }
+                    try { if (Application.isEditor) RemoveMarker(entity.Id); else await bindings.Remove(entity.Id); }
                     finally { operationBusy = false; gate.Reset(); }
                     Details(entity);
                 });
                 Button(1, "Zurück", EntityMenu);
                 return;
             }
-            Button(0, "Mit der Hand greifen & platzieren", () => BeginHandPlacement(entity.Id), IconFor(entity.Id));
-            Button(1, "Auf gescannter Fläche platzieren", () => BeginPlacement(entity.Id, 0), "map");
-            Button(2, "Frei vor mir platzieren · 1 Meter", () => BeginPlacement(entity.Id, 1));
+            Button(0, "Zeigen & pinchen · " + freeDistance.ToString("0.0") + " Meter", () => BeginPlacement(entity.Id, freeDistance), IconFor(entity.Id));
+            Button(1, "Direkt an der Hand platzieren · einmal pinchen", () => BeginHandPlacement(entity.Id));
+            Button(2, "Auf gescannter Fläche platzieren", () => BeginPlacement(entity.Id, 0), "map");
             if (EntityPolicy.Domain(entity.Id) == "light" || EntityPolicy.Domain(entity.Id) == "switch")
                 Button(3, placementReadOnly ? "Modus: nur anzeigen" : "Modus: anzeigen & schalten", () => { placementReadOnly = !placementReadOnly; Details(entity); });
             Button(4, "Zurück", EntityMenu);
+            Button(5, "Abstand ändern · " + freeDistance.ToString("0.0") + " Meter", () => { freeDistance = freeDistance >= 2 ? 0.5f : freeDistance + 0.5f; Details(entity); });
         }
 
         void BeginPlacement(string id, float distance)
@@ -455,11 +452,14 @@ namespace HAgoesQuest
             { notice = "Zuerst im Hauptmenü den Raum laden/scannen."; return; }
             CloseMenu();
             placing = id;
+            placementFrozen = false;
             handPlacement = false;
             placementDistance = distance;
             preview = WorldCard.Create(null, Vector3.zero, new Vector2(420, 110), "");
             preview.GetComponent<Collider>().enabled = false;
             preview.SetIcon(IconFor(id));
+            preview.MakeCompactMarker();
+            preview.SetNearby(true);
         }
 
         void BeginHandPlacement(string id)
@@ -486,17 +486,27 @@ namespace HAgoesQuest
             }
             if (OVRInput.IsControllerConnected(OVRInput.Controller.RTouch) && OVRInput.GetControllerPositionTracked(OVRInput.Controller.RTouch))
             { point = Rig.rightControllerAnchor.position + Rig.rightControllerAnchor.forward * 0.12f; return true; }
+            if (HandReady(RightHand) && RightHand.PointerPose) { point = RightHand.PointerPose.position; return true; }
             if (Application.isEditor) { point = head.position + head.forward * 0.6f; return true; }
             return false;
+        }
+
+        void FreezePlacement(Vector3 position)
+        {
+            heldPosition = position;
+            placementFrozen = true;
+            preview.transform.position = position;
+            ConfirmHandPlacement();
         }
 
         void ConfirmHandPlacement()
         {
             NewMenu("Hier bleibt deine Entität");
             Button(0, "Position speichern", () => Place(heldPosition), IconFor(placing));
-            Button(1, "Weiter verschieben", () => { CloseMenu(); placement.Reset(); });
+            Button(1, "Weiter verschieben", () => { CloseMenu(); placementFrozen = false; placement.Reset(); });
             Button(2, "Abbrechen", () => { CancelPlacement(); Home(); });
             preview.Pulse();
+            preview.Label.text = "Vorschau · Position bestätigen";
         }
 
         async void Place(Vector3 position)
@@ -528,6 +538,7 @@ namespace HAgoesQuest
         {
             placing = null;
             handPlacement = false;
+            placementFrozen = false;
             if (preview) Destroy(preview.gameObject);
             gate.Reset();
         }
@@ -561,17 +572,61 @@ namespace HAgoesQuest
         {
             if (scanBusy || operationBusy) return;
             if (Application.isEditor) { notice = "Raumscan ist auf der Quest verfügbar. Im Editor frei platzieren."; return; }
-            scanBusy = operationBusy = true;
+            scanBusy = true;
             notice = "Raumerfassung wird geöffnet …";
             try
             {
-                if (!await ScenePermission()) { notice = "Raumzugriff abgelehnt. In den Quest-App-Berechtigungen erlauben."; return; }
-                if (rescan && !await OVRScene.RequestSpaceSetup()) { notice = "Raumscan abgebrochen oder nicht verfügbar."; return; }
-                var result = await MRUK.Instance.LoadSceneFromDevice(!rescan);
+                if (!await WithTimeout(ScenePermission(), 30)) { notice = "Raumzugriff abgelehnt. In den Quest-App-Berechtigungen erlauben."; return; }
+                if (rescan && !await WithTimeout(RequestScan(), 300)) { notice = "Raumscan abgebrochen oder nicht verfügbar."; return; }
+                var result = await WithTimeout(MRUK.Instance.LoadSceneFromDevice(!rescan), 60);
                 notice = result == MRUK.LoadDeviceResult.Success ? "Raum geladen. Jetzt Entitäten zuordnen." : "Kein Raum geladen. Raumscan und Berechtigung prüfen.";
             }
             catch { notice = "Raumerfassung fehlgeschlagen. Bitte auf der Quest erneut versuchen."; }
-            finally { scanBusy = operationBusy = false; gate.Reset(); }
+            finally { scanBusy = false; gate.Reset(); RecenterMenu(); }
+        }
+
+        static async Task<bool> RequestScan() => await OVRScene.RequestSpaceSetup();
+        static async Task<T> WithTimeout<T>(Task<T> task, int seconds)
+        {
+            if (await Task.WhenAny(task, Task.Delay(seconds * 1000)) != task) throw new TimeoutException();
+            return await task;
+        }
+
+        void RecenterMenu()
+        {
+            if (!menu || !head) return;
+            Vector3 forward = Vector3.ProjectOnPlane(head.forward, Vector3.up).normalized;
+            if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
+            menu.transform.SetPositionAndRotation(head.position + forward * 1.4f, Quaternion.LookRotation(forward));
+        }
+
+        void PlacedMenu(int index)
+        {
+            var ids = bindings.EntityIds.Concat(markers.Keys).Distinct().OrderBy(id => id).ToArray();
+            int pages = Math.Max(1, (ids.Length + 2) / 3);
+            index = Math.Max(0, Math.Min(index, pages - 1));
+            NewMenu("Platzierte Entitäten · " + (index + 1) + "/" + pages);
+            for (int i = 0; i < 3 && index * 3 + i < ids.Length; i++)
+            {
+                string id = ids[index * 3 + i];
+                string name = ha.Entities.TryGetValue(id, out var entity) ? entity.Name : id;
+                Button(i, "Löschen · " + Short(name, 38), () =>
+                {
+                    NewMenu("Platzierung löschen?\n" + Short(name, 40));
+                    Button(0, "Ja · Platzierung entfernen", async () =>
+                    {
+                        if (operationBusy || bindings.Busy) { notice = "Positionen werden gerade verarbeitet. Bitte kurz warten."; return; }
+                        operationBusy = true;
+                        try { if (Application.isEditor) RemoveMarker(id); else await bindings.Remove(id); }
+                        finally { operationBusy = false; gate.Reset(); }
+                        PlacedMenu(index);
+                    });
+                    Button(1, "Abbrechen", () => PlacedMenu(index));
+                }, IconFor(id));
+            }
+            Pager(4, () => PlacedMenu((index + pages - 1) % pages), () => PlacedMenu((index + 1) % pages));
+            Button(5, "Zurück", Home);
+            notice = ids.Length == 0 ? "Noch keine Entitäten platziert." : "Entfernt nur die Platzierung in der App. Das Gerät bleibt in Home Assistant erhalten.";
         }
 
         static Task<bool> ScenePermission()
@@ -597,11 +652,13 @@ namespace HAgoesQuest
         void OnApplicationFocus(bool focus)
         {
             gate.Reset();
+            if (focus) { previousMenuPinch = false; RecenterMenu(); }
             if (!focus && placement.Phase != PlacementPhase.Confirm) placement.Reset();
         }
         void OnApplicationPause(bool pause)
         {
             gate.Reset();
+            if (!pause) { previousMenuPinch = false; RecenterMenu(); }
             if (pause && placement.Phase != PlacementPhase.Confirm) placement.Reset();
         }
     }

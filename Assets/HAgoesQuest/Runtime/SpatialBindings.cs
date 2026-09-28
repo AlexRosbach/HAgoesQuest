@@ -22,6 +22,7 @@ namespace HAgoesQuest
         public bool Ready { get; private set; }
         BindingFile data = new BindingFile();
         string path;
+        public IEnumerable<string> EntityIds => data.bindings.Select(b => b.entityId).ToArray();
         public bool Contains(string id) => data.bindings.Any(b => b.entityId == id);
         public bool DisplayOnly(string id) => data.bindings.FirstOrDefault(b => b.entityId == id)?.displayOnly ?? false;
 
@@ -153,33 +154,34 @@ namespace HAgoesQuest
             if (Busy || !Ready) return;
             var record = data.bindings.FirstOrDefault(b => b.entityId == id);
             if (record == null) return;
-            if (!Loaded.TryGetValue(id, out var anchor))
-            {
-                Status = "Zum Entfernen zuerst die gespeicherte Position im zugehörigen Raum laden.";
-                return;
-            }
             Busy = true;
             try
             {
-                // Commit the local deletion first. Retain the record if persistence fails.
                 data.bindings.Remove(record);
                 try { Persist(); }
                 catch { data.bindings.Add(record); throw; }
-                var result = await anchor.EraseAnchorAsync();
-                if (!result.Success)
-                {
-                    data.bindings.Add(record);
-                    Persist();
-                    Status = "Position konnte nicht gelöscht werden. Bitte erneut versuchen.";
-                    return;
-                }
+                Loaded.TryGetValue(id, out var anchor);
                 Loaded.Remove(id);
                 Removed?.Invoke(id);
-                Destroy(anchor.gameObject);
+                if (anchor) Destroy(anchor.gameObject);
                 Status = "Zuordnung entfernt.";
+                // Removing a placement must not depend on finding its room again.
+                // The persisted association is authoritative even if OS cleanup fails.
+                if (!Application.isEditor)
+                {
+                    var cleanup = EraseSavedAnchor(Guid.Parse(record.anchorUuid));
+                    if (await Task.WhenAny(cleanup, Task.Delay(5000)) != cleanup || !await cleanup)
+                        Status = "Zuordnung entfernt. Raumanker konnte noch nicht bereinigt werden.";
+                }
             }
-            catch { Status = "Löschen fehlgeschlagen. Zuordnungsdatei und Berechtigung prüfen."; }
+            catch { Status = Contains(id) ? "Löschen fehlgeschlagen. Zuordnungsdatei prüfen." : "Zuordnung entfernt; Raumanker-Bereinigung fehlgeschlagen."; }
             finally { Busy = false; }
+        }
+
+        static async Task<bool> EraseSavedAnchor(Guid uuid)
+        {
+            try { return (await OVRSpatialAnchor.EraseAnchorsAsync(null, new[] { uuid })).Success; }
+            catch { return false; }
         }
     }
 }

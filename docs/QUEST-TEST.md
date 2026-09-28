@@ -59,3 +59,10 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - [ ] QR-Scan: Freigabe erlauben/ablehnen, Scan abbrechen, App pausieren, erneut starten. Kamera nur im aktiven Scan.
 - [ ] Token-QR und JSON-QR vom Handy lesen; Adresse vor Verbinden prüfen. QR darf keine automatische Verbindung oder HTTP-Freigabe auslösen.
 - [ ] Beschädigten QR, normalen Weblink und ungültigen Token prüfen; keine Zugangsdaten in Fehlermeldungen.
+
+## Regressionen ab 0.3.2
+
+- Quest-Systemdialog zum Bearbeiten der Räume öffnen und abschließen/abbrechen. Danach rechte Hand und linken Menü-Pinch prüfen; Menü muss wieder vor dem Kopf stehen.
+- Annäherung an ein Icon: Kreis/Rand sichtbar, Größenanstieg zwischen 1,2 m und 30 cm; Text erst innerhalb von 30 cm.
+- Platzierung per Zeiger und direkter Handposition jeweils mit einmaligem Pinch einfrieren, verschieben und bestätigen.
+- Platzierung im Hauptmenü löschen, auch wenn Raumanker nicht gefunden oder HA-Entität nicht verfügbar ist; nach App-Neustart darf sie nicht zurückkehren.
