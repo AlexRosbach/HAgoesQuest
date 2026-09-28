@@ -21,6 +21,8 @@ namespace HAgoesQuest
         bool showDetails;
         float proximity;
         Image ring;
+        bool magicFocus, magicArmed;
+        public void SetMagicFocus(bool active, bool armed = false) { magicFocus = active; magicArmed = armed; }
         static Sprite circle, circleRing;
         string lastState;
         static Sprite rounded;
@@ -168,7 +170,7 @@ namespace HAgoesQuest
             {
                 detailAlpha = Mathf.MoveTowards(detailAlpha, showDetails ? 1 : 0, Time.unscaledDeltaTime * 8);
                 Label.color = new Color(1, 1, 1, detailAlpha);
-                if (ring) ring.color = focused ? new Color(0.3f, 1, 0.9f, 1) : new Color(0.14f, 0.6f, 0.65f, 0.85f);
+                if (ring) ring.color = magicFocus ? new Color(0.12f, 1, 0.3f, magicArmed ? 1 : 0.5f) : focused ? new Color(0.3f, 1, 0.9f, 1) : new Color(0.14f, 0.6f, 0.65f, 0.85f);
             }
             Color target = focused ? new Color(0.025f, 0.24f, 0.27f, 0.98f) : idle;
             target = Color.Lerp(target, new Color(0.1f, 0.58f, 0.48f, 1), pulse * 0.6f);

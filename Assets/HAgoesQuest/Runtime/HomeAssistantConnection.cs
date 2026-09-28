@@ -290,18 +290,19 @@ namespace HAgoesQuest
             AreasLoading = false; Changed?.Invoke();
         }
 
-        public void Switch(string id)
+        public bool Switch(string id)
         {
-            if (Busy || !Fresh || !Entities.TryGetValue(id, out var entity) || !EntityPolicy.CanSwitch(id, entity.State)) return;
+            if (Busy || !Fresh || !Entities.TryGetValue(id, out var entity) || !EntityPolicy.CanSwitch(id, entity.State)) return false;
             if (Demo)
             {
                 entity.State = entity.State == "on" ? "off" : "on";
                 Changed?.Invoke();
-                return;
+                return true;
             }
             Busy = true;
             generation++;
             StartCoroutine(SendCommand(entity.Id, EntityPolicy.Domain(id), EntityPolicy.Service(id, entity.State)));
+            return true;
         }
 
         IEnumerator SendCommand(string id, string domain, string service)

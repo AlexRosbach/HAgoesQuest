@@ -93,9 +93,45 @@ public static class CoreTests
             Check(placement.Phase == PlacementPhase.Confirm, "Confirmation keeps the dropped point stable");
             placement.Reset();
             Check(placement.Phase == PlacementPhase.AwaitRelease, "Moving again requires new gesture");
-            Console.WriteLine("PASS: " + assertions + " assertions (interaction, service policy, connection address).");
+            double magicTime;
+            var magic = ArmedMagic(out magicTime);
+            Check(magic.Armed, "Open stationary palm arms after dwell");
+            Check(!magic.Step("light.test", true, true, new PushVector(0,0,.05), new PushVector(0,0,1), magicTime+=.05), "Short push does not fire");
+            Check(!magic.Step("light.test", true, true, new PushVector(0,0,.10), new PushVector(0,0,1), magicTime+=.05), "Push must reach twelve centimeters");
+            Check(magic.Step("light.test", true, true, new PushVector(0,0,.15), new PushVector(0,0,1), magicTime+=.05), "Directed open-palm thrust casts once");
+            bool repeated = false;
+            for (int i=0;i<60;i++) repeated |= magic.Step("light.test", true, true, new PushVector(0,0,.15), new PushVector(0,0,1), magicTime+=.05);
+            Check(!repeated, "Holding extended hand cannot repeatedly toggle");
+            magic.Step("light.test", false, false, new PushVector(), new PushVector(0,0,1), magicTime+=.05);
+            for (int i=0;i<20;i++) repeated |= magic.Step("light.test", true, true, new PushVector(0,0,.15), new PushVector(0,0,1), magicTime+=.05);
+            Check(!repeated && !magic.Armed, "Tracking loss does not release consumed gesture");
+            magic.Step("light.test", true, false, new PushVector(), new PushVector(0,0,1), magicTime+=.05);
+            for (int i=0;i<10;i++) magic.Step("light.test", true, true, new PushVector(), new PushVector(0,0,1), magicTime+=.05);
+            Check(magic.Armed, "Closing and reopening after cooldown permits another cast");
+            magic = ArmedMagic(out magicTime);
+            Check(!magic.Step("light.test", true, true, new PushVector(.15,0,0), new PushVector(0,0,1), magicTime+=.05) && !magic.Armed, "Sideways swipe rejected");
+            magic = ArmedMagic(out magicTime);
+            Check(!magic.Step("light.test", true, true, new PushVector(0,0,-.15), new PushVector(0,0,1), magicTime+=.05), "Backward motion rejected");
+            magic = ArmedMagic(out magicTime);
+            Check(!magic.Step("other", true, true, new PushVector(0,0,.15), new PushVector(0,0,1), magicTime+=.05), "Target change cannot cast");
+            magic = ArmedMagic(out magicTime);
+            Check(!magic.Step("light.test", true, true, new PushVector(0,0,1), new PushVector(0,0,1), magicTime+=.05), "Tracking position jump rejected");
+            magic = ArmedMagic(out magicTime);
+            Check(!magic.Step("light.test", true, true, new PushVector(0,0,.15), new PushVector(0,0,1), magicTime+=1), "Long sample gap resets recognition");
+            magic = ArmedMagic(out magicTime);
+            Check(!magic.Step("light.test", false, true, new PushVector(0,0,.15), new PushVector(0,0,1), magicTime+=.05), "Disabled/menu/offline input cannot cast");
+            magic = ArmedMagic(out magicTime); repeated = false;
+            for (int i=1;i<=20;i++) repeated |= magic.Step("light.test", true, true, new PushVector(0,0,i*.01), new PushVector(0,0,1), magicTime+=.05);
+            Check(!repeated, "Slow reach cannot cast");
+            Console.WriteLine("PASS: " + assertions + " assertions (interaction, magic gestures, service policy, connection address).");
             return 0;
         }
         catch (Exception ex) { Console.Error.WriteLine("FAIL: " + ex.Message); return 1; }
+    }
+    static MagicPushGate ArmedMagic(out double time)
+    {
+        var gate = new MagicPushGate(); time=0;
+        for (int i=0;i<9;i++) gate.Step("light.test", true, true, new PushVector(), new PushVector(0,0,1), time=i*.05);
+        return gate;
     }
 }

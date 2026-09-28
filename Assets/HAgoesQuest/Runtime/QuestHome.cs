@@ -41,11 +41,13 @@ namespace HAgoesQuest
         QrTokenScanner qr;
         bool qrMenu;
         LineRenderer pointer;
+        MagicCasting magic;
 
         IEnumerator Start()
         {
             head = Rig.centerEyeAnchor;
             ha = GetComponent<HomeAssistantConnection>();
+            magic = new MagicCasting();
             bindings = GetComponent<SpatialBindings>();
             bindings.Added += AddMarker;
             bindings.Removed += RemoveMarker;
@@ -199,11 +201,14 @@ namespace HAgoesQuest
             {
                 Vector3 start = ray.origin;
                 if (hand && rightSkeleton && rightSkeleton.Bones != null)
-                    foreach (var bone in rightSkeleton.Bones)
-                        if (bone.Id == OVRSkeleton.BoneId.Hand_IndexTip || bone.Id == OVRSkeleton.BoneId.XRHand_IndexTip) { start = bone.Transform.position; break; }
+                {
+                    var tip = MagicCasting.Bone(rightSkeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip);
+                    if (tip) start = tip.position;
+                }
                 pointer.SetPosition(0, start); pointer.SetPosition(1, aim);
             }
-            if (gate.Step(key, down, tracked && !operationBusy && inputAllowed, Time.realtimeSinceStartup))
+            magic?.Tick(RightHand, rightSkeleton, head, markers.Values, ha, inputAllowed && !menu && placing == null && !operationBusy && !scanBusy && !bindings.Busy);
+            if (gate.Step(key, down, tracked && !operationBusy && inputAllowed && (magic == null || !magic.Flying || menu), Time.realtimeSinceStartup))
             {
                 if (placing != null && placementValid) FreezePlacement(aim);
                 else if (focused) focused.Activate();
@@ -212,6 +217,7 @@ namespace HAgoesQuest
 
         void NewMenu(string title)
         {
+            magic?.Cancel();
             if (qrMenu) { qr.Stop(); qrMenu = false; }
             keyboard = null;
             if (menu) { menu.SetActive(false); Destroy(menu); }
@@ -248,9 +254,20 @@ namespace HAgoesQuest
             Button(0, ha.Demo ? "Mit Home Assistant verbinden" : "Home-Assistant-Verbindung", ConnectionMenu, "lamp");
             Button(1, "Entität mit der Hand platzieren", () => { page = 0; EntityMenu(); }, "lamp");
             Button(2, "Wohnung erfassen & Karte ansehen", MapMenu, "map");
-            Button(3, "Gespeicherte Positionen wiederfinden", LoadBindings, "map");
+            Button(3, "Einstellungen · Magie & Positionen", MagicSettings, "map");
             Button(4, "Menü schließen · Linker Pinch öffnet es", CloseMenu);
             Button(5, "Platzierte Entitäten verwalten / löschen", () => PlacedMenu(0));
+        }
+
+        void MagicSettings()
+        {
+            if (magic == null) magic = new MagicCasting();
+            NewMenu("Magie & Positionen");
+            Button(0, magic.Enabled ? "Magie: AN · ausschalten" : "Magie: AUS · einschalten", () => { magic.SetEnabled(!magic.Enabled); MagicSettings(); });
+            Button(1, "Gespeicherte Positionen wiederfinden", LoadBindings, "map");
+            Button(2, "Zurück", Home);
+            Button(3, "Menü schließen & ausprobieren", CloseMenu);
+            notice = "Rechte Hand flach zum Icon richten, kurz ruhig halten, dann nach vorn stoßen. Grüner Rand = Ziel. Danach Hand zurücknehmen oder schließen. Für Lampen und Schalter.";
         }
 
         void ConnectionMenu()
@@ -476,12 +493,8 @@ namespace HAgoesQuest
             point = heldPosition;
             if (HandReady(RightHand) && rightSkeleton && rightSkeleton.Bones != null)
             {
-                Transform index = null, thumb = null;
-                foreach (var bone in rightSkeleton.Bones)
-                {
-                    if (bone.Id == OVRSkeleton.BoneId.Hand_IndexTip || bone.Id == OVRSkeleton.BoneId.XRHand_IndexTip) index = bone.Transform;
-                    if (bone.Id == OVRSkeleton.BoneId.Hand_ThumbTip || bone.Id == OVRSkeleton.BoneId.XRHand_ThumbTip) thumb = bone.Transform;
-                }
+                Transform index = MagicCasting.Bone(rightSkeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip);
+                Transform thumb = MagicCasting.Bone(rightSkeleton, OVRSkeleton.BoneId.Hand_ThumbTip, OVRSkeleton.BoneId.XRHand_ThumbTip);
                 if (index && thumb) { point = (index.position + thumb.position) * 0.5f; return true; }
             }
             if (OVRInput.IsControllerConnected(OVRInput.Controller.RTouch) && OVRInput.GetControllerPositionTracked(OVRInput.Controller.RTouch))
@@ -648,15 +661,17 @@ namespace HAgoesQuest
 
         static string Short(string value, int length) => value.Length <= length ? value : value.Substring(0, length - 1) + "…";
         static string IconFor(string id) => EntityPolicy.Domain(id) == "light" ? "lamp" : EntityPolicy.Domain(id) == "switch" ? "switch" : "sensor";
-        void OnDestroy() { if (pointer) { Destroy(pointer.material); Destroy(pointer.gameObject); } }
+        void OnDestroy() { magic?.Cancel(); if (pointer) { Destroy(pointer.material); Destroy(pointer.gameObject); } }
         void OnApplicationFocus(bool focus)
         {
+            magic?.Cancel();
             gate.Reset();
             if (focus) { previousMenuPinch = false; RecenterMenu(); }
             if (!focus && placement.Phase != PlacementPhase.Confirm) placement.Reset();
         }
         void OnApplicationPause(bool pause)
         {
+            magic?.Cancel();
             gate.Reset();
             if (!pause) { previousMenuPinch = false; RecenterMenu(); }
             if (pause && placement.Phase != PlacementPhase.Confirm) placement.Reset();
