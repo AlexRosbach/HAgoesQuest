@@ -1,6 +1,6 @@
 # Verkauf, Lizenzen und offene Freigaben
 
-Stand: 28. September 2026. Technische und lizenzbezogene Vorprüfung, keine verbindliche Rechtsberatung.
+Stand: 29. September 2026. Technische und lizenzbezogene Vorprüfung, keine verbindliche Rechtsberatung.
 
 ## Einschätzung
 
@@ -12,7 +12,7 @@ Die App dient der Haussteuerung und damit nicht ausschließlich Spielen oder Unt
 
 ## Meta SDK und Store
 
-Die installierten Meta XR Core- und MRUK-Pakete verweisen auf die Meta/Oculus-SDK-Lizenz. Diese erlaubt die Entwicklung und Verteilung von Anwendungen unter Bedingungen, beschränkt den Einsatz auf zugelassene Plattformen und verlangt passende Lizenz-/Copyright-Hinweise. Das ist keine pauschale Freigabe für alle Meta-Beispiele: Manche separat lizenzierten Beispiele sind nur zur nichtkommerziellen Evaluation bestimmt. Diese App verwendet eigene UI-Grafiken und Sounds; es wurden keine Filmoberflächen oder separat heruntergeladenen Meta-UI-Mockups übernommen.
+Die installierten Meta XR Core-, Interaction- und MRUK-Pakete verweisen auf die Meta/Oculus-SDK-Lizenz. Diese erlaubt die Entwicklung und Verteilung von Anwendungen unter Bedingungen, beschränkt den Einsatz auf zugelassene Plattformen und verlangt passende Lizenz-/Copyright-Hinweise. Das ist keine pauschale Freigabe für alle Meta-Beispiele: Manche separat lizenzierten Beispiele sind nur zur nichtkommerziellen Evaluation bestimmt. Diese App verwendet eigene UI-Grafiken und Sounds; es wurden keine Filmoberflächen oder separat heruntergeladenen Meta-UI-Mockups übernommen.
 
 Ein Sideload-Build ist keine Store-Zulassung. Vor Veröffentlichung sind Entwicklerorganisation, Store-Vorgaben/VRCs, Datenschutzangaben und gegebenenfalls die Prüfung angeforderter Kameraberechtigungen erforderlich. Boundaryless bleibt eine offizielle Plattformfunktion; Systemschutz und Systemgesten werden nicht umgangen. Quellen: [SDK-Lizenz](https://developers.meta.com/horizon/licenses/oculussdk/), [separate Examples-Lizenz](https://developers.meta.com/horizon/licenses/examples-license-1.0/), [VRCs](https://developers.meta.com/horizon/resources/publish-common-vrc-failures/), [prüfpflichtige Berechtigungen](https://developers.meta.com/horizon/resources/permissions-review-required/).
 

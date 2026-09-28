@@ -1,6 +1,6 @@
 # Interaktion und Gestaltung: recherchierte Entscheidungen
 
-Recherche: 28. September 2026; Primärquellen von Meta und Home Assistant.
+Recherche: 29. September 2026; Primärquellen von Meta und Home Assistant.
 
 ## Metas Empfehlungen und Umsetzung
 
