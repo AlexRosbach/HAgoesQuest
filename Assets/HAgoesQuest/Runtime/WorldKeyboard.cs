@@ -30,12 +30,12 @@ namespace HAgoesQuest
                 letters.Add(Tuple.Create(card, key));
             }
             Small(-0.27f, "ABC / abc", () => { upper = !upper; foreach (var letter in letters) letter.Item1.Label.text = upper ? letter.Item2.ToUpperInvariant() : letter.Item2; });
-            Small(-0.09f, "Löschen", () => { if (value.Length > 0) value = value.Substring(0, value.Length - 1); Refresh(); });
-            Small(0.09f, "Leeren", () => { value = ""; Refresh(); });
-            Small(0.27f, "Einfügen", () => { string pasted = GUIUtility.systemCopyBuffer; if (!string.IsNullOrEmpty(pasted) && pasted.Length <= 4096) value = pasted.Trim(); Refresh(); });
-            if (!secret) WorldCard.Create(parent, new Vector3(0, -0.235f, 0), new Vector2(350, 32), "Leerzeichen", () => { if (value.Length < 4096) value += " "; Refresh(); });
-            WorldCard.Create(parent, new Vector3(-0.19f, -0.29f, 0), new Vector2(350, 65), "Zurück", cancel);
-            WorldCard.Create(parent, new Vector3(0.19f, -0.29f, 0), new Vector2(350, 65), "Übernehmen", () => accept(value));
+            Small(-0.09f, L10n.T("Löschen"), () => { if (value.Length > 0) value = value.Substring(0, value.Length - 1); Refresh(); });
+            Small(0.09f, L10n.T("Leeren"), () => { value = ""; Refresh(); });
+            Small(0.27f, L10n.T("Einfügen"), () => { string pasted = GUIUtility.systemCopyBuffer; if (!string.IsNullOrEmpty(pasted) && pasted.Length <= 4096) value = pasted.Trim(); Refresh(); });
+            if (!secret) WorldCard.Create(parent, new Vector3(0, -0.235f, 0), new Vector2(350, 32), L10n.T("Leerzeichen"), () => { if (value.Length < 4096) value += " "; Refresh(); });
+            WorldCard.Create(parent, new Vector3(-0.19f, -0.29f, 0), new Vector2(350, 65), L10n.T("Zurück"), cancel);
+            WorldCard.Create(parent, new Vector3(0.19f, -0.29f, 0), new Vector2(350, 65), L10n.T("Übernehmen"), () => accept(value));
             Refresh();
         }
 
@@ -44,7 +44,7 @@ namespace HAgoesQuest
         {
             display.Label.text = secret ? new string('•', Math.Min(32, value.Length)) + "  (" + value.Length + " Zeichen)" :
                 value.Length > 60 ? "…" + value.Substring(value.Length - 60) : value;
-            if (value.Length == 0) display.Label.text = secret ? "Token eingeben oder einfügen" : "Text eingeben";
+            if (value.Length == 0) display.Label.text = secret ? L10n.T("Token eingeben oder einfügen") : L10n.T("Text eingeben");
         }
     }
 }

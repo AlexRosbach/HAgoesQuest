@@ -53,8 +53,8 @@ namespace HAgoesQuest.Core
             var travel = position-origin;
             double along = travel.Dot(direction);
             double lateral = Math.Sqrt(Math.Max(0, travel.Dot(travel)-along*along));
-            if (now-armedAt > 0.65 || lateral > 0.09 || along < -0.06) { Reset(); return false; }
-            if (along >= 0.12 && delta.Dot(direction)/dt >= 0.65)
+            if (now-armedAt > 2.0 || lateral > 0.12 || along < -0.06) { Reset(); return false; }
+            if (along >= 0.12 && delta.Dot(direction)/dt >= 0.45)
             {
                 firedAt = position; latched = true; nextAllowed = now+0.35; Reset(); return true;
             }

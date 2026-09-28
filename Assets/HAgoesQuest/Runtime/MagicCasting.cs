@@ -1,5 +1,6 @@
 using HAgoesQuest.Core;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace HAgoesQuest
@@ -13,6 +14,8 @@ namespace HAgoesQuest
         Vector3 armedPalm;
         public bool Enabled { get; private set; }
         public bool Flying => effects.Exists(effect => effect);
+        public WorldCard PracticeTarget;
+        public string Hint { get; private set; } = L10n.T("Magie · rechte Hand öffnen");
         public MagicCasting() { Enabled = PlayerPrefs.GetInt(Preference, 0) == 1; }
         public void SetEnabled(bool enabled)
         {
@@ -26,6 +29,8 @@ namespace HAgoesQuest
             highlighted = null;
             foreach (var effect in effects) if (effect) Object.Destroy(effect.gameObject);
             effects.Clear();
+            if (PracticeTarget) Object.Destroy(PracticeTarget.gameObject);
+            PracticeTarget = null;
         }
         public void Tick(OVRHand hand, OVRSkeleton skeleton, Transform head,
             IEnumerable<WorldCard> markers, HomeAssistantConnection ha, bool allowed)
@@ -35,16 +40,18 @@ namespace HAgoesQuest
             effects.RemoveAll(effect => !effect);
             if (!Enabled || !allowed || !hand || !hand.IsTracked ||
                 hand.IsSystemGestureInProgress || hand.HandConfidence != OVRHand.TrackingConfidence.High || !skeleton || !skeleton.IsDataValid)
-            { gate.Reset(); return; }
+            { gate.Reset(); Hint = L10n.T("Magie · rechte Hand gut sichtbar ins Bild halten"); return; }
             if (!OpenPalm(skeleton, out var palm, out var normal))
             {
+                Hint = L10n.T("Hand öffnen · Finger ausstrecken, Handfläche zum Ziel");
                 gate.Step(null, true, false, default, default, Time.unscaledTime); return;
             }
-            float best = Mathf.Cos(20*Mathf.Deg2Rad);
+            float best = Mathf.Cos(35*Mathf.Deg2Rad);
             WorldCard target = null;
-            foreach (var card in markers)
+            foreach (var card in PracticeTarget ? markers.Concat(new[] { PracticeTarget }) : markers)
             {
-                if (!ha.Fresh || ha.Busy || effects.Count >= 4 || !card || !card.gameObject.activeInHierarchy || !card.Interactable || card.ReadOnly) continue;
+                if (effects.Count >= 4 || !card || !card.gameObject.activeInHierarchy || !card.Interactable || card.ReadOnly) continue;
+                if (card != PracticeTarget && (!ha.Fresh || ha.Busy || !ha.Entities.TryGetValue(card.EntityId, out var entity) || !EntityPolicy.CanSwitch(entity.Id, entity.State))) continue;
                 var to = card.transform.position-palm;
                 if (to.magnitude < 0.2f || to.magnitude > 5 || Vector3.Dot(head.forward, (card.transform.position-head.position).normalized) < 0.65f) continue;
                 float alignment = Vector3.Dot(normal, to.normalized);
@@ -57,8 +64,12 @@ namespace HAgoesQuest
                 new PushVector(relative.x, relative.y, relative.z), new PushVector(toward.x, toward.y, toward.z), Time.unscaledTime);
             if (!wasArmed && gate.Armed) armedPalm = palm;
             if (target) { target.SetMagicFocus(true, gate.Armed); highlighted = target; }
-            if (cast && target && Vector3.Dot(palm-armedPalm, toward) >= 0.10f && ha.Switch(target.EntityId))
+            Hint = !target ? L10n.T("Handfläche auf ein Lampen-/Schalter-Icon richten") : gate.Armed ? L10n.T("Bereit · jetzt etwa 12 cm nach vorne stoßen") : L10n.T("Ziel erkannt · Hand kurz ruhig halten");
+            if (cast && target && Vector3.Dot(palm-armedPalm, toward) >= 0.10f && (target == PracticeTarget || ha.Switch(target.EntityId)))
+            {
                 effects.Add(MagicFireball.Launch(palm + toward*0.04f, target, head));
+                Hint = L10n.T("Ausgelöst · Hand zurücknehmen oder kurz schließen");
+            }
         }
 
         public static Transform Bone(OVRSkeleton skeleton, OVRSkeleton.BoneId legacy, OVRSkeleton.BoneId xr)
@@ -75,6 +86,10 @@ namespace HAgoesQuest
             return root && joint && tip && Vector3.Distance(root.position, tip.position) > 0.035f &&
                 Vector3.Dot((joint.position-root.position).normalized, (tip.position-joint.position).normalized) > 0.75f;
         }
+        public static bool IndexExtended(OVRSkeleton skeleton) => skeleton && skeleton.IsDataValid && Extended(
+            Bone(skeleton, OVRSkeleton.BoneId.Hand_Index1, OVRSkeleton.BoneId.XRHand_IndexProximal),
+            Bone(skeleton, OVRSkeleton.BoneId.Hand_Index2, OVRSkeleton.BoneId.XRHand_IndexIntermediate),
+            Bone(skeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip));
         public static bool OpenPalm(OVRSkeleton skeleton, out Vector3 palm, out Vector3 normal)
         {
             palm = normal = Vector3.zero;
@@ -87,8 +102,7 @@ namespace HAgoesQuest
             if (!wrist || !index || !middle || !pinky) return false;
             if (!Extended(index, Bone(skeleton, OVRSkeleton.BoneId.Hand_Index2, OVRSkeleton.BoneId.XRHand_IndexIntermediate), Bone(skeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip)) ||
                 !Extended(middle, Bone(skeleton, OVRSkeleton.BoneId.Hand_Middle2, OVRSkeleton.BoneId.XRHand_MiddleIntermediate), Bone(skeleton, OVRSkeleton.BoneId.Hand_MiddleTip, OVRSkeleton.BoneId.XRHand_MiddleTip)) ||
-                !Extended(ring, Bone(skeleton, OVRSkeleton.BoneId.Hand_Ring2, OVRSkeleton.BoneId.XRHand_RingIntermediate), Bone(skeleton, OVRSkeleton.BoneId.Hand_RingTip, OVRSkeleton.BoneId.XRHand_RingTip)) ||
-                !Extended(pinky, Bone(skeleton, OVRSkeleton.BoneId.Hand_Pinky2, OVRSkeleton.BoneId.XRHand_LittleIntermediate), Bone(skeleton, OVRSkeleton.BoneId.Hand_PinkyTip, OVRSkeleton.BoneId.XRHand_LittleTip))) return false;
+                !Extended(ring, Bone(skeleton, OVRSkeleton.BoneId.Hand_Ring2, OVRSkeleton.BoneId.XRHand_RingIntermediate), Bone(skeleton, OVRSkeleton.BoneId.Hand_RingTip, OVRSkeleton.BoneId.XRHand_RingTip))) return false;
             palm = (wrist.position+middle.position)*0.5f;
             normal = Vector3.Cross(pinky.position-index.position, middle.position-wrist.position).normalized;
             return normal.sqrMagnitude > 0.9f;

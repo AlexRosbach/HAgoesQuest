@@ -48,6 +48,28 @@ namespace HAgoesQuest.Testing
             resultPath = Environment.GetEnvironmentVariable("HA_QUEST_TEST_RESULT");
             ha = GetComponent<HomeAssistantConnection>();
             yield return null;
+            bool priorLanguage=ExperienceSettings.English;
+            ExperienceSettings.English=true;
+            bool englishWorks=L10n.T("Zurück")=="Back" && new HaEntity { State="off" }.DisplayValue=="Off";
+            ExperienceSettings.English=priorLanguage;
+            if(!Check(englishWorks,"English UI and HA state labels use the persisted language preference"))yield break;
+            var inputHost=new GameObject("ISDK input fixture");var input=inputHost.AddComponent<MetaInputBridge>();
+            var sdkTarget=WorldCard.Create(null,new Vector3(0,0,2),new Vector2(300,100),"SDK target",()=>{});
+            yield return null;yield return null;Physics.SyncTransforms();
+            var testRay=new Ray(Vector3.zero,Vector3.forward);
+            input.Step(testRay,false,true,false,Vector3.zero);yield return null;
+            input.Step(testRay,true,true,false,Vector3.zero);
+            if(!Check(input.Hovered==sdkTarget&&input.RaySelected==sdkTarget,"Meta SDK ray hover and fresh pinch select the visible card"))yield break;
+            input.Step(testRay,true,true,false,Vector3.zero);
+            if(!Check(input.RaySelected==null,"Holding a pinch does not repeat a Meta SDK activation"))yield break;
+            input.Step(testRay,true,false,false,Vector3.zero);
+            input.Step(testRay,true,true,false,Vector3.zero);
+            if(!Check(input.RaySelected==null,"Tracking recovery while held cannot select another card"))yield break;
+            input.Step(testRay,false,true,true,new Vector3(0,0,1.8f));yield return null;
+            input.Step(testRay,false,true,true,new Vector3(0,0,1.95f));yield return null;
+            input.Step(testRay,false,true,true,new Vector3(0,0,2.001f));
+            if(!Check(input.PokeSelected==sdkTarget,"Meta SDK poke recognizes index fingertip crossing the front surface"))yield break;
+            Destroy(inputHost);Destroy(sdkTarget.gameObject);yield return null;
             var trackingRoot = new GameObject("Shifted tracking origin").transform;
             trackingRoot.SetPositionAndRotation(new Vector3(3,1,-2), Quaternion.Euler(0,70,0));
             var pointerHand = new GameObject("Pointer calibration fixture").AddComponent<OVRHand>(); pointerHand.enabled = false;
@@ -89,6 +111,8 @@ namespace HAgoesQuest.Testing
             if (!Check(marker.Label.color.a == 0, "Distant entity label hidden")) yield break;
             marker.SetNearby(true); yield return new WaitForSeconds(0.2f);
             if (!Check(marker.Label.color.a > 0.99f, "Nearby entity label appears")) yield break;
+            marker.SetIcon("temperature");marker.SetIcon("temperature");
+            if(!Check(marker.GetComponentsInChildren<UnityEngine.UI.Image>().Single(i=>i.name=="Icon").rectTransform.anchoredPosition==Vector2.zero,"Refreshing a marker icon preserves its centered layout"))yield break;
             Destroy(marker.gameObject);
             var handFixture = new GameObject("Synthetic right-hand geometry");
             var skeleton = handFixture.AddComponent<OVRSkeleton>(); skeleton.enabled = false;
@@ -153,8 +177,33 @@ namespace HAgoesQuest.Testing
             Destroy(fireTarget.gameObject); Destroy(fireHead.gameObject);
             var bindingHost = new GameObject("Isolated placement persistence test");
             var spatial = bindingHost.AddComponent<SpatialBindings>();
-            spatial.Initialize("test-unlocalized-delete-" + Guid.NewGuid());
+            string fixtureServer="test-unlocalized-delete-"+Guid.NewGuid();
+            spatial.Initialize(fixtureServer);
             var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var roomFile=(BindingFile)typeof(SpatialBindings).GetField("data",flags).GetValue(spatial);
+            string roomA=Guid.NewGuid().ToString(),roomB=Guid.NewGuid().ToString();
+            roomFile.bindings.Add(new BindingRecord { entityId="light.room_a",anchorUuid=roomA });
+            roomFile.bindings.Add(new BindingRecord { entityId="sensor.room_b",anchorUuid=roomB });
+            typeof(SpatialBindings).GetMethod("Persist",flags).Invoke(spatial,null);
+            var reloaded=new GameObject("Multi-room reload").AddComponent<SpatialBindings>();
+            reloaded.Initialize(fixtureServer);
+            var records=(BindingFile)typeof(SpatialBindings).GetField("data",flags).GetValue(reloaded);
+            if(!Check(records.bindings.Count==2&&records.bindings[0].anchorUuid==roomA&&records.bindings[1].anchorUuid==roomB,
+                "Independent UUIDs for two rooms survive persistence without sharing an origin"))yield break;
+            Destroy(reloaded.gameObject);roomFile.bindings.Clear();
+            if (!Check(!spatial.CanShow("light.unbound"), "Missing anchor never becomes a visible fallback at startup")) yield break;
+            var anchorFixture = new GameObject("Tracked anchor visibility fixture").AddComponent<OVRSpatialAnchor>();
+            anchorFixture.enabled = false;
+            spatial.Loaded["light.visibility"] = anchorFixture;
+            var visible = (System.Collections.Generic.HashSet<string>)typeof(SpatialBindings).GetField("trackedIds", flags).GetValue(spatial);
+            visible.Add("light.visibility");
+            typeof(SpatialBindings).GetProperty("TrackingReady").SetValue(spatial, true);
+            if (!Check(!spatial.CanShow("light.visibility"), "Untracked anchor stays hidden even with cached stable state")) yield break;
+            typeof(OVRSpatialAnchor).GetProperty("IsTracked").SetValue(anchorFixture, true);
+            if (!Check(spatial.CanShow("light.visibility"), "Current tracked anchor and stable session permit display")) yield break;
+            spatial.InvalidateTracking();
+            if (!Check(!spatial.CanShow("light.visibility") && !spatial.TrackingReady, "Recenter immediately invalidates cached anchor visibility")) yield break;
+            spatial.Loaded.Remove("light.visibility"); Destroy(anchorFixture.gameObject);
             var stored = (BindingFile)typeof(SpatialBindings).GetField("data", flags).GetValue(spatial);
             stored.bindings.Add(new BindingRecord { entityId = "light.missing_from_ha", anchorUuid = Guid.NewGuid().ToString() });
             typeof(SpatialBindings).GetMethod("Persist", flags).Invoke(spatial, null);
@@ -174,6 +223,11 @@ namespace HAgoesQuest.Testing
             void Invoke(string method, params object[] args) => typeof(QuestHome).GetMethod(method, flags).Invoke(ui, args);
             void Press(string prefix) => ((GameObject)Get("menu")).GetComponentsInChildren<WorldCard>().Single(c => c.Press != null && c.Label.text.StartsWith(prefix)).Activate();
             Set("head", testHead); Set("ha", ha); Set("bindings", spatial);
+            Invoke("BeginPlacement", "light.cancel_on_recenter", 1f);
+            Invoke("FreezePlacement", new Vector3(0.2f, 0, 1));
+            Invoke("RestoreHandInput");
+            if (!Check(Get("placing") == null && !((GameObject)Get("menu")).GetComponentsInChildren<WorldCard>().Any(c => c.Label.text.StartsWith("Position speichern")),
+                "Recenter discards the frozen preview and its stale save action")) yield break;
             Invoke("BeginPlacement", "light.ui_test", 1f);
             Invoke("FreezePlacement", new Vector3(0.2f, 0, 1));
             if (!Check((bool)Get("placementFrozen") && ((WorldCard)Get("preview")).IsMarker &&
@@ -213,6 +267,47 @@ namespace HAgoesQuest.Testing
             ha.Switch("light.test");
             yield return Wait(() => !ha.Busy && ha.Fresh && ha.Entities["light.test"].State == "on", 12, "Command and state refresh");
             if (!Check(ha.Entities["light.test"].AreaId == "living", "Room survives state polling")) yield break;
+            if(!Check(ha.Entities["light.test"].CanDim&&!ha.Entities["light.simple"].CanDim&&ha.Entities["media_player.speaker"].CanVolume,"Only advertised dimming and volume capabilities enable controls"))yield break;
+            if(!Check(!ha.SetLevel("sensor.temperature",.5f)&&!ha.SetLevel("light.simple",.5f)&&!ha.SetLevel("light.test",float.NaN),"Unsupported or invalid level commands are rejected"))yield break;
+            if(!Check(ha.SetLevel("light.test",.4f),"Brightness gesture accepts valid value"))yield break;
+            yield return Wait(()=>!ha.Busy&&ha.Fresh&&Mathf.Abs(ha.Entities["light.test"].Level-.4f)<.01f,12,"Brightness payload round trip");
+            if(!Check(ha.SetLevel("media_player.speaker",.3f),"Volume gesture accepts valid value"))yield break;
+            yield return Wait(()=>!ha.Busy&&ha.Fresh&&Mathf.Abs(ha.Entities["media_player.speaker"].Level-.3f)<.01f,12,"Volume payload round trip");
+            var sliderHost=new GameObject("Slider gesture fixture");var sliderUi=sliderHost.AddComponent<QuestHome>();sliderUi.enabled=false;
+            var sliderHead=new GameObject("Slider head").transform;
+            typeof(QuestHome).GetField("head",flags).SetValue(sliderUi,sliderHead);typeof(QuestHome).GetField("ha",flags).SetValue(sliderUi,ha);
+            typeof(QuestHome).GetMethod("OpenLevelControls",flags).Invoke(sliderUi,new object[]{ha.Entities["light.test"]});
+            var sliderCard=(WorldCard)typeof(QuestHome).GetField("levelControl",flags).GetValue(sliderUi);
+            typeof(QuestHome).GetField("focused",flags).SetValue(sliderUi,sliderCard);
+            var sliderMenu=(GameObject)typeof(QuestHome).GetField("menu",flags).GetValue(sliderUi);
+            var sliderRay=new Ray(Vector3.zero,sliderMenu.transform.TransformPoint(new Vector3(.15f,.06f,0)).normalized);
+            var dragMethod=typeof(QuestHome).GetMethod("UpdateAlternativeInput",flags);
+            dragMethod.Invoke(sliderUi,new object[]{true,true,true,sliderRay});
+            if(!Check(!ha.Busy&&Mathf.Abs((float)typeof(QuestHome).GetField("draftLevel",flags).GetValue(sliderUi)-.75f)<.01f,"Pinch drag previews slider value without issuing intermediate commands"))yield break;
+            dragMethod.Invoke(sliderUi,new object[]{true,true,false,sliderRay});
+            yield return Wait(()=>!ha.Busy&&ha.Fresh&&Mathf.Abs(ha.Entities["light.test"].Level-.75f)<.01f,12,"Releasing a dragged slider sends the selected brightness");
+            typeof(QuestHome).GetMethod("CloseMenu",flags).Invoke(sliderUi,null);Destroy(sliderHost);Destroy(sliderHead.gameObject);
+            if(!Check(ha.Entities["media_player.speaker"].AreaId=="bedroom"&&ha.Entities["camera.front"].AreaId=="hall","Four HA rooms retain independent assignments after commands"))yield break;
+            foreach(string mediaId in new[]{"camera.front","image.picture"})
+            {
+                using(var mediaRequest=ha.MediaRequest(mediaId))
+                {
+                    if(!Check(mediaRequest!=null&&mediaRequest.redirectLimit==0&&mediaRequest.GetRequestHeader("Authorization")=="Bearer test-token","Media request is authenticated and never redirects"))yield break;
+                    yield return mediaRequest.SendWebRequest();
+                    var decodedFrame=new Texture2D(2,2);
+                    bool ok=mediaRequest.result==UnityWebRequest.Result.Success&&decodedFrame.LoadImage(mediaRequest.downloadHandler.data);
+                    Destroy(decodedFrame);if(!Check(ok,"Camera/image proxy provides a decodable frame"))yield break;
+                }
+            }
+            if(!Check(ha.MediaRequest("camera.front/../../other")==null&&ha.MediaRequest("sensor.temperature")==null,"Media cannot escape the selected entity endpoint"))yield break;
+            var listHost=new GameObject("Scroll list fixture");
+            var list=listHost.AddComponent<EntityScrollList>();
+            var many=Enumerable.Range(0,30).Select(i=>new HaEntity{Id="sensor.row_"+i,Name="Row "+i,State=i.ToString(),Unit="W",AreaName=i%2==0?"Kitchen":"Office"}).ToArray();
+            list.Initialize(many,ha,_=>{});yield return null;
+            if(!Check(list.GetComponentsInChildren<WorldCard>().Count(c=>c.GetComponent<Collider>().enabled)==8,"Scrollable list exposes eight complete entity targets"))yield break;
+            list.ScrollBy(99);yield return null;
+            if(!Check(list.Count==30&&list.Offset>1&&list.GetComponentsInChildren<WorldCard>().Any(c=>c.Label.text.Contains("29 W")),"Virtualized scrolling reaches last entity and shows live values"))yield break;
+            Destroy(listHost);
             ha.Switch("sensor.temperature");
             yield return Stats(1);
             yield return Control("offline");

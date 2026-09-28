@@ -9,14 +9,15 @@ using UnityEngine;
 
 namespace HAgoesQuest
 {
-    public sealed class QuestHome : MonoBehaviour
+    [DefaultExecutionOrder(11000)]
+    public sealed partial class QuestHome : MonoBehaviour
     {
         public OVRCameraRig Rig;
         public OVRHand LeftHand;
         public OVRHand RightHand;
         HomeAssistantConnection ha;
         SpatialBindings bindings;
-        readonly FocusPinchGate gate = new FocusPinchGate();
+        readonly FocusPinchGate gate = new FocusPinchGate(0, 0.4);
         readonly Dictionary<string, WorldCard> markers = new Dictionary<string, WorldCard>();
         Transform head;
         GameObject menu;
@@ -50,6 +51,7 @@ namespace HAgoesQuest
             head = Rig.centerEyeAnchor;
             ha = GetComponent<HomeAssistantConnection>();
             magic = new MagicCasting();
+            InitializeExperience();
             bindings = GetComponent<SpatialBindings>();
             bindings.Added += AddMarker;
             bindings.Removed += RemoveMarker;
@@ -70,6 +72,7 @@ namespace HAgoesQuest
             reticle = WorldCard.Create(null, Vector3.zero, new Vector2(16, 16), "");
             reticle.GetComponent<Collider>().enabled = false;
             Home();
+            if (ExperienceSettings.Wrist && !ha.Demo) CloseMenu();
             while (string.IsNullOrEmpty(ha.ServerIdentity)) yield return null;
             if (!bindings.Ready) ServerChanged();
         }
@@ -98,6 +101,10 @@ namespace HAgoesQuest
         }
         void RestoreHandInput()
         {
+            bindings?.InvalidateTracking();
+            bool wasPlacing = placing != null;
+            CancelPlacement();
+            if (wasPlacing && head && ha) Home();
             RepairHandPointers(); gate.Reset(); menuGate.Reset(); magic?.Cancel(); RecenterMenu();
         }
         void ToggleMenu()
@@ -109,6 +116,7 @@ namespace HAgoesQuest
         void Update()
         {
             if (!head || ha == null) return;
+            UpdateExperience();
             RepairHandPointers();
             bool inputAllowed = Application.isFocused && (Application.isEditor || (OVRManager.hasInputFocus && OVRManager.hasVrFocus));
             if (MRUK.Instance.GetCurrentRoom() != null && (walkTrail.Count == 0 || Vector3.Distance(walkTrail[walkTrail.Count - 1], head.position) > 0.3f))
@@ -148,27 +156,33 @@ namespace HAgoesQuest
             foreach (var pair in markers)
             {
                 var card = pair.Value;
-                bool localized = !bindings.Loaded.TryGetValue(pair.Key, out var anchor) || anchor.Localized;
+                bool localized = Application.isEditor || (!scanBusy && bindings.CanShow(pair.Key));
                 card.gameObject.SetActive(localized);
                 if (!localized) continue;
                 card.GetComponent<Collider>().enabled = !menu && !operationBusy && placing == null;
-                card.Face(head);
+                if (!card.IsMedia) card.Face(head);
                 card.SetDistance(Vector3.Distance(head.position, card.transform.position));
+                if (EntityPolicy.Domain(pair.Key) == "sensor" || EntityPolicy.Domain(pair.Key) == "binary_sensor") card.ShowSensorValue(LookingAt(card));
                 if (ha.Entities.TryGetValue(pair.Key, out var entity))
                 {
-                    string value = ha.Fresh ? entity.DisplayValue : "Veraltet · " + entity.DisplayValue;
-                    card.Label.text = Short(entity.Name, 42) + "\n" + Short(value, 42) + (ha.Demo ? " · DEMO" : "");
+                    string value = ha.Fresh ? entity.DisplayValue : L10n.T("Veraltet · ") + entity.DisplayValue;
+                    if (!card.IsMedia) card.Label.text = Short(entity.Name, 42) + "\n" + Short(value, 42) + (ha.Demo ? " · DEMO" : "");
                     card.SetState(entity.State);
-                    card.Interactable = !card.ReadOnly && !menu && !operationBusy && ha.Fresh && !ha.Busy && EntityPolicy.CanSwitch(entity.Id, entity.State);
+                    if(!card.IsMedia)card.SetIcon(IconFor(pair.Key));
+                    EnsureAdjustment(card,entity);
+                    card.Interactable = !card.ReadOnly && !menu && !operationBusy && ha.Fresh && !ha.Busy && (EntityPolicy.CanSwitch(entity.Id, entity.State) || entity.CanVolume);
                 }
-                else { card.Label.text = pair.Key + "\nNicht verfügbar"; card.Interactable = false; }
+                else { card.Label.text = pair.Key + L10n.T("\nNicht verfügbar"); card.Interactable = false; }
             }
 
             Ray ray = new Ray(head.position, head.forward);
             if (hand && RightHand.IsPointerPoseValid && RightHand.PointerPose)
                 ray = new Ray(RightHand.PointerPose.position, RightHand.PointerPose.forward);
             else if (controller) ray = new Ray(Rig.rightControllerAnchor.position, Rig.rightControllerAnchor.forward);
-            Vector3 aim = ray.GetPoint(1.5f);
+            ray = SmoothAim(ray, down);
+            var fingerTip=MagicCasting.Bone(rightSkeleton,OVRSkeleton.BoneId.Hand_IndexTip,OVRSkeleton.BoneId.XRHand_IndexTip);
+            metaInput?.Step(ray,down,inputAllowed&&tracked&&!operationBusy,hand&&fingerTip,fingerTip?fingerTip.position:Vector3.zero);
+            Vector3 aim = ray.GetPoint(5);
             if (focused) focused.Focus(false);
             focused = null;
             string key = null;
@@ -181,8 +195,8 @@ namespace HAgoesQuest
                 aim = heldPosition;
                 preview.transform.position = heldPosition;
                 preview.Face(head);
-                preview.Label.text = !positionTracked ? "Rechte Hand ins Sichtfeld halten" :
-                    "Hand zum Wunschort bewegen\nEinmal pinchen: Position festhalten";
+                preview.Label.text = !positionTracked ? L10n.T("Rechte Hand ins Sichtfeld halten") :
+                    L10n.T("Hand zum Wunschort bewegen\nEinmal pinchen: Position festhalten");
                 placementValid = positionTracked;
                 key = placementValid ? "place:" + placing : null;
             }
@@ -204,25 +218,25 @@ namespace HAgoesQuest
                 }
                 preview.transform.position = aim;
                 preview.Face(head);
-                preview.Label.text = placementValid ? "Hier platzieren\nEinmal pinchen: Position festhalten" : "Keine Scanfläche\nLinks pinchen: zurück";
+                preview.Label.text = placementValid ? L10n.T("Hier platzieren\nEinmal pinchen: Position festhalten") : L10n.T("Keine Scanfläche\nLinks pinchen: zurück");
                 key = placementValid ? "place:" + placing : null;
             }
-            else if (!operationBusy && Physics.Raycast(ray, out var cardHit, 8))
+            else if (!operationBusy && metaInput && metaInput.Hovered)
             {
-                var card = cardHit.collider.GetComponent<WorldCard>();
+                var card = metaInput.Hovered;
                 if (card && (card.IsMarker || (card.Interactable && card.Press != null)))
                 {
                     focused = card;
                     focused.Focus(true);
                     if (card.Interactable && card.Press != null) key = card.Key;
                 }
-                aim = cardHit.point - ray.direction * 0.01f;
+                aim = metaInput.HitPoint - ray.direction * 0.01f;
             }
             reticle.transform.position = aim;
             reticle.Face(head);
             reticle.Focus(key != null);
             reticle.gameObject.SetActive(inputAllowed && (focused || placing != null));
-            pointer.enabled = inputAllowed && tracked && (focused || (placing != null && !placementFrozen)) &&
+            pointer.enabled = inputAllowed && tracked && (focused || down || MagicCasting.IndexExtended(rightSkeleton) || (placing != null && !placementFrozen)) &&
                 (!hand || (RightHand.IsPointerPoseValid && RightHand.PointerPose));
             if (pointer.enabled)
             {
@@ -233,9 +247,14 @@ namespace HAgoesQuest
                     if (tip) start = tip.position;
                 }
                 pointer.SetPosition(0, start); pointer.SetPosition(1, aim);
+                UpdateBeam(start, aim, focused && focused.IsMarker);
             }
-            magic?.Tick(RightHand, rightSkeleton, head, markers.Values, ha, inputAllowed && !menu && placing == null && !operationBusy && !scanBusy && !bindings.Busy);
-            if (gate.Step(key, down, tracked && !operationBusy && inputAllowed, Time.realtimeSinceStartup))
+            else if (beamGlow) beamGlow.enabled = false;
+            magic?.Tick(RightHand, rightSkeleton, head, markers.Values, ha, inputAllowed && !menu && placing == null && !operationBusy && !scanBusy);
+            bool consumed = UpdateAlternativeInput(inputAllowed, tracked, down, ray);
+            bool placementPressed=placing!=null&&!placementFrozen&&gate.Step(consumed?null:key,down,tracked&&!operationBusy&&inputAllowed,Time.realtimeSinceStartup);
+            bool selected=!consumed&&metaInput&&metaInput.RaySelected&&metaInput.RaySelected==focused&&key!=null;
+            if (placementPressed || selected)
             {
                 if (placing != null && placementValid) FreezePlacement(aim);
                 else if (focused) focused.Activate();
@@ -250,6 +269,7 @@ namespace HAgoesQuest
             if (menu) { menu.SetActive(false); Destroy(menu); }
             gate.Reset();
             menu = new GameObject("HA Menu");
+            entityList = null;
             Vector3 forward = Vector3.ProjectOnPlane(head.forward, Vector3.up).normalized;
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
             menu.transform.SetPositionAndRotation(head.position + forward * 1.4f, Quaternion.LookRotation(forward));
@@ -277,35 +297,36 @@ namespace HAgoesQuest
         void Home()
         {
             notice = "";
-            NewMenu("HA goes Quest\nDein Zuhause. Direkt vor dir.");
-            Button(0, ha.Demo ? "Mit Home Assistant verbinden" : "Home-Assistant-Verbindung", ConnectionMenu, "lamp");
-            Button(1, "Entität mit der Hand platzieren", () => { page = 0; EntityMenu(); }, "lamp");
-            Button(2, "Wohnung erfassen & Karte ansehen", MapMenu, "map");
-            Button(3, "Einstellungen · Magie & Positionen", MagicSettings, "map");
-            Button(4, "Menü schließen · Linker Pinch öffnet / schließt", CloseMenu);
-            Button(5, "Platzierte Entitäten verwalten / löschen", () => PlacedMenu(0));
+            NewMenu(L10n.T("HA goes Quest\nDein Zuhause. Direkt vor dir."));
+            Button(0, ha.Demo ? L10n.T("Mit Home Assistant verbinden") : L10n.T("Home-Assistant-Verbindung"), ConnectionMenu, "lamp");
+            Button(1, L10n.T("Entität mit der Hand platzieren"), () => { page = 0; EntityMenu(); }, "lamp");
+            Button(2, L10n.T("Wohnung erfassen & Karte ansehen"), MapMenu, "map");
+            Button(3, L10n.T("Einstellungen · Bedienung & Aussehen"), ExperienceMenu, "settings");
+            Button(4, L10n.T("Menü schließen · Linker Pinch öffnet / schließt"), CloseMenu);
+            Button(5, L10n.T("Platzierte Entitäten verwalten / löschen"), () => PlacedMenu(0));
         }
 
         void MagicSettings()
         {
             if (magic == null) magic = new MagicCasting();
-            NewMenu("Magie & Positionen");
-            Button(0, magic.Enabled ? "Magie: AN · ausschalten" : "Magie: AUS · einschalten", () => { magic.SetEnabled(!magic.Enabled); MagicSettings(); });
-            Button(1, "Gespeicherte Positionen wiederfinden", LoadBindings, "map");
-            Button(2, "Zurück", Home);
-            Button(3, "Menü schließen & ausprobieren", CloseMenu);
-            notice = "Rechte Hand flach zum Icon richten, kurz ruhig halten, dann nach vorn stoßen. Grüner Rand = Ziel. Danach Hand zurücknehmen oder schließen. Für Lampen und Schalter.";
+            NewMenu(L10n.T("Magie & Positionen"));
+            Button(0, magic.Enabled ? L10n.T("Magie: AN · ausschalten") : L10n.T("Magie: AUS · einschalten"), () => { magic.SetEnabled(!magic.Enabled); MagicSettings(); });
+            Button(1, L10n.T("Gespeicherte Positionen wiederfinden"), LoadBindings, "map");
+            Button(2, L10n.T("Übungsziel · ohne Geräte zu schalten"), StartMagicPractice);
+            Button(3, L10n.T("Menü schließen & ausprobieren"), CloseMenu);
+            Button(4, L10n.T("Zurück"), ExperienceMenu);
+            notice = L10n.T("Rechte Hand flach zum Icon richten, kurz ruhig halten, dann nach vorn stoßen. Grüner Rand = Ziel. Danach Hand zurücknehmen oder schließen. Für Lampen und Schalter.");
         }
 
         void ConnectionMenu()
         {
-            if (bindings.Busy || operationBusy) { notice = "Bitte warten, bis die Positionen geladen sind."; return; }
+            if (bindings.Busy || operationBusy) { notice = L10n.T("Bitte warten, bis die Positionen geladen sind."); return; }
             if (draftUrl == "https://" && !string.IsNullOrEmpty(ha.BaseUrl)) { draftUrl = ha.BaseUrl; allowHttp = ha.AllowsInsecureHttp; }
-            NewMenu("Verbinde dein Zuhause");
-            Button(0, "Adresse: " + Short(draftUrl, 47), () => OpenKeyboard(false));
-            Button(1, draftToken.Length == 0 ? (ha.CanReuseToken(draftUrl, allowHttp) ? "Gespeicherter Token wird verwendet · ändern" : "Zugangstoken eingeben / einfügen") : "Zugangstoken bereit · " + draftToken.Length + " Zeichen", () => OpenKeyboard(true));
-            Button(2, allowHttp ? "Lokales HTTP: erlaubt (unverschlüsselt)" : "Lokales HTTP: aus · HTTPS empfohlen", () => { allowHttp = !allowHttp; ConnectionMenu(); });
-            Button(3, "Verbindung prüfen & speichern", () =>
+            NewMenu(L10n.T("Verbinde dein Zuhause"));
+            Button(0, L10n.T("Adresse: ") + Short(draftUrl, 47), () => OpenKeyboard(false));
+            Button(1, draftToken.Length == 0 ? (ha.CanReuseToken(draftUrl, allowHttp) ? L10n.T("Gespeicherter Token wird verwendet · ändern") : L10n.T("Zugangstoken eingeben / einfügen")) : L10n.T("Zugangstoken bereit · ") + draftToken.Length + L10n.T(" Zeichen"), () => OpenKeyboard(true));
+            Button(2, allowHttp ? L10n.T("Lokales HTTP: erlaubt (unverschlüsselt)") : L10n.T("Lokales HTTP: aus · HTTPS empfohlen"), () => { allowHttp = !allowHttp; ConnectionMenu(); });
+            Button(3, L10n.T("Verbindung prüfen & speichern"), () =>
             {
                 if (bindings.Busy || ha.Connecting) return;
                 operationBusy = true;
@@ -316,66 +337,66 @@ namespace HAgoesQuest
                     if (success) { draftToken = ""; Home(); }
                 });
             }, "lamp");
-            Button(4, "Token per QR-Code vom Handy einlesen", QrMenu);
-            Button(5, "Zurück / Anmeldung verwalten", () =>
+            Button(4, L10n.T("Token per QR-Code vom Handy einlesen"), QrMenu);
+            Button(5, L10n.T("Zurück / Anmeldung verwalten"), () =>
             {
-                NewMenu("Verbindung verwalten");
-                Button(0, "Zurück zum Hauptmenü", Home);
-                Button(1, "Anmeldung auf diesem Gerät entfernen", () =>
+                NewMenu(L10n.T("Verbindung verwalten"));
+                Button(0, L10n.T("Zurück zum Hauptmenü"), Home);
+                Button(1, L10n.T("Anmeldung auf diesem Gerät entfernen"), () =>
                 {
-                    NewMenu("Anmeldung entfernen?");
-                    Button(0, "Ja · Token auf dieser Quest löschen", () =>
+                    NewMenu(L10n.T("Anmeldung entfernen?"));
+                    Button(0, L10n.T("Ja · Token auf dieser Quest löschen"), () =>
                     {
                         try { ha.ForgetConnection(); draftToken = ""; Home(); }
-                        catch { notice = "Anmeldung konnte nicht entfernt werden."; }
+                        catch { notice = L10n.T("Anmeldung konnte nicht entfernt werden."); }
                     });
-                    Button(1, "Abbrechen", ConnectionMenu);
+                    Button(1, L10n.T("Abbrechen"), ConnectionMenu);
                 });
-                Button(2, "Zurück zur Verbindung", ConnectionMenu);
+                Button(2, L10n.T("Zurück zur Verbindung"), ConnectionMenu);
             });
-            notice = "In Home Assistant: Profil → Sicherheit → langlebigen Zugriffstoken erstellen. Hier einfügen. Anmeldung wird auf der Quest verschlüsselt gespeichert.";
+            notice = L10n.T("In Home Assistant: Profil → Sicherheit → langlebigen Zugriffstoken erstellen. Hier einfügen. Anmeldung wird auf der Quest verschlüsselt gespeichert.");
         }
 
         void QrMenu()
         {
-            NewMenu("Zugang per QR-Code");
+            NewMenu(L10n.T("Zugang per QR-Code"));
             qrMenu = true;
-            Button(0, "Scan starten / erneut versuchen", () => qr.Begin((url, token) =>
+            Button(0, L10n.T("Scan starten / erneut versuchen"), () => qr.Begin((url, token) =>
             {
                 if (!string.IsNullOrEmpty(url)) draftUrl = url;
                 draftToken = token;
                 ConnectionMenu();
-                notice = "QR-Code gelesen. Adresse prüfen und „Verbindung prüfen & speichern“ wählen. HTTP bleibt eine separate Freigabe.";
+                notice = L10n.T("QR-Code gelesen. Adresse prüfen und „Verbindung prüfen & speichern“ wählen. HTTP bleibt eine separate Freigabe.");
             }));
-            Button(1, "Zurück", ConnectionMenu);
-            notice = "Token-QR oder JSON mit baseUrl und accessToken. Die Verbindung erfolgt erst nach deiner Bestätigung.";
+            Button(1, L10n.T("Zurück"), ConnectionMenu);
+            notice = L10n.T("Token-QR oder JSON mit baseUrl und accessToken. Die Verbindung erfolgt erst nach deiner Bestätigung.");
             status.Label.text = notice;
         }
 
         void OpenKeyboard(bool token)
         {
-            NewMenu(token ? "Home-Assistant-Zugangstoken" : "Adresse deines Home Assistant");
-            keyboard = new WorldKeyboard(menu.transform, token ? draftToken : draftUrl, token,
+            NewMenu(token ? L10n.T("Home-Assistant-Zugangstoken") : L10n.T("Adresse deines Home Assistant"));
+            SystemTextInput.Open(menu.transform, token ? draftToken : draftUrl, token,
                 value => { if (token) draftToken = value; else draftUrl = value; ConnectionMenu(); }, ConnectionMenu);
-            notice = token ? "Der Token bleibt verdeckt. „Einfügen“ nutzt die Zwischenablage der Quest." : "Zum Beispiel https://ha.example.com oder http://192.168.1.10:8123";
+            notice = token ? L10n.T("Der Token bleibt verdeckt. „Einfügen“ nutzt die Zwischenablage der Quest.") : L10n.T("Zum Beispiel https://ha.example.com oder http://192.168.1.10:8123");
         }
 
         void MapMenu()
         {
-            NewMenu("Erfasse deine Wohnung");
-            Button(0, "Vorhandene Räume laden / ersten Scan starten", () => Scan(false), "map");
-            Button(1, "Durch die Wohnung gehen & neu erfassen", () => Scan(true), "map");
-            Button(2, "Wohnungskarte ansehen", ShowMap, "map");
-            Button(3, "Entität im Raum platzieren", () => { page = 0; EntityMenu(); }, "lamp");
-            Button(4, "Zurück", Home);
-            notice = "Die Quest-Raumerfassung führt dich durch den Scan. Danach zeigt die Karte geladene Räume, Geräte und deinen aktuellen Standort.";
+            NewMenu(L10n.T("Erfasse deine Wohnung"));
+            Button(0, L10n.T("Vorhandene Räume laden / ersten Scan starten"), () => Scan(false), "map");
+            Button(1, L10n.T("Durch die Wohnung gehen & neu erfassen"), () => Scan(true), "map");
+            Button(2, L10n.T("Wohnungskarte ansehen"), ShowMap, "map");
+            Button(3, L10n.T("Entität im Raum platzieren"), () => { page = 0; EntityMenu(); }, "lamp");
+            Button(4, L10n.T("Zurück"), Home);
+            notice = L10n.T("Die Quest-Raumerfassung führt dich durch den Scan. Danach zeigt die Karte geladene Räume, Geräte und deinen aktuellen Standort.");
         }
 
         void ShowMap()
         {
-            if (MRUK.Instance.Rooms.Count == 0) { notice = "Zuerst Räume laden oder die Wohnung erfassen."; return; }
-            NewMenu("Deine Wohnung · " + MRUK.Instance.Rooms.Count + " Raum/Räume");
-            var card = WorldCard.Create(menu.transform, new Vector3(0, 0.055f, 0), new Vector2(740, 420), "Grün: Räume · Gold: Geräte · Weiß: Du");
+            if (MRUK.Instance.Rooms.Count == 0) { notice = L10n.T("Zuerst Räume laden oder die Wohnung erfassen."); return; }
+            NewMenu(L10n.T("Deine Wohnung · ") + MRUK.Instance.Rooms.Count + L10n.T(" Raum/Räume"));
+            var card = WorldCard.Create(menu.transform, new Vector3(0, 0.055f, 0), new Vector2(740, 420), L10n.T("Grün: Räume · Gold: Geräte · Weiß: Du"));
             card.Interactable = false;
             card.Label.alignment = TextAnchor.LowerCenter;
             card.Label.fontSize = 18;
@@ -387,48 +408,42 @@ namespace HAgoesQuest
             var map = mapObject.GetComponent<ApartmentMap>();
             map.raycastTarget = false;
             map.Head = head; map.Bindings = bindings; map.Trail = walkTrail;
-            Button(5, "Zurück", MapMenu);
-            notice = "Die blaue Spur zeigt deinen Weg in dieser Sitzung. Weitere Räume über die Quest-Raumerfassung hinzufügen.";
+            Button(5, L10n.T("Zurück"), MapMenu);
+            notice = L10n.T("Die blaue Spur zeigt deinen Weg in dieser Sitzung. Weitere Räume über die Quest-Raumerfassung hinzufügen.");
         }
 
         void EntityMenu()
         {
             var entities = browser.Apply(ha.Entities.Values).ToArray();
-            int pages = Math.Max(1, (entities.Length + 2) / 3);
-            page = Math.Min(page, pages - 1);
-            NewMenu(entities.Length + " Entitäten · Seite " + (page + 1) + "/" + pages);
-            Button(0, "Suchen & Filtern · " + (browser.Domain.Length == 0 ? "Alle Arten" : EntityBrowser.DomainName(browser.Domain)), Filters);
-            for (int i = 0; i < 3 && page * 3 + i < entities.Length; i++)
-            {
-                var entity = entities[page * 3 + i];
-                Button(i + 1, Short(entity.Name, 30) + "\n" + Short(entity.Id + " · " + (entity.AreaName.Length == 0 ? "Ohne Raum" : entity.AreaName), 58) + (bindings.Contains(entity.Id) ? " ✓" : ""), () => { placementReadOnly = !EntityPolicy.CanSwitch(entity.Id, entity.State); Details(entity); }, IconFor(entity.Id));
-            }
-            Pager(4, () => { page = (page + pages - 1) % pages; EntityMenu(); }, () => { page = (page + 1) % pages; EntityMenu(); });
-            Button(5, "Zurück", Home);
-            notice = entities.Length == 0 ? "Keine Treffer. Suche oder Filter ändern." : FilterSummary();
+            NewMenu(entities.Length + L10n.T(" Entitäten"));
+            WorldCard.Create(menu.transform, new Vector3(-0.2f, 0.29f, 0), new Vector2(390, 65), L10n.T("Suchen & Filtern"), Filters).SetIcon("search");
+            WorldCard.Create(menu.transform, new Vector3(0.2f, 0.29f, 0), new Vector2(390, 65), L10n.T("Zurück"), Home);
+            entityList = menu.AddComponent<EntityScrollList>();
+            entityList.Initialize(entities, ha, entity => { placementReadOnly = !EntityPolicy.CanSwitch(entity.Id, entity.State) && !entity.CanVolume; Details(entity); });
+            notice = entities.Length == 0 ? L10n.T("Keine Treffer. Suche oder Filter ändern.") : L10n.T("Zielen, pinchen und ziehen · oder mit dem Finger wischen\n") + FilterSummary();
         }
 
-        string FilterSummary() => "Raum: " + AreaLabel() + " · Suche: " + (browser.Search.Length == 0 ? "–" : browser.Search);
-        string AreaLabel() => browser.Area.Length == 0 ? "Alle" : browser.Area == "__none" ? "Ohne Raum" :
+        string FilterSummary() => L10n.T("Raum: ") + AreaLabel() + L10n.T(" · Suche: ") + (browser.Search.Length == 0 ? "–" : browser.Search);
+        string AreaLabel() => browser.Area.Length == 0 ? L10n.T("Alle") : browser.Area == "__none" ? L10n.T("Ohne Raum") :
             ha.Entities.Values.FirstOrDefault(e => e.AreaId == browser.Area)?.AreaName ?? browser.Area;
         void Pager(int row, Action previous, Action next)
         {
-            WorldCard.Create(menu.transform, new Vector3(-0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), "‹ Zurück", previous);
-            WorldCard.Create(menu.transform, new Vector3(0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), "Weiter ›", next);
+            WorldCard.Create(menu.transform, new Vector3(-0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), L10n.T("‹ Zurück"), previous);
+            WorldCard.Create(menu.transform, new Vector3(0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), L10n.T("Weiter ›"), next);
         }
         void Filters()
         {
-            NewMenu("Entitäten finden");
-            Button(0, "Art: " + (browser.Domain.Length == 0 ? "Alle" : EntityBrowser.DomainName(browser.Domain)), () => TypeMenu(0));
-            Button(1, "Raum: " + AreaLabel(), () => AreaMenu(0));
-            Button(2, "Suchen: " + (browser.Search.Length == 0 ? "Name oder Entitäts-ID" : Short(browser.Search, 35)), () =>
+            NewMenu(L10n.T("Entitäten finden"));
+            Button(0, L10n.T("Art: ") + (browser.Domain.Length == 0 ? L10n.T("Alle") : EntityBrowser.DomainName(browser.Domain)), () => TypeMenu(0));
+            Button(1, L10n.T("Raum: ") + AreaLabel(), () => AreaMenu(0));
+            Button(2, L10n.T("Suchen: ") + (browser.Search.Length == 0 ? L10n.T("Name oder Entitäts-ID") : Short(browser.Search, 35)), () =>
             {
-                NewMenu("Entitäten suchen");
-                keyboard = new WorldKeyboard(menu.transform, browser.Search, false, value => { browser.Search = value.Trim(); page = 0; EntityMenu(); }, Filters);
+                NewMenu(L10n.T("Entitäten suchen"));
+                SystemTextInput.Open(menu.transform, browser.Search, false, value => { browser.Search = value.Trim(); page = 0; EntityMenu(); }, Filters);
             });
-            Button(3, "Alle Filter zurücksetzen", () => { browser.Domain = browser.Area = browser.Search = ""; page = 0; EntityMenu(); });
-            Button(4, "Raumzuordnungen neu laden", () => { ha.RefreshAreas(); notice = ha.AreaStatus; });
-            Button(5, "Ergebnisse anzeigen", () => { page = 0; EntityMenu(); });
+            Button(3, L10n.T("Alle Filter zurücksetzen"), () => { browser.Domain = browser.Area = browser.Search = ""; page = 0; EntityMenu(); });
+            Button(4, L10n.T("Raumzuordnungen neu laden"), () => { ha.RefreshAreas(); notice = ha.AreaStatus; });
+            Button(5, L10n.T("Ergebnisse anzeigen"), () => { page = 0; EntityMenu(); });
             notice = ha.AreaStatus;
         }
         void TypeMenu(int index)
@@ -436,31 +451,31 @@ namespace HAgoesQuest
             var types = ha.Entities.Values.Select(e => EntityPolicy.Domain(e.Id)).Distinct().OrderBy(EntityBrowser.DomainName).ToArray();
             int pages = Math.Max(1, (types.Length + 2) / 3);
             index = Math.Max(0, Math.Min(index, pages - 1));
-            NewMenu("Entitätsarten · " + (index + 1) + "/" + pages);
-            Button(0, "Alle Arten", () => { browser.Domain = ""; Filters(); });
+            NewMenu(L10n.T("Entitätsarten · ") + (index + 1) + "/" + pages);
+            Button(0, L10n.T("Alle Arten"), () => { browser.Domain = ""; Filters(); });
             for (int i = 0; i < 3 && index * 3 + i < types.Length; i++)
             {
                 string type = types[index * 3 + i];
                 Button(i + 1, EntityBrowser.DomainName(type) + " · " + ha.Entities.Values.Count(e => EntityPolicy.Domain(e.Id) == type), () => { browser.Domain = type; Filters(); });
             }
             Pager(4, () => TypeMenu((index + pages - 1) % pages), () => TypeMenu((index + 1) % pages));
-            Button(5, "Zurück", Filters);
+            Button(5, L10n.T("Zurück"), Filters);
         }
         void AreaMenu(int index)
         {
             var areas = ha.Entities.Values.Where(e => e.AreaId.Length > 0).GroupBy(e => e.AreaId).Select(g => g.First()).OrderBy(e => e.AreaName).ToArray();
             int pages = Math.Max(1, (areas.Length + 1) / 2);
             index = Math.Max(0, Math.Min(index, pages - 1));
-            NewMenu("Räume · " + (index + 1) + "/" + pages);
-            Button(0, "Alle Räume", () => { browser.Area = ""; Filters(); });
-            Button(1, "Ohne Raumzuordnung", () => { browser.Area = "__none"; Filters(); });
+            NewMenu(L10n.T("Räume · ") + (index + 1) + "/" + pages);
+            Button(0, L10n.T("Alle Räume"), () => { browser.Area = ""; Filters(); });
+            Button(1, L10n.T("Ohne Raumzuordnung"), () => { browser.Area = "__none"; Filters(); });
             for (int i = 0; i < 2 && index * 2 + i < areas.Length; i++)
             {
                 var area = areas[index * 2 + i];
                 Button(i + 2, area.AreaName, () => { browser.Area = area.AreaId; Filters(); });
             }
             Pager(4, () => AreaMenu((index + pages - 1) % pages), () => AreaMenu((index + 1) % pages));
-            Button(5, "Zurück", Filters);
+            Button(5, L10n.T("Zurück"), Filters);
             notice = ha.AreaStatus;
         }
 
@@ -469,7 +484,7 @@ namespace HAgoesQuest
             NewMenu(Short(entity.Name, 45) + "\n" + entity.Id);
             if (bindings.Contains(entity.Id) || markers.ContainsKey(entity.Id))
             {
-                Button(0, "Zuordnung entfernen", async () =>
+                Button(0, L10n.T("Zuordnung entfernen"), async () =>
                 {
                     if (operationBusy) return;
                     operationBusy = true;
@@ -477,23 +492,24 @@ namespace HAgoesQuest
                     finally { operationBusy = false; gate.Reset(); }
                     Details(entity);
                 });
-                Button(1, "Zurück", EntityMenu);
+                Button(1, L10n.T("Zurück"), EntityMenu);
+                if (!bindings.DisplayOnly(entity.Id) && (entity.CanDim || entity.CanVolume)) Button(2, L10n.T("Helligkeit / Lautstärke ändern"), () => OpenLevelControls(entity), entity.CanDim ? "sun" : "speaker");
                 return;
             }
-            Button(0, "Zeigen & pinchen · " + freeDistance.ToString("0.0") + " Meter", () => BeginPlacement(entity.Id, freeDistance), IconFor(entity.Id));
-            Button(1, "Direkt an der Hand platzieren · einmal pinchen", () => BeginHandPlacement(entity.Id));
-            Button(2, "Auf gescannter Fläche platzieren", () => BeginPlacement(entity.Id, 0), "map");
+            Button(0, L10n.T("Zeigen & pinchen · ") + freeDistance.ToString("0.0") + L10n.T(" Meter"), () => BeginPlacement(entity.Id, freeDistance), IconFor(entity.Id));
+            Button(1, L10n.T("Direkt an der Hand platzieren · einmal pinchen"), () => BeginHandPlacement(entity.Id));
+            Button(2, L10n.T("Auf gescannter Fläche platzieren"), () => BeginPlacement(entity.Id, 0), "map");
             if (EntityPolicy.Domain(entity.Id) == "light" || EntityPolicy.Domain(entity.Id) == "switch")
-                Button(3, placementReadOnly ? "Modus: nur anzeigen" : "Modus: anzeigen & schalten", () => { placementReadOnly = !placementReadOnly; Details(entity); });
-            Button(4, "Zurück", EntityMenu);
-            Button(5, "Abstand ändern · " + freeDistance.ToString("0.0") + " Meter", () => { freeDistance = freeDistance >= 2 ? 0.5f : freeDistance + 0.5f; Details(entity); });
+                Button(3, placementReadOnly ? L10n.T("Modus: nur anzeigen") : L10n.T("Modus: anzeigen & schalten"), () => { placementReadOnly = !placementReadOnly; Details(entity); });
+            Button(4, L10n.T("Zurück"), EntityMenu);
+            Button(5, L10n.T("Abstand ändern · ") + freeDistance.ToString("0.0") + L10n.T(" Meter"), () => { freeDistance = freeDistance >= 2 ? 0.5f : freeDistance + 0.5f; Details(entity); });
         }
 
         void BeginPlacement(string id, float distance)
         {
-            if (!bindings.Ready || bindings.Busy) { notice = "Positionen werden noch vorbereitet. " + bindings.Status; return; }
+            if (!bindings.Ready || bindings.Busy) { notice = L10n.T("Positionen werden noch vorbereitet. ") + bindings.Status; return; }
             if (distance == 0 && MRUK.Instance.GetCurrentRoom() == null)
-            { notice = "Zuerst im Hauptmenü den Raum laden/scannen."; return; }
+            { notice = L10n.T("Zuerst im Hauptmenü den Raum laden/scannen."); return; }
             CloseMenu();
             placing = id;
             placementFrozen = false;
@@ -541,17 +557,17 @@ namespace HAgoesQuest
 
         void ConfirmHandPlacement()
         {
-            NewMenu("Hier bleibt deine Entität");
-            Button(0, "Position speichern", () => Place(heldPosition), IconFor(placing));
-            Button(1, "Weiter verschieben", () => { CloseMenu(); placementFrozen = false; placement.Reset(); });
-            Button(2, "Abbrechen", () => { CancelPlacement(); Home(); });
+            NewMenu(L10n.T("Hier bleibt deine Entität"));
+            Button(0, L10n.T("Position speichern"), () => Place(heldPosition), IconFor(placing));
+            Button(1, L10n.T("Weiter verschieben"), () => { CloseMenu(); placementFrozen = false; placement.Reset(); });
+            Button(2, L10n.T("Abbrechen"), () => { CancelPlacement(); Home(); });
             preview.Pulse();
-            preview.Label.text = "Vorschau · Position bestätigen";
+            preview.Label.text = L10n.T("Vorschau · Position bestätigen");
         }
 
         async void Place(Vector3 position)
         {
-            if (operationBusy) return;
+            if (operationBusy || string.IsNullOrEmpty(placing)) return;
             string id = placing;
             bool displayOnly = placementReadOnly;
             CancelPlacement();
@@ -565,9 +581,9 @@ namespace HAgoesQuest
                     temporary.transform.position = position;
                     AddMarker(id, temporary.transform);
                     markers[id].ReadOnly = displayOnly;
-                    resultNotice = "Editor-Vorschau · Position wird erst auf der Quest dauerhaft gespeichert.";
+                    resultNotice = L10n.T("Editor-Vorschau · Position wird erst auf der Quest dauerhaft gespeichert.");
                 }
-                else await bindings.Place(id, position, displayOnly);
+                else await bindings.Place(id, position, displayOnly, Quaternion.LookRotation(position-head.position, Vector3.up));
             }
             finally { operationBusy = false; gate.Reset(); }
             Home();
@@ -586,13 +602,35 @@ namespace HAgoesQuest
         void AddMarker(string id, Transform anchor)
         {
             RemoveMarker(id);
-            var card = WorldCard.Create(anchor, Vector3.zero, new Vector2(340, 115), id, () => ha.Switch(id));
+            bool media = EntityPolicy.Domain(id) == "camera" || EntityPolicy.Domain(id) == "image";
+            var card = WorldCard.Create(anchor, Vector3.zero, media ? new Vector2(600, 400) : new Vector2(340, 115), id, () =>
+            {
+                if (ha.Entities.TryGetValue(id, out var entity) && entity.CanVolume) OpenLevelControls(entity);
+                else ha.Switch(id);
+            });
             card.EntityId = id;
             card.IsMarker = true;
             card.ReadOnly = bindings.DisplayOnly(id);
-            card.SetIcon(IconFor(id));
-            card.MakeCompactMarker();
+            if (media) { card.IsMedia = true; card.gameObject.AddComponent<MediaFrame>().Initialize(ha,id); }
+            else { card.SetIcon(IconFor(id)); card.MakeCompactMarker(); }
+            if(ha.Entities.TryGetValue(id,out var adjustable))EnsureAdjustment(card,adjustable);
+            card.gameObject.SetActive(Application.isEditor);
             markers[id] = card;
+        }
+        void EnsureAdjustment(WorldCard card,HaEntity entity)
+        {
+            if(card.Adjustment||card.ReadOnly||(!entity.CanDim&&!entity.CanVolume))return;
+            var control=WorldCard.Create(card.transform,new Vector3(0,-76,0),new Vector2(85,46),"",()=>
+            {if(ha.Fresh&&ha.Entities.TryGetValue(entity.Id,out var current))OpenLevelControls(current);});
+            control.UnitScale=1;control.SetIcon(entity.CanDim?"sun":"speaker");card.Adjustment=control;control.gameObject.SetActive(false);
+        }
+
+        void LateUpdate()
+        {
+            // Run after SDK anchor updates and the tracking stability check, before rendering.
+            if (Application.isEditor || !bindings) return;
+            foreach (var pair in markers)
+                if (pair.Value) pair.Value.gameObject.SetActive(!scanBusy && bindings.CanShow(pair.Key));
         }
 
         void RemoveMarker(string id)
@@ -602,26 +640,27 @@ namespace HAgoesQuest
 
         async void LoadBindings()
         {
-            if (operationBusy) return;
-            operationBusy = true;
-            try { await bindings.Load(); }
-            finally { operationBusy = false; gate.Reset(); }
+            if (operationBusy || bindings.Busy) return;
+            await bindings.Load();
+            gate.Reset();
         }
 
         async void Scan(bool rescan)
         {
             if (scanBusy || operationBusy) return;
-            if (Application.isEditor) { notice = "Raumscan ist auf der Quest verfügbar. Im Editor frei platzieren."; return; }
+            if (Application.isEditor) { notice = L10n.T("Raumscan ist auf der Quest verfügbar. Im Editor frei platzieren."); return; }
             scanBusy = true;
-            notice = "Raumerfassung wird geöffnet …";
+            bindings.InvalidateTracking();
+            CancelPlacement();
+            notice = L10n.T("Raumerfassung wird geöffnet …");
             try
             {
-                if (!await WithTimeout(ScenePermission(), 30)) { notice = "Raumzugriff abgelehnt. In den Quest-App-Berechtigungen erlauben."; return; }
-                if (rescan && !await WithTimeout(RequestScan(), 300)) { notice = "Raumscan abgebrochen oder nicht verfügbar."; return; }
+                if (!await WithTimeout(ScenePermission(), 30)) { notice = L10n.T("Raumzugriff abgelehnt. In den Quest-App-Berechtigungen erlauben."); return; }
+                if (rescan && !await WithTimeout(RequestScan(), 300)) { notice = L10n.T("Raumscan abgebrochen oder nicht verfügbar."); return; }
                 var result = await WithTimeout(MRUK.Instance.LoadSceneFromDevice(!rescan), 60);
-                notice = result == MRUK.LoadDeviceResult.Success ? "Raum geladen. Jetzt Entitäten zuordnen." : "Kein Raum geladen. Raumscan und Berechtigung prüfen.";
+                notice = result == MRUK.LoadDeviceResult.Success ? L10n.T("Raum geladen. Jetzt Entitäten zuordnen.") : L10n.T("Kein Raum geladen. Raumscan und Berechtigung prüfen.");
             }
-            catch { notice = "Raumerfassung fehlgeschlagen. Bitte auf der Quest erneut versuchen."; }
+            catch { notice = L10n.T("Raumerfassung fehlgeschlagen. Bitte auf der Quest erneut versuchen."); }
             finally { scanBusy = false; RestoreHandInput(); }
         }
 
@@ -645,28 +684,28 @@ namespace HAgoesQuest
             var ids = bindings.EntityIds.Concat(markers.Keys).Distinct().OrderBy(id => id).ToArray();
             int pages = Math.Max(1, (ids.Length + 2) / 3);
             index = Math.Max(0, Math.Min(index, pages - 1));
-            NewMenu("Platzierte Entitäten · " + (index + 1) + "/" + pages);
+            NewMenu(L10n.T("Platzierte Entitäten · ") + (index + 1) + "/" + pages);
             for (int i = 0; i < 3 && index * 3 + i < ids.Length; i++)
             {
                 string id = ids[index * 3 + i];
                 string name = ha.Entities.TryGetValue(id, out var entity) ? entity.Name : id;
-                Button(i, "Löschen · " + Short(name, 38), () =>
+                Button(i, L10n.T("Löschen · ") + Short(name, 38), () =>
                 {
-                    NewMenu("Platzierung löschen?\n" + Short(name, 40));
-                    Button(0, "Ja · Platzierung entfernen", async () =>
+                    NewMenu(L10n.T("Platzierung löschen?\n") + Short(name, 40));
+                    Button(0, L10n.T("Ja · Platzierung entfernen"), async () =>
                     {
-                        if (operationBusy || bindings.Busy) { notice = "Positionen werden gerade verarbeitet. Bitte kurz warten."; return; }
+                        if (operationBusy || bindings.Busy) { notice = L10n.T("Positionen werden gerade verarbeitet. Bitte kurz warten."); return; }
                         operationBusy = true;
                         try { if (Application.isEditor) RemoveMarker(id); else await bindings.Remove(id); }
                         finally { operationBusy = false; gate.Reset(); }
                         PlacedMenu(index);
                     });
-                    Button(1, "Abbrechen", () => PlacedMenu(index));
+                    Button(1, L10n.T("Abbrechen"), () => PlacedMenu(index));
                 }, IconFor(id));
             }
             Pager(4, () => PlacedMenu((index + pages - 1) % pages), () => PlacedMenu((index + 1) % pages));
-            Button(5, "Zurück", Home);
-            notice = ids.Length == 0 ? "Noch keine Entitäten platziert." : "Entfernt nur die Platzierung in der App. Das Gerät bleibt in Home Assistant erhalten.";
+            Button(5, L10n.T("Zurück"), Home);
+            notice = ids.Length == 0 ? L10n.T("Noch keine Entitäten platziert.") : L10n.T("Entfernt nur die Platzierung in der App. Das Gerät bleibt in Home Assistant erhalten.");
         }
 
         static Task<bool> ScenePermission()
@@ -687,12 +726,16 @@ namespace HAgoesQuest
         }
 
         static string Short(string value, int length) => value.Length <= length ? value : value.Substring(0, length - 1) + "…";
-        static string IconFor(string id) => EntityPolicy.Domain(id) == "light" ? "lamp" : EntityPolicy.Domain(id) == "switch" ? "switch" : "sensor";
+        string IconFor(string id) => IconLibrary.ForEntity(ha != null && ha.Entities.TryGetValue(id ?? "", out var value) ? value : new HaEntity { Id = id });
         void OnDestroy()
         {
             OVRManager.InputFocusAcquired -= RestoreHandInput;
             if (subscribedDisplay != null) subscribedDisplay.RecenteredPose -= RestoreHandInput;
             magic?.Cancel(); if (pointer) { Destroy(pointer.material); Destroy(pointer.gameObject); }
+            if (beamGlow) { Destroy(beamGlow.material); Destroy(beamGlow.gameObject); }
+            if (beamTexture) Destroy(beamTexture);
+            if (wristWatch) Destroy(wristWatch.gameObject);
+            if (magicHint) Destroy(magicHint.gameObject);
         }
         void OnApplicationFocus(bool focus)
         {

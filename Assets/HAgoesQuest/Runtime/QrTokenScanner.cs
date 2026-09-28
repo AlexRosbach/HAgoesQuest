@@ -31,12 +31,12 @@ namespace HAgoesQuest
         IEnumerator Scan(int revision)
         {
             if (Application.isEditor || !PassthroughCameraAccess.IsSupported)
-            { Status = "QR-Scan benötigt eine Quest 3/3S mit Horizon OS 74 oder neuer."; Running = false; yield break; }
+            { Status = L10n.T("QR-Scan benötigt eine Quest 3/3S mit Horizon OS 74 oder neuer."); Running = false; yield break; }
 #if UNITY_ANDROID && !UNITY_EDITOR
             const string permission = "horizonos.permission.HEADSET_CAMERA";
             if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(permission))
             {
-                Status = "Kamerazugriff für den QR-Scan erlauben …";
+                Status = L10n.T("Kamerazugriff für den QR-Scan erlauben …");
                 bool answered = false;
                 var callbacks = new UnityEngine.Android.PermissionCallbacks();
                 callbacks.PermissionGranted += _ => answered = true;
@@ -47,7 +47,7 @@ namespace HAgoesQuest
                 while (!answered && Time.realtimeSinceStartup < deadline && revision == session) yield return null;
                 if (revision != session) yield break;
                 if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(permission))
-                { Status = "Kamerazugriff nicht erlaubt. Token kann weiterhin eingegeben werden."; Running = false; yield break; }
+                { Status = L10n.T("Kamerazugriff nicht erlaubt. Token kann weiterhin eingegeben werden."); Running = false; yield break; }
             }
 #endif
             cameraHost = new GameObject("QR camera (scan only)");
@@ -58,12 +58,12 @@ namespace HAgoesQuest
             cameraAccess.MaxFramerate = 15;
             cameraAccess.enabled = true;
             cameraHost.SetActive(true);
-            Status = "QR-Code auf dem Handy vor die Quest halten. Kamera wird gestartet …";
+            Status = L10n.T("QR-Code auf dem Handy vor die Quest halten. Kamera wird gestartet …");
             float readyUntil = Time.realtimeSinceStartup + 15;
             while (!cameraAccess.IsPlaying && Time.realtimeSinceStartup < readyUntil) yield return null;
             if (!cameraAccess.IsPlaying)
-            { Fail("Kamera nicht verfügbar. Berechtigung und Headset-Version prüfen."); yield break; }
-            Status = "QR-Code ruhig, hell und groß vor die Quest halten. Bilder bleiben auf der Quest.";
+            { Fail(L10n.T("Kamera nicht verfügbar. Berechtigung und Headset-Version prüfen.")); yield break; }
+            Status = L10n.T("QR-Code ruhig, hell und groß vor die Quest halten. Bilder bleiben auf der Quest.");
             while (revision == session && Running)
             {
                 var texture = cameraAccess.GetTexture();
@@ -71,7 +71,7 @@ namespace HAgoesQuest
                 int width = texture.width, height = texture.height;
                 var request = AsyncGPUReadback.Request(texture, 0, TextureFormat.RGBA32);
                 while (!request.done) yield return null;
-                if (request.hasError) { Fail("Kamerabild konnte nicht gelesen werden. Bitte erneut versuchen."); yield break; }
+                if (request.hasError) { Fail(L10n.T("Kamerabild konnte nicht gelesen werden. Bitte erneut versuchen.")); yield break; }
                 var bytes = request.GetData<byte>().ToArray();
                 var decode = Task.Run(() => {
                     try { return Reader().Decode(bytes, width, height, RGBLuminanceSource.BitmapFormat.RGBA32); }
@@ -86,7 +86,7 @@ namespace HAgoesQuest
                     {
                         var callback = found; Stop(); callback?.Invoke(url, token); yield break;
                     }
-                    Status = "Kein gültiger HA-Zugangscode. Token als Text oder Verbindungs-JSON verwenden.";
+                    Status = L10n.T("Kein gültiger HA-Zugangscode. Token als Text oder Verbindungs-JSON verwenden.");
                 }
                 yield return new WaitForSecondsRealtime(0.35f);
             }
@@ -100,6 +100,6 @@ namespace HAgoesQuest
             cameraHost = null; cameraAccess = null;
         }
         void OnDisable() => Stop();
-        void OnApplicationPause(bool paused) { if (paused && cameraHost) Fail("Scan pausiert. Bitte erneut starten."); }
+        void OnApplicationPause(bool paused) { if (paused && cameraHost) Fail(L10n.T("Scan pausiert. Bitte erneut starten.")); }
     }
 }
