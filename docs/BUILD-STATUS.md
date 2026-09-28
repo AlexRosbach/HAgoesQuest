@@ -1,13 +1,13 @@
 # Build und Prüfungen
 
-Datum: 28. September 2026. Ziel: Meta Quest 3, Version 0.3.2.
+Datum: 28. September 2026. Ziel: Meta Quest 3, Version 0.4.0.
 
 | Prüfung | Ergebnis |
 | --- | --- |
 | Unity 6000.0.66f2 Paketimport | erfolgreich |
 | Vollständige C#-Kompilierung im Editor | erfolgreich |
-| Unabhängiger App-Kern | 48 Assertions erfolgreich |
-| Unity-Netzwerkclient im Play Mode | 39 Assertions erfolgreich |
+| Unabhängiger App-Kern | 62 Assertions erfolgreich |
+| Unity-Netzwerkclient im Play Mode | 48 Assertions erfolgreich |
 | Android ARM64 / IL2CPP | erfolgreich gebaut |
 | APK-Signatur | gültige Entwicklungssignatur; identisch mit 0.2.0 und 0.3.0 |
 | APK-Inhalt | Paketname, Version, ARM64, IL2CPP, GameActivity, VR-Kategorie und Berechtigungen geprüft |
@@ -22,11 +22,11 @@ Die Tests belegen keine Darstellung, Trackingqualität oder Persistenz auf einer
 
 ## APK
 
-- Datei: `HAgoesQuest-0.3.2.apk`
+- Datei: `HAgoesQuest-0.4.0.apk`
 - Paket: `com.alexrosbach.hagoesquest`
-- Version: 0.3.2 (Code 5)
-- Größe: 65.037.568 Bytes
-- SHA-256: `82517128df3e4d1c6a69b59777fd52f99806fb46d19ee41a43b76febe5ce439e`
+- Version: 0.4.0 (Code 6)
+- Größe: 65.129.079 Bytes
+- SHA-256: `c766bc7d90fdc823fab438a7ac31e24ac193b43b2f4d2c122bc03fc9bd070295`
 - Mindest-Android-API: 32; ARM64; Unity IL2CPP; Entwicklungsbuild.
 - Android verwendet ausschließlich das neue Unity-Eingabesystem.
 
@@ -37,3 +37,5 @@ Version 0.3.1 ergänzt Tests für den tatsächlichen QR-Codec (Erzeugen/Lesen), 
 Update: Wiederverwendung der letzten bestätigten Zugangsdaten, Schutz gegen Serverwechsel und Wiederverbindung mit leerem Tokenfeld im Integrationstest bestätigt. Echtes APK-Update mit Android-Keystore auf Quest noch nicht geprüft.
 
 0.3.2: Zusätzliche Unity-Prüfungen für wachsende runde Marker, persistentes Löschen ohne lokalisierten Raumanker, Einfrieren/Korrigieren/Speichern einer Vorschau, Löschen aus dem Verwaltungsmenü und Neuausrichtung nach Fokuswechsel. Der Wiederholungsbuild beendet Unity erfolgreich; die erste APK-Erzeugung war erfolgreich, der erste Editor-Prozess meldete anschließend ein Beendigungs-Timeout. Finale APK und Signatur erneut geprüft. Der tatsächliche Quest-Systemdialog und die Handverfolgung sind weiterhin Hardwareprüfungen.
+
+0.4.0: 62 Kernprüfungen inklusive Zielwechsel, Vorwärtsstoß, seitlichem/langsamem/rückwärtigem Bewegen, Tracking-Sprung, Latch und Wiederfreigabe. 48 Unity-Prüfungen inklusive OVR/OpenXR-Handgeometrie, gespeicherter Magie-Einstellung und tatsächlichen Feuerball-Objekten (Flug, Aufprallring, Aufräumen). Generierte PNG mit echtem Alphakanal geprüft; für Quest auf maximal 512 Pixel importiert. ARM64-Build und Signaturprüfung erfolgreich; Editor sauber beendet. Geste und Effektwirkung auf echter Quest bleiben offen.

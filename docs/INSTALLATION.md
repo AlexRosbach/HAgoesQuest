@@ -3,12 +3,12 @@
 ## Installieren
 
 1. Entwicklermodus für die Quest aktivieren und die Brille per USB mit deinem PC verbinden. USB-Debugging in der Brille erlauben. [Metas Anleitung](https://developers.meta.com/horizon/documentation/unity/unity-env-device-setup/).
-2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.3.2.apk`.
+2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.4.0.apk`.
 3. **HA goes Quest** unter den Apps aus unbekannten Quellen starten. Handtracking in den Quest-Einstellungen einschalten.
 
 ## Update ohne erneute Token-Eingabe
 
-Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.3.2.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
+Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.4.0.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
 
 Das Verbindungsmenü zeigt „Gespeicherter Token wird verwendet“. Für dieselbe Serveradresse darf das Tokenfeld leer bleiben. Bei einer anderen Adresse ist ein neuer Token erforderlich. Ein fehlgeschlagener Verbindungsversuch ersetzt die zuletzt bestätigte Anmeldung nicht. Ein von Home Assistant widerrufener Token muss erneuert werden.
 
@@ -29,6 +29,10 @@ Die Suche unterstützt Namen und IDs, kombiniert mit Typ- und Raumfiltern. Alle 
 ## Zugang per QR-Code
 
 Im Verbindungsmenü **Token per QR-Code → Scan starten** wählen und Kamerazugriff erlauben. Der QR-Code kann den Token als Text oder ein JSON mit **baseUrl** und **accessToken** enthalten. Nach dem Scan Adresse prüfen und verbinden. Mit dem beiliegenden QR-Helfer lässt sich der Code lokal auf dem Handy oder Computer erzeugen. Beide Dateien aus dem ZIP zusammen entpacken und index.html öffnen. Quest 3/3S mit Horizon OS 74 oder neuer erforderlich.
+
+## Magie-Modus
+
+Im Hauptmenü **Einstellungen · Magie & Positionen → Magie einschalten**, dann das Menü schließen. Rechte Hand flach zum Lampen- oder Schalter-Icon richten, kurz ruhig halten und bei grünem Zielrand etwa zwölf Zentimeter nach vorn stoßen. Ein grüner Feuerball fliegt von der Hand zum Icon. Für eine weitere Geste die Hand zurücknehmen oder kurz schließen. Die Einstellung bleibt gespeichert; anfangs ist sie aus. Der Effekt zeigt den ausgelösten Befehl, der zurückgemeldete Entitätszustand zeigt das tatsächliche Ergebnis.
 
 ## Entwicklungsstand
 

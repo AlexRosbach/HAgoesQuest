@@ -71,6 +71,65 @@ namespace HAgoesQuest.Testing
             marker.SetNearby(true); yield return new WaitForSeconds(0.2f);
             if (!Check(marker.Label.color.a > 0.99f, "Nearby entity label appears")) yield break;
             Destroy(marker.gameObject);
+            var handFixture = new GameObject("Synthetic right-hand geometry");
+            var skeleton = handFixture.AddComponent<OVRSkeleton>(); skeleton.enabled = false;
+            var bones = new System.Collections.Generic.List<OVRBone>();
+            Transform AddBone(OVRSkeleton.BoneId id, Vector3 position)
+            {
+                var bone = new GameObject(id.ToString()).transform; bone.SetParent(handFixture.transform);
+                bone.position = position; bones.Add(new OVRBone(id, 0, bone)); return bone;
+            }
+            AddBone(OVRSkeleton.BoneId.Hand_WristRoot, new Vector3(0,0,0.5f));
+            var roots = new[] { OVRSkeleton.BoneId.Hand_Index1, OVRSkeleton.BoneId.Hand_Middle1, OVRSkeleton.BoneId.Hand_Ring1, OVRSkeleton.BoneId.Hand_Pinky1 };
+            var joints = new[] { OVRSkeleton.BoneId.Hand_Index2, OVRSkeleton.BoneId.Hand_Middle2, OVRSkeleton.BoneId.Hand_Ring2, OVRSkeleton.BoneId.Hand_Pinky2 };
+            var tips = new[] { OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.Hand_MiddleTip, OVRSkeleton.BoneId.Hand_RingTip, OVRSkeleton.BoneId.Hand_PinkyTip };
+            Transform indexTip = null;
+            for (int i=0;i<4;i++)
+            {
+                float x = -0.03f+i*0.02f;
+                AddBone(roots[i], new Vector3(x,0.075f,0.5f)); AddBone(joints[i], new Vector3(x,0.10f,0.5f));
+                var tip = AddBone(tips[i], new Vector3(x,0.14f,0.5f)); if (i == 0) indexTip = tip;
+            }
+            typeof(OVRSkeleton).GetProperty("Bones").SetValue(skeleton, bones);
+            typeof(OVRSkeleton).GetProperty("IsDataValid").SetValue(skeleton, true);
+            if (!Check(MagicCasting.OpenPalm(skeleton, out _, out var palmNormal) && Vector3.Dot(palmNormal, Vector3.forward) > 0.99f, "Extended right-hand bones produce forward-facing palm normal")) yield break;
+            indexTip.position = new Vector3(-0.03f,0.07f,0.46f);
+            if (!Check(!MagicCasting.OpenPalm(skeleton, out _, out _), "Curled index finger rejects open-palm spell")) yield break;
+            indexTip.position = new Vector3(-0.03f,0.14f,0.5f);
+            var xrRoots = new[] { OVRSkeleton.BoneId.XRHand_IndexProximal, OVRSkeleton.BoneId.XRHand_MiddleProximal, OVRSkeleton.BoneId.XRHand_RingProximal, OVRSkeleton.BoneId.XRHand_LittleProximal };
+            var xrJoints = new[] { OVRSkeleton.BoneId.XRHand_IndexIntermediate, OVRSkeleton.BoneId.XRHand_MiddleIntermediate, OVRSkeleton.BoneId.XRHand_RingIntermediate, OVRSkeleton.BoneId.XRHand_LittleIntermediate };
+            var xrTips = new[] { OVRSkeleton.BoneId.XRHand_IndexTip, OVRSkeleton.BoneId.XRHand_MiddleTip, OVRSkeleton.BoneId.XRHand_RingTip, OVRSkeleton.BoneId.XRHand_LittleTip };
+            var xrBones = new System.Collections.Generic.List<OVRBone> { new OVRBone(OVRSkeleton.BoneId.XRHand_Wrist, 0, bones[0].Transform) };
+            for (int i=0;i<4;i++)
+            {
+                xrBones.Add(new OVRBone(xrRoots[i],0,bones[1+i*3].Transform));
+                xrBones.Add(new OVRBone(xrJoints[i],0,bones[2+i*3].Transform));
+                xrBones.Add(new OVRBone(xrTips[i],0,bones[3+i*3].Transform));
+            }
+            typeof(OVRSkeleton).GetProperty("Bones").SetValue(skeleton, xrBones);
+            typeof(OVRSkeleton).GetField("_skeletonType", System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(skeleton, OVRSkeleton.SkeletonType.XRHandRight);
+            if (!Check(MagicCasting.OpenPalm(skeleton, out _, out palmNormal) && palmNormal.z > 0.99f &&
+                MagicCasting.Bone(skeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip) == indexTip,
+                "OpenXR bone identifiers stay distinct from overlapping OVR identifiers")) yield break;
+            Destroy(handFixture);
+            var magicPreference = new MagicCasting(); bool oldMagic = magicPreference.Enabled;
+            magicPreference.SetEnabled(!oldMagic);
+            bool rememberedMagic = new MagicCasting().Enabled;
+            magicPreference.SetEnabled(oldMagic);
+            if (!Check(rememberedMagic == !oldMagic, "Magic toggle survives settings reload")) yield break;
+            var fireTarget = WorldCard.Create(null, new Vector3(0, 0, 1), new Vector2(90,90), "Magic target");
+            fireTarget.MakeCompactMarker();
+            var fireHead = new GameObject("Magic test head").transform;
+            var fireball = MagicFireball.Launch(Vector3.zero, fireTarget, fireHead);
+            if (!Check(fireball && fireball.GetComponentsInChildren<SpriteRenderer>().Length == 16, "Generated emerald texture loads into actual fireball and trail")) yield break;
+            yield return new WaitForSeconds(0.12f);
+            var lead = fireball.GetComponentsInChildren<SpriteRenderer>()[0];
+            if (!Check(lead.transform.position.z > 0 && lead.transform.position.z < 1 && lead.color.a > 0, "Fireball visibly advances from hand origin toward entity")) yield break;
+            yield return new WaitForSeconds(0.23f);
+            if (!Check(fireball && fireball.GetComponentInChildren<LineRenderer>().enabled, "Arrival creates expanding impact ring")) yield break;
+            yield return new WaitForSeconds(0.5f);
+            if (!Check(!fireball, "Effect releases its objects after impact")) yield break;
+            Destroy(fireTarget.gameObject); Destroy(fireHead.gameObject);
             var bindingHost = new GameObject("Isolated placement persistence test");
             var spatial = bindingHost.AddComponent<SpatialBindings>();
             spatial.Initialize("test-unlocalized-delete-" + Guid.NewGuid());
@@ -116,6 +175,7 @@ namespace HAgoesQuest.Testing
             ha.Connect("http://127.0.0.1:18123", "test-token", true, ok => { completed = true; accepted = ok; });
             yield return Wait(() => completed, 12, "Connection callback");
             if (!Check(accepted && ha.Fresh && !ha.Demo, "Authenticated HTTP connection")) yield break;
+            if (!Check(!ha.Switch("sensor.temperature"), "Magic dispatch rejects read-only sensor commands")) yield break;
             if (!Check(ha.Entities.ContainsKey("light.test") && ha.Entities["sensor.temperature"].Unit == "°C", "Parse actual JSON state and unit")) yield break;
             yield return Wait(() => !ha.AreasLoading, 12, "Area metadata loaded");
             if (!Check(ha.Entities["light.test"].AreaId == "living" && ha.Entities["sensor.temperature"].AreaName == "Küche", "HA room mapping applied")) yield break;

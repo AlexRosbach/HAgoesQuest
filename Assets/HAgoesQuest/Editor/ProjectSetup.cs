@@ -28,8 +28,8 @@ namespace HAgoesQuest.Editor
         {
             PlayerSettings.companyName = "HAgoesQuest";
             PlayerSettings.productName = "HA goes Quest";
-            PlayerSettings.bundleVersion = "0.3.2";
-            PlayerSettings.Android.bundleVersionCode = 5;
+            PlayerSettings.bundleVersion = "0.4.0";
+            PlayerSettings.Android.bundleVersionCode = 6;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.alexrosbach.hagoesquest");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
@@ -55,6 +55,12 @@ namespace HAgoesQuest.Editor
                 importer.SaveAndReimport();
             }
             var appIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/HAgoesQuest/Resources/Icons/lamp.png");
+            var fire = AssetImporter.GetAtPath("Assets/HAgoesQuest/Resources/Effects/green-fireball.png") as TextureImporter;
+            if (fire)
+            {
+                fire.alphaIsTransparency = true; fire.mipmapEnabled = false; fire.maxTextureSize = 512;
+                fire.textureType = TextureImporterType.Default; fire.SaveAndReimport();
+            }
             if (appIcon) PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Unknown, new[] { appIcon }, IconKind.Any);
             var player = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
             var input = player.FindProperty("activeInputHandler");
@@ -189,6 +195,8 @@ namespace HAgoesQuest.Editor
                 scenes = new[] { ScenePath }, locationPathName = "Builds/HAgoesQuest.apk",
                 target = BuildTarget.Android, options = BuildOptions.Development });
             if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("APK-Build fehlgeschlagen. Unity-Konsole prüfen.");
+            // BuildPlayer has finished all build steps; do not wait for unrelated editor async services.
+            if (Application.isBatchMode) EditorApplication.Exit(0);
         }
 
         public static void PrepareBatch()

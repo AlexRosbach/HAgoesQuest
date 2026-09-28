@@ -66,3 +66,11 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - Annäherung an ein Icon: Kreis/Rand sichtbar, Größenanstieg zwischen 1,2 m und 30 cm; Text erst innerhalb von 30 cm.
 - Platzierung per Zeiger und direkter Handposition jeweils mit einmaligem Pinch einfrieren, verschieben und bestätigen.
 - Platzierung im Hauptmenü löschen, auch wenn Raumanker nicht gefunden oder HA-Entität nicht verfügbar ist; nach App-Neustart darf sie nicht zurückkehren.
+
+## Magie ab 0.4.0
+
+- Modus einschalten, App neu starten und gespeicherte Einstellung prüfen.
+- Rechte offene Hand zum Icon richten, kurz halten und vorwärts stoßen. Zielrand, einmaligen Schaltbefehl, Feuerball vom Handteller, Schweif und Aufprall prüfen.
+- Keine Auslösung durch Gehen, Zurückziehen des Kopfes, seitliches Winken, langsames Hinreichen, geschlossene Hand, Trackingverlust oder gehaltene Hand nach einem Stoß.
+- Sensoren, reine Anzeigen, veraltete Zustände, Menüs, Platzierung und Raumscan dürfen keine Magie-Schaltbefehle auslösen.
+- Nach Rücknahme/Schließen der Hand und Ablauf der Pause muss ein neuer Stoß möglich sein.
