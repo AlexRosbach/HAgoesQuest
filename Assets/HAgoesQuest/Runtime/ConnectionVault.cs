@@ -17,7 +17,7 @@ namespace HAgoesQuest
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             var envelope = JsonUtility.FromJson<Envelope>(File.ReadAllText(PathName));
-            using (var key = GetKey())
+            using (var key = GetKey(false))
             using (var cipherClass = new AndroidJavaClass("javax.crypto.Cipher"))
             using (var cipher = cipherClass.CallStatic<AndroidJavaObject>("getInstance", "AES/GCM/NoPadding"))
             using (var spec = new AndroidJavaObject("javax.crypto.spec.GCMParameterSpec", 128, Convert.FromBase64String(envelope.iv)))
@@ -69,13 +69,14 @@ namespace HAgoesQuest
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        static AndroidJavaObject GetKey()
+        static AndroidJavaObject GetKey(bool create = true)
         {
             using (var storeClass = new AndroidJavaClass("java.security.KeyStore"))
             using (var store = storeClass.CallStatic<AndroidJavaObject>("getInstance", "AndroidKeyStore"))
             {
                 store.Call("load", new object[] { null });
                 if (store.Call<bool>("containsAlias", Alias)) return store.Call<AndroidJavaObject>("getKey", Alias, null);
+                if (!create) throw new InvalidOperationException("Saved connection key is missing.");
                 using (var generatorClass = new AndroidJavaClass("javax.crypto.KeyGenerator"))
                 using (var generator = generatorClass.CallStatic<AndroidJavaObject>("getInstance", "AES", "AndroidKeyStore"))
                 using (var builder = new AndroidJavaObject("android.security.keystore.KeyGenParameterSpec$Builder", Alias, 3))

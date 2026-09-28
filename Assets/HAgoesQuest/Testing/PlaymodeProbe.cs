@@ -95,6 +95,15 @@ namespace HAgoesQuest.Testing
             ha.Connect("http://127.0.0.1:18123", "invalid-token", true, ok => { completed = true; accepted = ok; });
             yield return Wait(() => completed, 12, "Authentication rejection callback");
             if (!Check(!accepted && !ha.Online, "Invalid token is rejected")) yield break;
+            if (!Check(ha.CanReuseToken("http://127.0.0.1:18123/", true), "Failed replacement preserves last validated credentials")) yield break;
+            if (!Check(!ha.CanReuseToken("http://127.0.0.1:18124", true) && !ha.CanReuseToken("https://127.0.0.1:18123", true), "Stored token cannot follow a changed port or scheme")) yield break;
+            completed = accepted = false;
+            ha.Connect("http://127.0.0.1:18124", "", true, ok => { completed = true; accepted = ok; });
+            if (!Check(completed && !accepted, "Different server requires an explicit token before networking")) yield break;
+            completed = accepted = false;
+            ha.Connect("http://127.0.0.1:18123/", "", true, ok => { completed = true; accepted = ok; });
+            yield return Wait(() => completed, 12, "Reconnect using remembered credentials callback");
+            if (!Check(accepted && ha.Fresh && ha.AllowsInsecureHttp, "Blank token reconnects with previous validated token and HTTP preference")) yield break;
             completed = accepted = false;
             ha.Connect("http://127.0.0.1:18123", "test-token", false, ok => { completed = true; accepted = ok; });
             if (!Check(completed && !accepted, "HTTP requires opt-in in the actual client")) yield break;
