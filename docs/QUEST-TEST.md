@@ -8,7 +8,7 @@ Status bei Erstellung: **alle folgenden Punkte noch offen**. Die automatischen C
 - [ ] Android/OpenXR Project Validation und erforderliche Meta-Project-Setup-Prüfungen sind erfolgreich.
 - [ ] ARM64-IL2CPP-APK wird gebaut, installiert und als immersive App gestartet.
 - [ ] Reale Umgebung ist im Passthrough sichtbar; UI ist mit beiden Augen gut lesbar.
-- [ ] Fehlende Verbindungsdatei ergibt klar markierte Demo-Daten; echte Geräte werden nicht angesprochen.
+- [ ] Ohne gespeicherte Verbindung erscheinen klar markierte Demo-Daten; echte Geräte werden nicht angesprochen.
 - [ ] Linker Pinch/X öffnet ein im Raum stehendes Menü; Rechts-Pinch/Trigger wählt dessen Buttons.
 
 ## Raum und Persistenz
@@ -17,7 +17,10 @@ Status bei Erstellung: **alle folgenden Punkte noch offen**. Die automatischen C
 - [ ] „Raum laden / erstmals scannen“ lädt vorhandenen Raum oder startet die Erfassung.
 - [ ] „Raum neu scannen“ öffnet die Erfassung auch bei vorhandenem Raum; Abbrechen ist möglich.
 - [ ] Scanfläche-Platzierung zeigt bei fehlendem Treffer keine speicherbare Position.
-- [ ] Freie Platzierung funktioniert bei 0,5 / 1 / 2 Metern.
+- [ ] Freie Platzierung funktioniert einen Meter vor dem Headset.
+- [ ] Handplatzierung: Greifen, Bewegen, Loslassen und Bestätigen funktionieren. Trackingverlust speichert keine Position.
+- [ ] Wohnungskarte zeigt Raumgrenzen, aktuelle Position, Laufweg und lokalisierte Geräte.
+- [ ] Generierte Symbole, Fokusanimation und Zustandsrückmeldung sind gut lesbar und flüssig.
 - [ ] Lampen- und Sensorzuordnung bleiben nach App-Neustart sowie Headset-Neustart am physischen Ort.
 - [ ] Bei nicht wiedergefundenem Anker erscheint kein geratenes Ersatzobjekt; erneutes Laden im richtigen Raum funktioniert.
 - [ ] Löschen einer Zuordnung entfernt Anzeige und gespeicherten Anker; nach Neustart bleibt sie gelöscht.
@@ -26,6 +29,11 @@ Status bei Erstellung: **alle folgenden Punkte noch offen**. Die automatischen C
 ## Home Assistant
 
 - [ ] Verbindung über HTTPS mit gültigem Zertifikat funktioniert.
+- [ ] URL und Token lassen sich in der Brille eingeben/einfügen; der Token bleibt verdeckt.
+- [ ] Verbindung bleibt nach Neustart erhalten; nur verschlüsselte Zugangsdaten liegen im App-Verzeichnis.
+- [ ] Verbindung vergessen löscht Zugangsdaten und schaltet zurück zur Demo.
+- [ ] Serverwechsel zeigt nur die zu diesem Server gehörenden räumlichen Zuordnungen.
+- [ ] Als reine Anzeige platzierte Lampe schaltet bei einer Geste nicht.
 - [ ] Lokales HTTP funktioniert nur mit ausdrücklicher Freigabe in der Konfiguration.
 - [ ] Ungültiger Token zeigt Zugriffsfehler. Keine Secrets stehen im Unity-/Gerätelog.
 - [ ] Authentische Geräteliste erscheint; lange Namen und größere Listen bleiben bedienbar.

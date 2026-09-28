@@ -29,11 +29,14 @@ namespace HAgoesQuest
     public sealed class HomeAssistantConnection : MonoBehaviour
     {
         public event Action Changed;
+        public event Action ServerChanged;
         public readonly Dictionary<string, HaEntity> Entities = new Dictionary<string, HaEntity>();
         public string Status { get; private set; } = "Verbindung wird vorbereitet …";
         public bool Online { get; private set; }
         public bool Busy { get; private set; }
         public bool Demo { get; private set; }
+        public bool Connecting { get; private set; }
+        public string BaseUrl => settings?.baseUrl ?? "";
         public string ServerIdentity { get; private set; }
         public float LastSnapshot { get; private set; } = -100;
         public bool Fresh => Online && Time.realtimeSinceStartup - LastSnapshot < 6;
@@ -44,21 +47,18 @@ namespace HAgoesQuest
 
         void Start()
         {
+#if UNITY_EDITOR
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("HA_QUEST_TEST_RESULT"))) { EnterDemo(); return; }
+#endif
             string path = Path.Combine(Application.persistentDataPath, "connection.json");
-            if (!File.Exists(path))
+            if (!File.Exists(path) && !ConnectionVault.Exists)
             {
-                Demo = true;
-                ServerIdentity = "demo";
-                Entities["light.demo"] = new HaEntity { Id = "light.demo", Name = "Demo-Lampe", State = "off", Unit = "" };
-                Entities["sensor.demo_temperature"] = new HaEntity { Id = "sensor.demo_temperature", Name = "Demo-Temperatur", State = "21.5", Unit = "°C" };
-                Status = "DEMO · Zum Verbinden connection.json übertragen und App neu starten.";
-                Online = true;
-                Changed?.Invoke();
+                EnterDemo();
                 return;
             }
             try
             {
-                settings = JsonUtility.FromJson<ConnectionSettings>(File.ReadAllText(path));
+                settings = ConnectionVault.Exists ? ConnectionVault.Read() : JsonUtility.FromJson<ConnectionSettings>(File.ReadAllText(path));
                 address = HaAddress.Parse(settings.baseUrl, settings.allowInsecureHttp);
                 if (string.IsNullOrWhiteSpace(settings.accessToken) || settings.accessToken.Contains("\n") || settings.accessToken.Contains("\r"))
                     throw new ArgumentException();
@@ -66,11 +66,93 @@ namespace HAgoesQuest
             }
             catch
             {
-                Status = "connection.json prüfen: Basis-URL, Token und HTTP-Freigabe.";
+                Status = "Anmeldung konnte nicht geladen werden. Im Menü neu verbinden.";
                 Changed?.Invoke();
                 return;
             }
-            StartCoroutine(Poll());
+            if (!ConnectionVault.Exists)
+            {
+                Connecting = true;
+                StartCoroutine(ValidateConnection(_ => { }));
+            }
+            else StartCoroutine(Poll());
+        }
+
+        public void EnterDemo()
+        {
+            StopAllCoroutines();
+            generation++;
+            settings = null;
+            address = null;
+            Demo = Online = true;
+            Busy = Connecting = false;
+            ServerIdentity = "demo";
+            Entities.Clear();
+            Entities["light.demo"] = new HaEntity { Id = "light.demo", Name = "Leselampe", State = "off", Unit = "" };
+            Entities["sensor.demo_temperature"] = new HaEntity { Id = "sensor.demo_temperature", Name = "Raumtemperatur", State = "21.5", Unit = "°C" };
+            LastSnapshot = Time.realtimeSinceStartup;
+            Status = "DEMO · Über „Verbinden“ dein Zuhause einrichten.";
+            ServerChanged?.Invoke();
+            Changed?.Invoke();
+        }
+
+        public void Connect(string url, string token, bool allowHttp, Action<bool> done)
+        {
+            if (Connecting || Busy) { Status = "Bitte den laufenden Vorgang abwarten."; done(false); return; }
+            Uri candidate;
+            try
+            {
+                candidate = HaAddress.Parse(url.Trim(), allowHttp);
+                if (string.IsNullOrWhiteSpace(token) || token.Contains("\n") || token.Contains("\r")) throw new ArgumentException();
+            }
+            catch { Status = "Basis-URL und Token prüfen. HTTP muss ausdrücklich erlaubt sein."; done(false); return; }
+            StopAllCoroutines();
+            generation++;
+            Demo = Online = Busy = false;
+            Connecting = true;
+            settings = new ConnectionSettings { baseUrl = candidate.AbsoluteUri, accessToken = token.Trim(), allowInsecureHttp = allowHttp };
+            address = candidate;
+            StartCoroutine(ValidateConnection(done));
+        }
+
+        IEnumerator ValidateConnection(Action<bool> done)
+        {
+            Status = "Verbindung wird geprüft …";
+            bool success = false;
+            using (var request = Request("api/states", UnityWebRequest.kHttpVerbGET))
+            {
+                yield return request.SendWebRequest();
+                if (request.result == UnityWebRequest.Result.Success)
+                {
+                    try
+                    {
+                        var next = ParseEntities(request.downloadHandler.text);
+                        bool saved = ConnectionVault.Save(settings);
+                        Entities.Clear();
+                        foreach (var entity in next) Entities[entity.Id] = entity;
+                        ServerIdentity = address.AbsoluteUri;
+                        LastSnapshot = Time.realtimeSinceStartup;
+                        Online = success = true;
+                        Status = saved ? "Verbunden · Anmeldung geschützt gespeichert." : "Verbunden · Anmeldung gilt nur für diese Editor-Sitzung.";
+                        string legacy = Path.Combine(Application.persistentDataPath, "connection.json");
+                        if (saved && File.Exists(legacy)) File.Delete(legacy);
+                    }
+                    catch { Status = "Anmeldung konnte nicht sicher gespeichert oder Antwort nicht gelesen werden."; }
+                }
+                else Status = request.responseCode == 401 || request.responseCode == 403
+                    ? "Zugriff abgelehnt · Token und Berechtigung prüfen."
+                    : "Verbindung fehlgeschlagen · Adresse, WLAN und Zertifikat prüfen.";
+            }
+            Connecting = false;
+            if (success) { ServerChanged?.Invoke(); StartCoroutine(Poll()); }
+            Changed?.Invoke();
+            done(success);
+        }
+
+        public void ForgetConnection()
+        {
+            ConnectionVault.Forget();
+            EnterDemo();
         }
 
         void Update() { if (Demo) LastSnapshot = Time.realtimeSinceStartup; }

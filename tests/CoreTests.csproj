@@ -4,6 +4,6 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Assets/HAgoesQuest/Core/Interaction.cs" Link="Interaction.cs" />
+    <Compile Include="../Assets/HAgoesQuest/Core/*.cs" Link="Core/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

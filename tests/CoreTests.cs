@@ -69,6 +69,28 @@ public static class CoreTests
             Reject(() => HaAddress.Parse("https://ha.example.com/#x", false), "Fragment rejected");
             Reject(() => HaAddress.Parse("file:///tmp/file", false), "File URL rejected");
             Reject(() => HaAddress.Parse("ha.example.com", false), "Missing scheme rejected");
+            var placement = new HandPlacement();
+            Check(placement.Phase == PlacementPhase.AwaitRelease, "Placement waits for menu gesture release");
+            placement.Step(true, true);
+            Check(placement.Phase == PlacementPhase.AwaitRelease, "Menu pinch cannot start a drag");
+            placement.Step(true, false);
+            Check(placement.Phase == PlacementPhase.Ready, "Release readies placement");
+            placement.Step(true, true);
+            Check(placement.Phase == PlacementPhase.Holding, "New pinch grabs the entity");
+            placement.Step(true, true);
+            Check(placement.Phase == PlacementPhase.Holding, "Held pinch moves without committing");
+            placement.Step(false, false);
+            Check(placement.Phase == PlacementPhase.AwaitRelease, "Lost tracking cannot drop or save the entity");
+            placement.Step(true, true);
+            Check(placement.Phase == PlacementPhase.AwaitRelease, "Recovery with held pinch requires release");
+            placement.Step(true, false);
+            placement.Step(true, true);
+            placement.Step(true, false);
+            Check(placement.Phase == PlacementPhase.Confirm, "Tracked release requests confirmation");
+            placement.Step(false, true);
+            Check(placement.Phase == PlacementPhase.Confirm, "Confirmation keeps the dropped point stable");
+            placement.Reset();
+            Check(placement.Phase == PlacementPhase.AwaitRelease, "Moving again requires new gesture");
             Console.WriteLine("PASS: " + assertions + " assertions (interaction, service policy, connection address).");
             return 0;
         }

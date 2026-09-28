@@ -12,6 +12,7 @@ Builds/
 *.aab
 *.keystore
 **/connection.json
+**/connection.secure.json
 **/bindings.json
 **/bindings-*.json
 TestResults/

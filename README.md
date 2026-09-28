@@ -2,21 +2,24 @@
 
 Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Kopf-Blickrichtung auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: erster Quellcode-Prototyp. Noch kein Unity-Build, keine APK und kein Test auf einer Quest.** Die unabhängigen Tests der Fokus-/Pinch-Logik, Entitätsregeln und URL-Prüfung wurden unter Windows ausgeführt (36 Assertions). Das ersetzt keine Prüfung der SDK-Integration, Darstellung, Netzwerkkommunikation und Raumanker auf echter Hardware.
+**Stand: Entwicklungsversion 0.2.0; Android-Build läuft, Quest-Hardwaretest noch offen.** Vollständiger Unity-Paketimport und C#-Kompilierung sind erfolgreich. Unter Windows bestanden 46 Kernprüfungen und 13 Unity-Netzwerkprüfungen gegen einen lokalen Home-Assistant-Testserver. Der Hardwaretest ist in [docs/QUEST-TEST.md](docs/QUEST-TEST.md) dokumentiert.
 
 ## Ablauf
 
-1. Raum laden; falls noch nicht vorhanden, öffnet sich Metas Raumerfassung. „Raum neu scannen“ startet sie erneut.
-2. Home-Assistant-Entität aus der Liste wählen.
-3. Markierung auf einer erfassten Fläche oder in einem festen Abstand von 0,5 / 1 / 2 Metern platzieren. Bei freier Platzierung selbst die passende Position einnehmen.
-4. Menü schließen, Markierung anvisieren, mindestens 0,35 Sekunden fokussieren und rechts Daumen und Zeigefinger zusammenführen.
-5. Bei Lampen und Schaltern wird der Zustand geändert. Sensoren zeigen ihren Wert samt Einheit.
+1. Im Verbindungsmenü die Home-Assistant-Adresse und einen Long-Lived Access Token eingeben. Die Bildschirmtastatur bietet auch Einfügen aus der Zwischenablage. Verbinden und speichern.
+2. Raum laden; falls noch nicht vorhanden, öffnet sich Metas Raumerfassung. „Raum neu scannen“ startet sie erneut. Die Wohnungskarte zeigt erfasste Räume, Gerätepositionen und den Laufweg der aktuellen Sitzung.
+3. Home-Assistant-Entität aus der Liste wählen; bei Lampen/Schaltern zwischen reiner Anzeige und Bedienung wählen.
+4. Handplatzierung wählen, rechts Daumen und Zeigefinger zusammenführen, zum gewünschten Ort bewegen und loslassen. Anschließend die Position bestätigen. Alternativ eine Scanfläche oder einen festen Abstand verwenden.
+5. Menü schließen, Markierung anvisieren, mindestens 0,35 Sekunden fokussieren und rechts Daumen und Zeigefinger zusammenführen.
+6. Bei bedienbaren Lampen und Schaltern wird der Zustand geändert. Sensoren zeigen ihren Wert samt Einheit.
 
 Die Quest 3 hat kein Eye-Tracking: „Anschauen“ bedeutet hier die Richtung des Headsets. Die Lampe wird über die ihr zugewiesene Markierung angesprochen. Ein Raumscan erkennt **nicht automatisch**, welche echte Lampe welcher Home-Assistant-Entität entspricht. Diese Zuordnung erfolgt einmal manuell.
 
 ## Enthalten
 
 - Passthrough-Szene, Meta MR Utility Kit und lokale Spatial Anchors.
+- Generierte transparente Symbole für Lampe, Karte und Sensor; animiertes Einblenden, Fokus und Rückmeldung bei Zustandsänderung. [Bildprompts und Herkunft](docs/ART-PROMPTS.md).
+- Wohnungskarte aus Metas Raumdaten. Die Erfassung erfolgt über den Quest-Systemdialog; der Laufweg ergänzt die Anzeige, erzeugt aber keine eigene kontinuierliche 3D-Rekonstruktion.
 - Entitätsauswahl mit Seiten; Unterstützung für `light`, `switch`, `sensor`, `binary_sensor`.
 - Kopf-Blickrichtung + rechter Pinch; rechter Controller-Trigger als Alternative.
 - Linker Pinch oder X am linken Controller öffnet das Menü und bricht eine Platzierung ab.
@@ -24,7 +27,7 @@ Die Quest 3 hat kein Eye-Tracking: „Anschauen“ bedeutet hier die Richtung de
 - Sensorwerte und Gerätezustände über REST-Polling, etwa alle 1,5 Sekunden plus Antwortzeit. Kein WebSocket-Livestream in dieser Version.
 - Explizite `turn_on`-/`turn_off`-Aufrufe, keine automatische Wiederholung von Schaltbefehlen nach Fehlern. Anzeigen werden durch die nächste Statusabfrage bestätigt.
 - Offline-/Veraltet-Anzeige; Schalten nur bei frischen Daten. Keine Aktion durch bloßes Anschauen oder dauerhaftes Pinchen.
-- Demo mit einer Lampe und einem Temperatursensor, solange keine Verbindungsdatei vorliegt.
+- Demo mit einer Lampe und einem Temperatursensor, solange keine Verbindung eingerichtet wurde.
 
 ## In Unity öffnen und bauen
 
@@ -39,7 +42,7 @@ Benötigt: **Unity 6000.0.66f2**, Android Build Support inklusive SDK/NDK/OpenJD
 7. Quest-Entwicklermodus aktivieren, per USB verbinden, USB-Debugging in der Brille erlauben. Mit Metas Developer Hub installieren oder `adb install -r Builds/HAgoesQuest.apk` verwenden.
 8. App auf der Quest einmal starten. Raumzugriff beim Scan erlauben und Handtracking in den Quest-Einstellungen aktivieren.
 
-**Bisher unbestätigt:** Paketimport und vollständige C#-Kompilierung in Unity, Android-/IL2CPP-Build, OpenXR-Initialisierung, UI-Lesbarkeit, Gestenerkennung, lokale Netzwerkerreichbarkeit und Ankerpersistenz. Ein laufender Demo-Modus im Editor bestätigt diese Hardwarefunktionen nicht.
+**Bisher unbestätigt:** Android-/IL2CPP-Build, OpenXR-Initialisierung auf der Quest, UI-Lesbarkeit in der Brille, Gestenerkennung, Erreichbarkeit des eigenen Home Assistant und Ankerpersistenz. Die erfolgreichen Editorprüfungen bestätigen diese Hardwarefunktionen nicht.
 
 Im Editor: rechte Maustaste halten und Maus bewegen, um die Blickrichtung zu drehen; linke Maustaste bestätigt nach der Fokuszeit; Tab öffnet das Menü. Freie Platzierung ist eine flüchtige Vorschau. Raumerfassung und persistente Anker müssen auf der Quest getestet werden.
 
@@ -47,7 +50,9 @@ Im Editor: rechte Maustaste halten und Maus bewegen, um die Blickrichtung zu dre
 
 Die Quest muss die Home-Assistant-Adresse erreichen können, typischerweise im selben WLAN. In Home Assistant im Benutzerprofil einen **Long-Lived Access Token** erzeugen. Token nicht in GitHub, Chat oder Screenshots veröffentlichen.
 
-Unter Windows nach der Installation:
+Die reguläre Einrichtung erfolgt direkt im Verbindungsmenü der App. Der Token wird verdeckt eingegeben und nach erfolgreicher Prüfung mit einem Schlüssel aus dem Android Keystore verschlüsselt gespeichert. Die Verschlüsselung muss noch auf echter Quest geprüft werden. Kein Token ist Bestandteil des Projekts oder der APK. Eine andere HA-Adresse verwendet getrennte räumliche Zuordnungen.
+
+Optionaler USB-Einrichtungsweg unter Windows:
 
 ```powershell
 .\tools\Connect-Quest.ps1 -BaseUrl 'https://dein-home-assistant.example'
@@ -65,7 +70,7 @@ HTTP überträgt auch den Token unverschlüsselt; deshalb verlangt der Prototyp 
 
 Alternativ eine Kopie von `docs/connection.example.json` als `connection.json` in `Application.persistentDataPath` ablegen. Auf der Quest ist das normalerweise `/sdcard/Android/data/com.alexrosbach.hagoesquest/files/`. Danach App neu starten. Ohne Datei ist Demo aktiv; eine fehlerhafte Datei führt zu einer Fehlermeldung und wird nicht stillschweigend als Demo behandelt.
 
-**Entwicklungsstand der Anmeldung:** Token liegen im App-Dateiverzeichnis als Klartext. Android-Backup wird deaktiviert; die Datei ist aber für autorisiertes USB-Debugging lesbar. Eine produktionsreife Anmeldung mit OAuth und geschützter Speicherung ist noch nicht implementiert. Kein Token ist Bestandteil des Projekts oder der APK. Wird eine andere HA-URL eingetragen, verwendet die App eine getrennte Zuordnungsdatei.
+Die optionale USB-Konfigurationsdatei enthält zunächst Klartext. Nach erfolgreicher Prüfung und verschlüsselter Speicherung löscht die App diese alte Datei. Android-Backup ist deaktiviert. OAuth-Anmeldung ist noch nicht implementiert.
 
 ## Überprüfung
 
@@ -81,15 +86,16 @@ dotnet run --project tests/CoreTests.csproj
 
 Die Tests kompilieren den echten unabhängigen App-Kern. Sie prüfen Fokuszeit, gehaltenen Pinch, Zielwechsel, Trackingverlust, Wiederaufnahme, Wiederholungssperre, unterstützte Entitäten, ausdrückliche Schaltaktionen und URL-Validierung. GitHub Actions führt diese Tests ebenfalls aus; es wird dort **keine APK gebaut**.
 
+`tools/Test-Network.ps1` startet einen ausschließlich auf `127.0.0.1` erreichbaren Testserver und prüft den tatsächlichen Unity-Netzwerkclient im Play Mode: Anmeldung, Zustandsdaten samt Einheit, Schaltbefehl und Aktualisierung, keine Sensor-/Offline-Befehle, Wiederverbindung, Ablehnung ungültiger Token und HTTP-Freigabe. Dafür werden keine echten Zugangsdaten verwendet.
+
 Die notwendige Abnahme auf der Quest ist in [docs/QUEST-TEST.md](docs/QUEST-TEST.md) beschrieben.
 
 ## Nächste Ausbaustufen
 
 - Auf echter Quest kompilieren, starten und die dokumentierten Prüfungen abschließen.
-- Komfortable Anmeldung direkt in der Brille und geschützte Speicherung.
 - WebSocket-Zustandsänderungen, Dimmen, Farben und weitere Entitätstypen.
 - Bessere Suche/Filter bei vielen Entitäten und direktes Verschieben vorhandener Zuordnungen.
-- Präzisere Platzierung über einen Handstrahl, Oberflächenvorschau und optische Verdeckung hinter Möbeln.
+- Optische Verdeckung hinter Möbeln.
 - Automatische Objekterkennung separat evaluieren; sie ist kein Bestandteil dieses Prototyps.
 
 ## Technische Quellen

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace HAgoesQuest
 {
-    [Serializable] public sealed class BindingRecord { public string entityId; public string anchorUuid; }
+    [Serializable] public sealed class BindingRecord { public string entityId; public string anchorUuid; public bool displayOnly; }
     [Serializable] public sealed class BindingFile { public int version = 1; public List<BindingRecord> bindings = new List<BindingRecord>(); }
 
     public sealed class SpatialBindings : MonoBehaviour
@@ -23,6 +23,22 @@ namespace HAgoesQuest
         BindingFile data = new BindingFile();
         string path;
         public bool Contains(string id) => data.bindings.Any(b => b.entityId == id);
+        public bool DisplayOnly(string id) => data.bindings.FirstOrDefault(b => b.entityId == id)?.displayOnly ?? false;
+
+        public bool ResetForServer(string server)
+        {
+            if (Busy) return false;
+            foreach (var pair in Loaded)
+            {
+                Removed?.Invoke(pair.Key);
+                if (pair.Value) Destroy(pair.Value.gameObject);
+            }
+            Loaded.Clear();
+            data = new BindingFile();
+            Ready = false;
+            Initialize(server);
+            return Ready;
+        }
 
         public void Initialize(string server)
         {
@@ -90,7 +106,7 @@ namespace HAgoesQuest
             finally { Busy = false; }
         }
 
-        public async Task Place(string entityId, Vector3 position)
+        public async Task Place(string entityId, Vector3 position, bool displayOnly = false)
         {
             if (Busy || !Ready || Contains(entityId)) return;
             if (data.bindings.Count >= 50) { Status = "Der Prototyp unterstützt bis zu 50 Zuordnungen."; return; }
@@ -108,7 +124,7 @@ namespace HAgoesQuest
                 var result = await anchor.SaveAnchorAsync();
                 if (!result.Success) throw new IOException();
                 saved = true;
-                added = new BindingRecord { entityId = entityId, anchorUuid = anchor.Uuid.ToString() };
+                added = new BindingRecord { entityId = entityId, anchorUuid = anchor.Uuid.ToString(), displayOnly = displayOnly };
                 data.bindings.Add(added);
                 Persist();
                 Loaded[entityId] = anchor;

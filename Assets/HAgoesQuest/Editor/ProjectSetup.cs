@@ -28,10 +28,13 @@ namespace HAgoesQuest.Editor
         {
             PlayerSettings.companyName = "HAgoesQuest";
             PlayerSettings.productName = "HA goes Quest";
+            PlayerSettings.bundleVersion = "0.2.0";
+            PlayerSettings.Android.bundleVersionCode = 2;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.alexrosbach.hagoesquest");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
-            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel29;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel32;
+            PlayerSettings.Android.applicationEntry = AndroidApplicationEntry.GameActivity;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
             PlayerSettings.Android.forceInternetPermission = true;
             PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
@@ -39,6 +42,20 @@ namespace HAgoesQuest.Editor
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
             QualitySettings.antiAliasing = 4;
+            foreach (string iconName in new[] { "lamp", "map", "sensor" })
+            {
+                string iconPath = "Assets/HAgoesQuest/Resources/Icons/" + iconName + ".png";
+                var importer = AssetImporter.GetAtPath(iconPath) as TextureImporter;
+                if (!importer) continue;
+                importer.textureType = TextureImporterType.Default;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.isReadable = true;
+                importer.maxTextureSize = 512;
+                importer.SaveAndReimport();
+            }
+            var appIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/HAgoesQuest/Resources/Icons/lamp.png");
+            if (appIcon) PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Unknown, new[] { appIcon }, IconKind.Any);
             var player = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
             var input = player.FindProperty("activeInputHandler");
             if (input != null) { input.intValue = 2; player.ApplyModifiedProperties(); }
@@ -48,6 +65,7 @@ namespace HAgoesQuest.Editor
             config.anchorSupport = OVRProjectConfig.AnchorSupport.Enabled;
             config.sceneSupport = OVRProjectConfig.FeatureSupport.Required;
             config.insightPassthroughSupport = OVRProjectConfig.FeatureSupport.Required;
+            config.systemLoadingScreenBackground = OVRProjectConfig.SystemLoadingScreenBackground.ContextualPassthrough;
             OVRProjectConfig.CommitProjectConfig(config);
 
             if (!EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out XRGeneralSettingsPerBuildTarget all))
@@ -70,6 +88,10 @@ namespace HAgoesQuest.Editor
             var touch = xr.GetFeature<OculusTouchControllerProfile>();
             if (touch == null) throw new BuildFailedException("Oculus Touch Controller Profile fehlt.");
             touch.enabled = true;
+            var composition = xr.GetFeature<UnityEngine.XR.OpenXR.Features.CompositionLayers.OpenXRCompositionLayersFeature>();
+            if (composition == null) throw new BuildFailedException("OpenXR Composition Layers Support fehlt.");
+            composition.enabled = true;
+            EditorUtility.SetDirty(composition);
             EditorUtility.SetDirty(touch);
             EditorUtility.SetDirty(xr);
             EditorUtility.SetDirty(all);
@@ -82,7 +104,7 @@ namespace HAgoesQuest.Editor
         [MenuItem("HA goes Quest/2 - Startszene erstellen")]
         public static void CreateScene()
         {
-            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             if (File.Exists(ScenePath))
             {
                 EditorSceneManager.OpenScene(ScenePath);
@@ -151,6 +173,12 @@ namespace HAgoesQuest.Editor
                 scenes = new[] { ScenePath }, locationPathName = "Builds/HAgoesQuest.apk",
                 target = BuildTarget.Android, options = BuildOptions.Development });
             if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("APK-Build fehlgeschlagen. Unity-Konsole prüfen.");
+        }
+
+        public static void PrepareBatch()
+        {
+            Configure();
+            CreateScene();
         }
     }
 
