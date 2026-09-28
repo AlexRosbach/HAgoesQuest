@@ -19,6 +19,9 @@ namespace HAgoesQuest
         float shownAt, pulseAt = -100;
         float detailAlpha;
         bool showDetails;
+        float proximity;
+        Image ring;
+        static Sprite circle, circleRing;
         string lastState;
         static Sprite rounded;
         static readonly System.Collections.Generic.Dictionary<string, Sprite> icons = new System.Collections.Generic.Dictionary<string, Sprite>();
@@ -70,19 +73,33 @@ namespace HAgoesQuest
         }
 
         public void SetNearby(bool nearby) { showDetails = nearby; }
+        public void SetDistance(float distance)
+        {
+            showDetails = distance <= 0.30f;
+            proximity = 1 - Mathf.InverseLerp(0.3f, 1.2f, distance);
+        }
 
         public void MakeCompactMarker()
         {
             IsMarker = true;
             GetComponent<RectTransform>().sizeDelta = new Vector2(90, 90);
             GetComponent<BoxCollider>().size = new Vector3(90, 90, 18);
-            background.enabled = false;
+            background.enabled = true;
+            background.sprite = Circle(false);
+            background.type = Image.Type.Simple;
             GetComponent<Outline>().enabled = false;
+            var border = new GameObject("Menu style ring", typeof(RectTransform), typeof(Image));
+            border.transform.SetParent(transform, false);
+            ring = border.GetComponent<Image>();
+            ring.raycastTarget = false;
+            ring.sprite = Circle(true);
+            ring.rectTransform.sizeDelta = new Vector2(90, 90);
+            ring.color = new Color(0.14f, 0.6f, 0.65f, 0.85f);
             if (icon)
             {
                 icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = Vector2.one * 0.5f;
                 icon.rectTransform.anchoredPosition = Vector2.zero;
-                icon.rectTransform.sizeDelta = new Vector2(90, 90);
+                icon.rectTransform.sizeDelta = new Vector2(68, 68);
             }
             Label.rectTransform.anchorMin = Label.rectTransform.anchorMax = new Vector2(0.5f, 0);
             Label.rectTransform.pivot = new Vector2(0.5f, 1);
@@ -144,16 +161,40 @@ namespace HAgoesQuest
             float ease = 1 - Mathf.Pow(1 - appear, 3);
             float pulse = Mathf.Clamp01(1 - (Time.unscaledTime - pulseAt) / 0.4f);
             float size = Mathf.Lerp(0.9f, 1, ease) * (focused ? 1.025f : 1) * (1 + Mathf.Sin(pulse * Mathf.PI) * 0.035f);
+            if (IsMarker) size *= Mathf.Lerp(1, 1.8f, proximity);
             transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * (size * 0.001f), 1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
             group.alpha = ease;
             if (IsMarker)
             {
                 detailAlpha = Mathf.MoveTowards(detailAlpha, showDetails ? 1 : 0, Time.unscaledDeltaTime * 8);
                 Label.color = new Color(1, 1, 1, detailAlpha);
+                if (ring) ring.color = focused ? new Color(0.3f, 1, 0.9f, 1) : new Color(0.14f, 0.6f, 0.65f, 0.85f);
             }
             Color target = focused ? new Color(0.025f, 0.24f, 0.27f, 0.98f) : idle;
             target = Color.Lerp(target, new Color(0.1f, 0.58f, 0.48f, 1), pulse * 0.6f);
             background.color = Color.Lerp(background.color, target, 1 - Mathf.Exp(-14 * Time.unscaledDeltaTime));
+        }
+
+        static Sprite Circle(bool rim)
+        {
+            if (rim && circleRing) return circleRing;
+            if (!rim && circle) return circle;
+            const int size = 128;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float radius = new Vector2(x - 63.5f, y - 63.5f).magnitude;
+                float alpha = Mathf.Clamp01(63.5f - radius);
+                if (rim) alpha *= Mathf.Clamp01(radius - 59.5f);
+                pixels[y * size + x] = new Color(1, 1, 1, alpha);
+            }
+            texture.SetPixels(pixels); texture.Apply(false, true);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, size, size), Vector2.one * 0.5f, 100);
+            if (rim) circleRing = sprite; else circle = sprite;
+            return sprite;
         }
 
         static Sprite Rounded()

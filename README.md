@@ -2,7 +2,9 @@
 
 Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Fingerzeiger auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: installierbare Entwicklungs-APK 0.3.1 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 48 Kernprüfungen und 32 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+**Stand: installierbare Entwicklungs-APK 0.3.2 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 48 Kernprüfungen und 39 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+
+Neu in 0.3.2: Bedienung nach Raumscan wiederherstellen, runde wachsende Icons, Platzieren mit einem Pinch und eigene Verwaltung zum Löschen. [Details](docs/VERSION-0.3.2.md).
 
 Neu in 0.3.1: gespeicherten Token bei Updates und im Verbindungsmenü weiterverwenden; Signaturkontrolle für kompatible APKs. [Update-Anleitung](docs/VERSION-0.3.1.md).
 
@@ -13,7 +15,7 @@ Neu in 0.3.0: keine virtuellen Hände, Boundaryless-AR, Typ-/Raumfilter und Such
 1. Im Verbindungsmenü die Home-Assistant-Adresse und einen Long-Lived Access Token eingeben. Die Bildschirmtastatur bietet auch Einfügen aus der Zwischenablage. Verbinden und speichern.
 2. Raum laden; falls noch nicht vorhanden, öffnet sich Metas Raumerfassung. „Raum neu scannen“ startet sie erneut. Die Wohnungskarte zeigt erfasste Räume, Gerätepositionen und den Laufweg der aktuellen Sitzung.
 3. Home-Assistant-Entität aus der Liste wählen; bei Lampen/Schaltern zwischen reiner Anzeige und Bedienung wählen.
-4. Handplatzierung wählen, rechts Daumen und Zeigefinger zusammenführen, zum gewünschten Ort bewegen und loslassen. Anschließend die Position bestätigen. Alternativ eine Scanfläche oder einen festen Abstand verwenden.
+4. Zeigerplatzierung wählen, auf den Wunschort zeigen und einmal pinchen. Vorschau bestätigen oder weiter verschieben. Alternativ direkt an der Hand oder auf einer Scanfläche platzieren; auch dort einmal pinchen und bestätigen.
 5. Menü schließen, Mit dem Finger auf die Markierung zeigen, mindestens 0,35 Sekunden fokussieren und rechts Daumen und Zeigefinger zusammenführen.
 6. Bei bedienbaren Lampen und Schaltern wird der Zustand geändert. Sensoren zeigen ihren Wert samt Einheit.
 

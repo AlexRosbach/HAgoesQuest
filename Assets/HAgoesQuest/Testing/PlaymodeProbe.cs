@@ -61,12 +61,57 @@ namespace HAgoesQuest.Testing
             if (!Check(decoded != null && QrConnection.TryParse(decoded.Text, out _, out var roundTrip) && roundTrip == testToken, "Actual QR encode/decode round-trip")) yield break;
             var marker = WorldCard.Create(null, Vector3.zero, new Vector2(340, 115), "Test name");
             marker.SetIcon("switch"); marker.MakeCompactMarker();
-            if (!Check(!marker.GetComponent<UnityEngine.UI.Image>().enabled && marker.GetComponent<BoxCollider>().size.x == 90, "Compact icon has no card background")) yield break;
+            if (!Check(marker.GetComponent<UnityEngine.UI.Image>().enabled && marker.transform.Find("Menu style ring") && marker.GetComponent<BoxCollider>().size.x == 90, "Compact marker has circular menu-style background and ring")) yield break;
+            marker.SetDistance(1.5f); yield return new WaitForSeconds(0.5f);
+            float distantScale = marker.transform.localScale.x;
+            marker.SetDistance(0.25f); yield return new WaitForSeconds(0.5f);
+            if (!Check(marker.transform.localScale.x > distantScale * 1.7f, "Approaching enlarges the actual marker transform and hit target")) yield break;
             marker.SetNearby(false); yield return new WaitForSeconds(0.2f);
             if (!Check(marker.Label.color.a == 0, "Distant entity label hidden")) yield break;
             marker.SetNearby(true); yield return new WaitForSeconds(0.2f);
             if (!Check(marker.Label.color.a > 0.99f, "Nearby entity label appears")) yield break;
             Destroy(marker.gameObject);
+            var bindingHost = new GameObject("Isolated placement persistence test");
+            var spatial = bindingHost.AddComponent<SpatialBindings>();
+            spatial.Initialize("test-unlocalized-delete-" + Guid.NewGuid());
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var stored = (BindingFile)typeof(SpatialBindings).GetField("data", flags).GetValue(spatial);
+            stored.bindings.Add(new BindingRecord { entityId = "light.missing_from_ha", anchorUuid = Guid.NewGuid().ToString() });
+            typeof(SpatialBindings).GetMethod("Persist", flags).Invoke(spatial, null);
+            string isolatedPath = (string)typeof(SpatialBindings).GetField("path", flags).GetValue(spatial);
+            bool removedEvent = false;
+            spatial.Removed += _ => removedEvent = true;
+            var deletion = spatial.Remove("light.missing_from_ha");
+            yield return Wait(() => deletion.IsCompleted, 8, "Unlocalized placement removal completes");
+            if (!Check(!spatial.Contains("light.missing_from_ha") && !spatial.EntityIds.Any() && removedEvent &&
+                JsonUtility.FromJson<BindingFile>(File.ReadAllText(isolatedPath)).bindings.Count == 0,
+                "Unlocalized and unavailable entity removal persists without a loaded anchor")) yield break;
+            File.Delete(isolatedPath); if (File.Exists(isolatedPath + ".bak")) File.Delete(isolatedPath + ".bak");
+            var ui = bindingHost.AddComponent<QuestHome>(); ui.enabled = false;
+            var testHead = new GameObject("Test head").transform;
+            void Set(string field, object value) => typeof(QuestHome).GetField(field, flags).SetValue(ui, value);
+            object Get(string field) => typeof(QuestHome).GetField(field, flags).GetValue(ui);
+            void Invoke(string method, params object[] args) => typeof(QuestHome).GetMethod(method, flags).Invoke(ui, args);
+            void Press(string prefix) => ((GameObject)Get("menu")).GetComponentsInChildren<WorldCard>().Single(c => c.Press != null && c.Label.text.StartsWith(prefix)).Activate();
+            Set("head", testHead); Set("ha", ha); Set("bindings", spatial);
+            Invoke("BeginPlacement", "light.ui_test", 1f);
+            Invoke("FreezePlacement", new Vector3(0.2f, 0, 1));
+            if (!Check((bool)Get("placementFrozen") && ((WorldCard)Get("preview")).IsMarker &&
+                ((WorldCard)Get("preview")).transform.position == new Vector3(0.2f, 0, 1), "One-pinch placement freezes compact preview before saving")) yield break;
+            Press("Weiter verschieben");
+            if (!Check(!(bool)Get("placementFrozen"), "Placement can be adjusted before committing")) yield break;
+            Invoke("FreezePlacement", new Vector3(0.3f, 0, 1));
+            Press("Position speichern");
+            Invoke("PlacedMenu", 0);
+            testHead.position = new Vector3(3, 0, 2);
+            Invoke("OnApplicationFocus", true);
+            if (!Check(Vector3.Distance(((GameObject)Get("menu")).transform.position, testHead.position) < 1.5f,
+                "Menu returns in front of user after system focus/room change")) yield break;
+            Press("Löschen"); Press("Ja");
+            if (!Check(!((System.Collections.Generic.Dictionary<string, WorldCard>)Get("markers")).Any(),
+                "Placed-entity management deletes an entity absent from HA listing")) yield break;
+            Invoke("CloseMenu"); Destroy(testHead.gameObject);
+            Destroy(bindingHost);
             bool completed = false, accepted = false;
             ha.Connect("http://127.0.0.1:18123", "test-token", true, ok => { completed = true; accepted = ok; });
             yield return Wait(() => completed, 12, "Connection callback");
