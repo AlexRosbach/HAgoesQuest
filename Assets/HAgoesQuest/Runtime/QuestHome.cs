@@ -102,10 +102,10 @@ namespace HAgoesQuest
                 else
                 {
                     var room = MRUK.Instance.GetCurrentRoom();
-                    if (room != null && room.Raycast(ray, 8, out var hit))
+                    if (room != null && room.Raycast(ray, 8, out var surfaceHit))
                     {
-                        aim = hit.point - ray.direction * 0.07f;
-                        placementValid = hit.distance > 0.25f;
+                        aim = surfaceHit.point - ray.direction * 0.07f;
+                        placementValid = surfaceHit.distance > 0.25f;
                     }
                 }
                 preview.transform.position = aim;
@@ -113,16 +113,16 @@ namespace HAgoesQuest
                 preview.Label.text = placementValid ? "Hier platzieren\nRechts pinchen · Links: zurück" : "Keine Scanfläche\nLinks pinchen: zurück";
                 key = placementValid ? "place:" + placing : null;
             }
-            else if (!operationBusy && Physics.Raycast(ray, out var hit, 8))
+            else if (!operationBusy && Physics.Raycast(ray, out var cardHit, 8))
             {
-                var card = hit.collider.GetComponent<WorldCard>();
+                var card = cardHit.collider.GetComponent<WorldCard>();
                 if (card && card.Interactable && card.Press != null)
                 {
                     focused = card;
                     focused.Focus(true);
                     key = card.Key;
                 }
-                aim = hit.point - ray.direction * 0.01f;
+                aim = cardHit.point - ray.direction * 0.01f;
             }
             reticle.transform.position = aim;
             reticle.Face(head);
