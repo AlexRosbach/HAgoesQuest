@@ -2,7 +2,7 @@
 
 Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Kopf-Blickrichtung auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: Entwicklungsversion 0.2.0; Android-Build läuft, Quest-Hardwaretest noch offen.** Vollständiger Unity-Paketimport und C#-Kompilierung sind erfolgreich. Unter Windows bestanden 46 Kernprüfungen und 13 Unity-Netzwerkprüfungen gegen einen lokalen Home-Assistant-Testserver. Der Hardwaretest ist in [docs/QUEST-TEST.md](docs/QUEST-TEST.md) dokumentiert.
+**Stand: installierbare Entwicklungs-APK 0.2.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 46 Kernprüfungen und 13 Unity-Netzwerkprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
 
 ## Ablauf
 
@@ -42,7 +42,7 @@ Benötigt: **Unity 6000.0.66f2**, Android Build Support inklusive SDK/NDK/OpenJD
 7. Quest-Entwicklermodus aktivieren, per USB verbinden, USB-Debugging in der Brille erlauben. Mit Metas Developer Hub installieren oder `adb install -r Builds/HAgoesQuest.apk` verwenden.
 8. App auf der Quest einmal starten. Raumzugriff beim Scan erlauben und Handtracking in den Quest-Einstellungen aktivieren.
 
-**Bisher unbestätigt:** Android-/IL2CPP-Build, OpenXR-Initialisierung auf der Quest, UI-Lesbarkeit in der Brille, Gestenerkennung, Erreichbarkeit des eigenen Home Assistant und Ankerpersistenz. Die erfolgreichen Editorprüfungen bestätigen diese Hardwarefunktionen nicht.
+**Bisher unbestätigt:** Installation und OpenXR-Initialisierung auf der Quest, UI-Lesbarkeit in der Brille, Gestenerkennung, Erreichbarkeit des eigenen Home Assistant, Android-Keystore und Ankerpersistenz. Die erfolgreichen Build- und Editorprüfungen bestätigen diese Hardwarefunktionen nicht.
 
 Im Editor: rechte Maustaste halten und Maus bewegen, um die Blickrichtung zu drehen; linke Maustaste bestätigt nach der Fokuszeit; Tab öffnet das Menü. Freie Platzierung ist eine flüchtige Vorschau. Raumerfassung und persistente Anker müssen auf der Quest getestet werden.
 
@@ -92,7 +92,7 @@ Die notwendige Abnahme auf der Quest ist in [docs/QUEST-TEST.md](docs/QUEST-TEST
 
 ## Nächste Ausbaustufen
 
-- Auf echter Quest kompilieren, starten und die dokumentierten Prüfungen abschließen.
+- Die erstellte APK auf einer echten Quest installieren, starten und die dokumentierten Prüfungen abschließen.
 - WebSocket-Zustandsänderungen, Dimmen, Farben und weitere Entitätstypen.
 - Bessere Suche/Filter bei vielen Entitäten und direktes Verschieben vorhandener Zuordnungen.
 - Optische Verdeckung hinter Möbeln.

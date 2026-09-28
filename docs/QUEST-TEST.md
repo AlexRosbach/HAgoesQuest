@@ -1,12 +1,13 @@
 # Abnahme auf der Quest 3
 
-Status bei Erstellung: **alle folgenden Punkte noch offen**. Die automatischen Core-Tests ersetzen keinen dieser Schritte.
+Desktop-Prüfungen sind unten markiert. **Alle Gerätetests sind noch offen.** Die automatischen Tests ersetzen die Abnahme in der Brille nicht.
 
 ## Build und erster Start
 
-- [ ] Unity importiert alle festgelegten Pakete ohne Compile-Fehler.
-- [ ] Android/OpenXR Project Validation und erforderliche Meta-Project-Setup-Prüfungen sind erfolgreich.
-- [ ] ARM64-IL2CPP-APK wird gebaut, installiert und als immersive App gestartet.
+- [x] Unity importiert alle festgelegten Pakete ohne Compile-Fehler.
+- [x] OpenXR-Buildvalidierung und Android-ARM64/IL2CPP-Build sind erfolgreich.
+- [x] Signatur und erforderliche Einträge im fertigen APK-Manifest wurden geprüft; siehe BUILD-STATUS.md.
+- [ ] APK wird auf der Quest installiert und als immersive App gestartet.
 - [ ] Reale Umgebung ist im Passthrough sichtbar; UI ist mit beiden Augen gut lesbar.
 - [ ] Ohne gespeicherte Verbindung erscheinen klar markierte Demo-Daten; echte Geräte werden nicht angesprochen.
 - [ ] Linker Pinch/X öffnet ein im Raum stehendes Menü; Rechts-Pinch/Trigger wählt dessen Buttons.

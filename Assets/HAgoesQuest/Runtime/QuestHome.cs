@@ -74,14 +74,19 @@ namespace HAgoesQuest
                 if (walkTrail.Count > 1600) walkTrail.RemoveRange(0, 400);
             }
 #if UNITY_EDITOR
-            if (Input.GetMouseButton(1))
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse != null && mouse.rightButton.isPressed)
             {
-                Rig.transform.Rotate(Vector3.up, Input.GetAxis("Mouse X") * 2, Space.World);
-                Rig.transform.Rotate(Vector3.right, -Input.GetAxis("Mouse Y") * 2, Space.Self);
+                Vector2 delta = mouse.delta.ReadValue();
+                Rig.transform.Rotate(Vector3.up, delta.x * 0.15f, Space.World);
+                Rig.transform.Rotate(Vector3.right, -delta.y * 0.15f, Space.Self);
             }
 #endif
             bool leftDown = HandReady(LeftHand) && LeftHand.GetFingerIsPinching(OVRHand.HandFinger.Index);
-            bool menuPressed = (leftDown && !previousMenuPinch) || OVRInput.GetDown(OVRInput.RawButton.X) || Input.GetKeyDown(KeyCode.Tab);
+            bool menuPressed = (leftDown && !previousMenuPinch) || OVRInput.GetDown(OVRInput.RawButton.X);
+#if UNITY_EDITOR
+            menuPressed |= UnityEngine.InputSystem.Keyboard.current?.tabKey.wasPressedThisFrame == true;
+#endif
             previousMenuPinch = leftDown;
             if (menuPressed && inputAllowed && !operationBusy && !ha.Connecting) { CancelPlacement(); Home(); }
 
@@ -91,7 +96,10 @@ namespace HAgoesQuest
             bool tracked = hand || controller;
             bool down = hand ? RightHand.GetFingerIsPinching(OVRHand.HandFinger.Index) :
                 controller && OVRInput.Get(OVRInput.RawButton.RIndexTrigger);
-            if (Application.isEditor) { tracked = true; down = Input.GetMouseButton(0); }
+#if UNITY_EDITOR
+            tracked = true;
+            down = mouse != null && mouse.leftButton.isPressed;
+#endif
 
             if (status) status.Label.text = Short(ha.Status + "\n" + (string.IsNullOrEmpty(notice) ? bindings.Status : notice), 185);
             foreach (var pair in markers)

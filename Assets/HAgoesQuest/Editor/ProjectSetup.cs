@@ -58,7 +58,7 @@ namespace HAgoesQuest.Editor
             if (appIcon) PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Unknown, new[] { appIcon }, IconKind.Any);
             var player = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
             var input = player.FindProperty("activeInputHandler");
-            if (input != null) { input.intValue = 2; player.ApplyModifiedProperties(); }
+            if (input != null) { input.intValue = 1; player.ApplyModifiedProperties(); }
 
             var config = OVRProjectConfig.CachedProjectConfig;
             config.handTrackingSupport = OVRProjectConfig.HandTrackingSupport.ControllersAndHands;
@@ -185,7 +185,8 @@ namespace HAgoesQuest.Editor
     // Runtime still requires allowInsecureHttp=true for local HTTP installations.
     public sealed class AndroidManifest : IPostGenerateGradleAndroidProject
     {
-        public int callbackOrder => 10000;
+        // Meta's manifest callback runs at 99999 and installs an HTTPS-only policy.
+        public int callbackOrder => 100000;
         public void OnPostGenerateGradleAndroidProject(string path)
         {
             string manifest = Path.Combine(path, "src/main/AndroidManifest.xml");
@@ -194,6 +195,12 @@ namespace HAgoesQuest.Editor
             var application = xml.Root.Element("application");
             application.SetAttributeValue(android + "usesCleartextTraffic", "true");
             application.SetAttributeValue(android + "allowBackup", "false");
+            application.SetAttributeValue(android + "networkSecurityConfig", "@xml/hagoesquest_network_config");
+            string resources = Path.Combine(path, "src/main/res/xml");
+            Directory.CreateDirectory(resources);
+            new XDocument(new XElement("network-security-config",
+                new XElement("base-config", new XAttribute("cleartextTrafficPermitted", "true"))))
+                .Save(Path.Combine(resources, "hagoesquest_network_config.xml"));
             foreach (string permission in new[] { "android.permission.INTERNET", "com.oculus.permission.USE_SCENE", "com.oculus.permission.USE_ANCHOR_API" })
             {
                 if (!xml.Root.Elements("uses-permission").Any(e => (string)e.Attribute(android + "name") == permission))
