@@ -1,0 +1,5 @@
+{
+  "baseUrl": "https://homeassistant.example.com",
+  "accessToken": "REPLACE_ON_DEVICE_ONLY",
+  "allowInsecureHttp": false
+}
