@@ -94,6 +94,16 @@ public static class CoreTests
             placement.Reset();
             Check(placement.Phase == PlacementPhase.AwaitRelease, "Moving again requires new gesture");
             double magicTime;
+            var menuToggle = new FocusPinchGate(0, .25);
+            menuToggle.Step("menu", false, true, 0);
+            Check(menuToggle.Step("menu", true, true, .3), "Left pinch opens menu");
+            Check(!menuToggle.Step("menu", true, true, 2), "Held left pinch cannot toggle twice");
+            menuToggle.Step("menu", false, true, 2.1);
+            Check(menuToggle.Step("menu", true, true, 2.2), "Next released left pinch closes menu");
+            menuToggle.Reset();
+            Check(!menuToggle.Step("menu", true, true, 3), "Held pinch after calibration cannot toggle until release");
+            menuToggle.Step("menu", false, true, 3.1);
+            Check(menuToggle.Step("menu", true, true, 3.2), "Release restores menu control after calibration");
             var magic = ArmedMagic(out magicTime);
             Check(magic.Armed, "Open stationary palm arms after dwell");
             Check(!magic.Step("light.test", true, true, new PushVector(0,0,.05), new PushVector(0,0,1), magicTime+=.05), "Short push does not fire");
@@ -123,6 +133,15 @@ public static class CoreTests
             magic = ArmedMagic(out magicTime); repeated = false;
             for (int i=1;i<=20;i++) repeated |= magic.Step("light.test", true, true, new PushVector(0,0,i*.01), new PushVector(0,0,1), magicTime+=.05);
             Check(!repeated, "Slow reach cannot cast");
+            magic = new MagicPushGate(); magicTime = 0;
+            int spells = 0;
+            for (int shot=0;shot<3;shot++)
+            {
+                magic.Step(null, true, true, new PushVector(), new PushVector(0,0,1), magicTime+=.05);
+                for (int frame=0;frame<10;frame++) magic.Step("light.test", true, true, new PushVector(), new PushVector(0,0,1), magicTime+=.05);
+                for (int frame=1;frame<=3;frame++) if (magic.Step("light.test", true, true, new PushVector(0,0,frame*.05), new PushVector(0,0,1), magicTime+=.05)) spells++;
+            }
+            Check(spells == 3, "Three separate forward thrusts cast consecutively without closing hand");
             Console.WriteLine("PASS: " + assertions + " assertions (interaction, magic gestures, service policy, connection address).");
             return 0;
         }

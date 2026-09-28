@@ -33,7 +33,9 @@ namespace HAgoesQuest
         WorldKeyboard keyboard;
         string draftUrl = "https://", draftToken = "";
         bool allowHttp;
-        bool previousMenuPinch, scanBusy, operationBusy;
+        bool scanBusy, operationBusy;
+        readonly FocusPinchGate menuGate = new FocusPinchGate(0, 0.25);
+        OVRDisplay subscribedDisplay;
         string notice = "";
         int page;
         readonly List<Vector3> walkTrail = new List<Vector3>();
@@ -53,6 +55,10 @@ namespace HAgoesQuest
             bindings.Removed += RemoveMarker;
             ha.ServerChanged += ServerChanged;
             rightSkeleton = RightHand ? RightHand.GetComponent<OVRSkeleton>() : null;
+            RepairHandPointers();
+            OVRManager.InputFocusAcquired += RestoreHandInput;
+            subscribedDisplay = OVRManager.display;
+            if (subscribedDisplay != null) subscribedDisplay.RecenteredPose += RestoreHandInput;
             qr = GetComponent<QrTokenScanner>() ?? gameObject.AddComponent<QrTokenScanner>();
             pointer = new GameObject("Finger selection ray").AddComponent<LineRenderer>();
             pointer.positionCount = 2; pointer.useWorldSpace = true;
@@ -79,9 +85,31 @@ namespace HAgoesQuest
 
         static bool HandReady(OVRHand hand) => hand && hand.IsTracked && !hand.IsSystemGestureInProgress;
 
+        public static void BindPointerToTrackingSpace(OVRHand hand, Transform trackingSpace)
+        {
+            if (hand && hand.PointerPose && trackingSpace && hand.PointerPose.parent != trackingSpace)
+                hand.PointerPose.SetParent(trackingSpace, false);
+        }
+        void RepairHandPointers()
+        {
+            if (!Rig) return;
+            BindPointerToTrackingSpace(LeftHand, Rig.trackingSpace);
+            BindPointerToTrackingSpace(RightHand, Rig.trackingSpace);
+        }
+        void RestoreHandInput()
+        {
+            RepairHandPointers(); gate.Reset(); menuGate.Reset(); magic?.Cancel(); RecenterMenu();
+        }
+        void ToggleMenu()
+        {
+            CancelPlacement();
+            if (menu) CloseMenu(); else Home();
+        }
+
         void Update()
         {
             if (!head || ha == null) return;
+            RepairHandPointers();
             bool inputAllowed = Application.isFocused && (Application.isEditor || (OVRManager.hasInputFocus && OVRManager.hasVrFocus));
             if (MRUK.Instance.GetCurrentRoom() != null && (walkTrail.Count == 0 || Vector3.Distance(walkTrail[walkTrail.Count - 1], head.position) > 0.3f))
             {
@@ -98,12 +126,11 @@ namespace HAgoesQuest
             }
 #endif
             bool leftDown = HandReady(LeftHand) && LeftHand.GetFingerIsPinching(OVRHand.HandFinger.Index);
-            bool menuPressed = (leftDown && !previousMenuPinch) || OVRInput.GetDown(OVRInput.RawButton.X);
+            bool menuPressed = menuGate.Step("menu", leftDown, HandReady(LeftHand) && inputAllowed, Time.unscaledTime) || OVRInput.GetDown(OVRInput.RawButton.X);
 #if UNITY_EDITOR
             menuPressed |= UnityEngine.InputSystem.Keyboard.current?.tabKey.wasPressedThisFrame == true;
 #endif
-            previousMenuPinch = leftDown;
-            if (menuPressed && inputAllowed && !operationBusy && !ha.Connecting) { CancelPlacement(); Home(); }
+            if (menuPressed && inputAllowed && !operationBusy && !ha.Connecting) ToggleMenu();
 
             bool hand = HandReady(RightHand);
             bool controller = !hand && OVRInput.IsControllerConnected(OVRInput.Controller.RTouch) &&
@@ -208,7 +235,7 @@ namespace HAgoesQuest
                 pointer.SetPosition(0, start); pointer.SetPosition(1, aim);
             }
             magic?.Tick(RightHand, rightSkeleton, head, markers.Values, ha, inputAllowed && !menu && placing == null && !operationBusy && !scanBusy && !bindings.Busy);
-            if (gate.Step(key, down, tracked && !operationBusy && inputAllowed && (magic == null || !magic.Flying || menu), Time.realtimeSinceStartup))
+            if (gate.Step(key, down, tracked && !operationBusy && inputAllowed, Time.realtimeSinceStartup))
             {
                 if (placing != null && placementValid) FreezePlacement(aim);
                 else if (focused) focused.Activate();
@@ -255,7 +282,7 @@ namespace HAgoesQuest
             Button(1, "Entität mit der Hand platzieren", () => { page = 0; EntityMenu(); }, "lamp");
             Button(2, "Wohnung erfassen & Karte ansehen", MapMenu, "map");
             Button(3, "Einstellungen · Magie & Positionen", MagicSettings, "map");
-            Button(4, "Menü schließen · Linker Pinch öffnet es", CloseMenu);
+            Button(4, "Menü schließen · Linker Pinch öffnet / schließt", CloseMenu);
             Button(5, "Platzierte Entitäten verwalten / löschen", () => PlacedMenu(0));
         }
 
@@ -595,7 +622,7 @@ namespace HAgoesQuest
                 notice = result == MRUK.LoadDeviceResult.Success ? "Raum geladen. Jetzt Entitäten zuordnen." : "Kein Raum geladen. Raumscan und Berechtigung prüfen.";
             }
             catch { notice = "Raumerfassung fehlgeschlagen. Bitte auf der Quest erneut versuchen."; }
-            finally { scanBusy = false; gate.Reset(); RecenterMenu(); }
+            finally { scanBusy = false; RestoreHandInput(); }
         }
 
         static async Task<bool> RequestScan() => await OVRScene.RequestSpaceSetup();
@@ -661,19 +688,26 @@ namespace HAgoesQuest
 
         static string Short(string value, int length) => value.Length <= length ? value : value.Substring(0, length - 1) + "…";
         static string IconFor(string id) => EntityPolicy.Domain(id) == "light" ? "lamp" : EntityPolicy.Domain(id) == "switch" ? "switch" : "sensor";
-        void OnDestroy() { magic?.Cancel(); if (pointer) { Destroy(pointer.material); Destroy(pointer.gameObject); } }
+        void OnDestroy()
+        {
+            OVRManager.InputFocusAcquired -= RestoreHandInput;
+            if (subscribedDisplay != null) subscribedDisplay.RecenteredPose -= RestoreHandInput;
+            magic?.Cancel(); if (pointer) { Destroy(pointer.material); Destroy(pointer.gameObject); }
+        }
         void OnApplicationFocus(bool focus)
         {
             magic?.Cancel();
             gate.Reset();
-            if (focus) { previousMenuPinch = false; RecenterMenu(); }
+            menuGate.Reset();
+            if (focus) RestoreHandInput();
             if (!focus && placement.Phase != PlacementPhase.Confirm) placement.Reset();
         }
         void OnApplicationPause(bool pause)
         {
             magic?.Cancel();
             gate.Reset();
-            if (!pause) { previousMenuPinch = false; RecenterMenu(); }
+            menuGate.Reset();
+            if (!pause) RestoreHandInput();
             if (pause && placement.Phase != PlacementPhase.Confirm) placement.Reset();
         }
     }

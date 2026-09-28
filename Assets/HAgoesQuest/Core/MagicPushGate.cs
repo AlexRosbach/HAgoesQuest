@@ -44,7 +44,7 @@ namespace HAgoesQuest.Core
             {
                 if (speed > 0.30) { settledAt = -1; return false; }
                 if (settledAt < 0) settledAt = now;
-                if (now-settledAt >= 0.25)
+                if (now-settledAt >= 0.15)
                 {
                     Armed = true; armedAt = now; origin = position; direction = forward;
                 }
@@ -56,7 +56,7 @@ namespace HAgoesQuest.Core
             if (now-armedAt > 0.65 || lateral > 0.09 || along < -0.06) { Reset(); return false; }
             if (along >= 0.12 && delta.Dot(direction)/dt >= 0.65)
             {
-                firedAt = position; latched = true; nextAllowed = now+1.2; Reset(); return true;
+                firedAt = position; latched = true; nextAllowed = now+0.35; Reset(); return true;
             }
             return false;
         }

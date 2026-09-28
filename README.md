@@ -2,7 +2,9 @@
 
 Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Fingerzeiger auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: installierbare Entwicklungs-APK 0.4.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 62 Kernprüfungen und 48 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+**Stand: installierbare Entwicklungs-APK 0.4.1 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 68 Kernprüfungen und 54 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+
+Neu in 0.4.1: Handzeiger bleiben bei Neukalibrierung im richtigen Koordinatenraum; linker Pinch öffnet und schließt das Menü; mehrere Feuerbälle nacheinander. [Details](docs/VERSION-0.4.1.md).
 
 Neu in 0.4.0: optionaler Magie-Modus mit flacher rechter Hand, gezieltem Vorwärtsstoß und generiertem grünem Feuerball samt Schweif und Aufprall. [Anleitung](docs/VERSION-0.4.0.md) · [Grafik und Prompt](docs/ART-MAGIC.md).
 

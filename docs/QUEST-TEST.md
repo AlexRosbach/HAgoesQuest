@@ -74,3 +74,10 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - Keine Auslösung durch Gehen, Zurückziehen des Kopfes, seitliches Winken, langsames Hinreichen, geschlossene Hand, Trackingverlust oder gehaltene Hand nach einem Stoß.
 - Sensoren, reine Anzeigen, veraltete Zustände, Menüs, Platzierung und Raumscan dürfen keine Magie-Schaltbefehle auslösen.
 - Nach Rücknahme/Schließen der Hand und Ablauf der Pause muss ein neuer Stoß möglich sein.
+
+## Regressionen ab 0.4.1
+
+- Räume im Quest-Systemdialog neu erstellen; anschließend mehrere Menüeinträge mit der rechten Hand auswählen.
+- Mit rechtem Daumen/Zeigefinger lange die Quest-Neukalibrierung ausführen. Finger lösen; der rechte Zeiger muss weiter auf Icons und Menü zeigen und neue Pinches erkennen.
+- Linker Pinch öffnet, nach Loslassen schließt ein weiterer Pinch auch Untermenüs. Gedrückthalten darf das Menü nicht wiederholt umschalten.
+- Drei getrennte Vorwärtsstöße mit jeweiligem Zurücknehmen ausführen, ohne auf das Ende der Fluganimation zu warten. Pro Geste maximal ein Befehl, kein automatisch wiederholtes Schalten.

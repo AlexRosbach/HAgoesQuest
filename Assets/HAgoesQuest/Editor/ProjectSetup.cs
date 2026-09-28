@@ -28,8 +28,8 @@ namespace HAgoesQuest.Editor
         {
             PlayerSettings.companyName = "HAgoesQuest";
             PlayerSettings.productName = "HA goes Quest";
-            PlayerSettings.bundleVersion = "0.4.0";
-            PlayerSettings.Android.bundleVersionCode = 6;
+            PlayerSettings.bundleVersion = "0.4.1";
+            PlayerSettings.Android.bundleVersionCode = 7;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.alexrosbach.hagoesquest");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
@@ -168,14 +168,21 @@ namespace HAgoesQuest.Editor
                 }
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
+            var pointerSettings = new SerializedObject(go.GetComponent<OVRHand>());
+            pointerSettings.FindProperty("_pointerPoseRoot").objectReferenceValue = parent.parent;
+            pointerSettings.ApplyModifiedPropertiesWithoutUndo();
             return go.GetComponent<OVRHand>();
         }
 
         static void UpgradeScene()
         {
+            var rig = UnityEngine.Object.FindFirstObjectByType<OVRCameraRig>();
             // Keep only invisible tracking; the user's real hands remain visible in passthrough.
             foreach (var hand in UnityEngine.Object.FindObjectsByType<OVRHand>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
+                var settings = new SerializedObject(hand);
+                settings.FindProperty("_pointerPoseRoot").objectReferenceValue = rig.trackingSpace;
+                settings.ApplyModifiedPropertiesWithoutUndo();
                 foreach (var mesh in hand.GetComponentsInChildren<OVRMeshRenderer>(true)) mesh.enabled = false;
                 foreach (var renderer in hand.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
             }
