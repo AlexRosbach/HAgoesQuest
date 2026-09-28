@@ -9,10 +9,10 @@ namespace HAgoesQuest
         const string Preference = "HAgoesQuest.magic.enabled.v1";
         readonly MagicPushGate gate = new MagicPushGate();
         WorldCard highlighted;
-        MagicFireball effect;
+        readonly List<MagicFireball> effects = new List<MagicFireball>();
         Vector3 armedPalm;
         public bool Enabled { get; private set; }
-        public bool Flying => effect;
+        public bool Flying => effects.Exists(effect => effect);
         public MagicCasting() { Enabled = PlayerPrefs.GetInt(Preference, 0) == 1; }
         public void SetEnabled(bool enabled)
         {
@@ -24,14 +24,16 @@ namespace HAgoesQuest
             gate.Reset();
             if (highlighted) highlighted.SetMagicFocus(false);
             highlighted = null;
-            if (effect) Object.Destroy(effect.gameObject);
+            foreach (var effect in effects) if (effect) Object.Destroy(effect.gameObject);
+            effects.Clear();
         }
         public void Tick(OVRHand hand, OVRSkeleton skeleton, Transform head,
             IEnumerable<WorldCard> markers, HomeAssistantConnection ha, bool allowed)
         {
             if (highlighted) highlighted.SetMagicFocus(false);
             highlighted = null;
-            if (!Enabled || !allowed || !ha.Fresh || ha.Busy || effect || !hand || !hand.IsTracked ||
+            effects.RemoveAll(effect => !effect);
+            if (!Enabled || !allowed || !hand || !hand.IsTracked ||
                 hand.IsSystemGestureInProgress || hand.HandConfidence != OVRHand.TrackingConfidence.High || !skeleton || !skeleton.IsDataValid)
             { gate.Reset(); return; }
             if (!OpenPalm(skeleton, out var palm, out var normal))
@@ -42,7 +44,7 @@ namespace HAgoesQuest
             WorldCard target = null;
             foreach (var card in markers)
             {
-                if (!card || !card.gameObject.activeInHierarchy || !card.Interactable || card.ReadOnly) continue;
+                if (!ha.Fresh || ha.Busy || effects.Count >= 4 || !card || !card.gameObject.activeInHierarchy || !card.Interactable || card.ReadOnly) continue;
                 var to = card.transform.position-palm;
                 if (to.magnitude < 0.2f || to.magnitude > 5 || Vector3.Dot(head.forward, (card.transform.position-head.position).normalized) < 0.65f) continue;
                 float alignment = Vector3.Dot(normal, to.normalized);
@@ -56,7 +58,7 @@ namespace HAgoesQuest
             if (!wasArmed && gate.Armed) armedPalm = palm;
             if (target) { target.SetMagicFocus(true, gate.Armed); highlighted = target; }
             if (cast && target && Vector3.Dot(palm-armedPalm, toward) >= 0.10f && ha.Switch(target.EntityId))
-                effect = MagicFireball.Launch(palm + toward*0.04f, target, head);
+                effects.Add(MagicFireball.Launch(palm + toward*0.04f, target, head));
         }
 
         public static Transform Bone(OVRSkeleton skeleton, OVRSkeleton.BoneId legacy, OVRSkeleton.BoneId xr)

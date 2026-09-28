@@ -48,6 +48,25 @@ namespace HAgoesQuest.Testing
             resultPath = Environment.GetEnvironmentVariable("HA_QUEST_TEST_RESULT");
             ha = GetComponent<HomeAssistantConnection>();
             yield return null;
+            var trackingRoot = new GameObject("Shifted tracking origin").transform;
+            trackingRoot.SetPositionAndRotation(new Vector3(3,1,-2), Quaternion.Euler(0,70,0));
+            var pointerHand = new GameObject("Pointer calibration fixture").AddComponent<OVRHand>(); pointerHand.enabled = false;
+            pointerHand.PointerPose.localPosition = new Vector3(0.2f,-0.1f,0.5f);
+            pointerHand.PointerPose.localRotation = Quaternion.identity;
+            var expectedOrigin = trackingRoot.TransformPoint(pointerHand.PointerPose.localPosition);
+            if (!Check(Vector3.Distance(pointerHand.PointerPose.position, expectedOrigin) > 1, "Unbound SDK pointer reproduces offset after tracking-space movement")) yield break;
+            QuestHome.BindPointerToTrackingSpace(pointerHand, trackingRoot);
+            if (!Check(Vector3.Distance(pointerHand.PointerPose.position, expectedOrigin) < 0.001f && Vector3.Dot(pointerHand.PointerPose.forward, trackingRoot.forward) > 0.999f,
+                "Pointer pose converts tracking-local position and direction into world space")) yield break;
+            var pointerTarget = WorldCard.Create(null, pointerHand.PointerPose.position + pointerHand.PointerPose.forward*1.4f, new Vector2(400,100), "Calibration target", () => {});
+            pointerTarget.transform.rotation = pointerHand.PointerPose.rotation;
+            trackingRoot.SetPositionAndRotation(new Vector3(-2,0.5f,1), Quaternion.Euler(0,-35,0));
+            pointerHand.PointerPose.localRotation = Quaternion.LookRotation(trackingRoot.InverseTransformPoint(pointerTarget.transform.position)-pointerHand.PointerPose.localPosition);
+            QuestHome.BindPointerToTrackingSpace(pointerHand, trackingRoot);
+            Physics.SyncTransforms();
+            if (!Check(Physics.Raycast(new Ray(pointerHand.PointerPose.position,pointerHand.PointerPose.forward), out var pointerHit, 10) && pointerHit.collider.GetComponent<WorldCard>() == pointerTarget,
+                "Right-hand ray still hits world menu after translation and rotation during recenter")) yield break;
+            Destroy(pointerTarget.gameObject); Destroy(pointerHand.gameObject); Destroy(trackingRoot.gameObject);
             string testToken = "example-token-only-for-tests-123456789";
             if (!Check(QrConnection.TryParse(testToken, out _, out var raw) && raw == testToken, "Raw QR token accepted")) yield break;
             string payload = new JObject { ["baseUrl"] = "https://ha.example.com", ["accessToken"] = testToken }.ToString();
@@ -121,6 +140,8 @@ namespace HAgoesQuest.Testing
             fireTarget.MakeCompactMarker();
             var fireHead = new GameObject("Magic test head").transform;
             var fireball = MagicFireball.Launch(Vector3.zero, fireTarget, fireHead);
+            var secondFireball = MagicFireball.Launch(new Vector3(0.1f,0,0), fireTarget, fireHead);
+            if (!Check(fireball && secondFireball && fireball != secondFireball, "Fireballs can coexist with independent flight effects")) yield break;
             if (!Check(fireball && fireball.GetComponentsInChildren<SpriteRenderer>().Length == 16, "Generated emerald texture loads into actual fireball and trail")) yield break;
             yield return new WaitForSeconds(0.12f);
             var lead = fireball.GetComponentsInChildren<SpriteRenderer>()[0];
@@ -169,6 +190,10 @@ namespace HAgoesQuest.Testing
             Press("Löschen"); Press("Ja");
             if (!Check(!((System.Collections.Generic.Dictionary<string, WorldCard>)Get("markers")).Any(),
                 "Placed-entity management deletes an entity absent from HA listing")) yield break;
+            Invoke("ToggleMenu");
+            if (!Check((GameObject)Get("menu") == null, "Second left-menu action closes the open submenu")) yield break;
+            Invoke("ToggleMenu");
+            if (!Check((GameObject)Get("menu") != null, "Next left-menu action opens the main menu again")) yield break;
             Invoke("CloseMenu"); Destroy(testHead.gameObject);
             Destroy(bindingHost);
             bool completed = false, accepted = false;
