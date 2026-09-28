@@ -260,10 +260,10 @@ namespace HAgoesQuest
         void ConnectionMenu()
         {
             if (bindings.Busy || operationBusy) { notice = "Bitte warten, bis die Positionen geladen sind."; return; }
-            if (draftUrl == "https://" && !string.IsNullOrEmpty(ha.BaseUrl)) draftUrl = ha.BaseUrl;
+            if (draftUrl == "https://" && !string.IsNullOrEmpty(ha.BaseUrl)) { draftUrl = ha.BaseUrl; allowHttp = ha.AllowsInsecureHttp; }
             NewMenu("Verbinde dein Zuhause");
             Button(0, "Adresse: " + Short(draftUrl, 47), () => OpenKeyboard(false));
-            Button(1, draftToken.Length == 0 ? "Zugangstoken eingeben / einfügen" : "Zugangstoken bereit · " + draftToken.Length + " Zeichen", () => OpenKeyboard(true));
+            Button(1, draftToken.Length == 0 ? (ha.CanReuseToken(draftUrl, allowHttp) ? "Gespeicherter Token wird verwendet · ändern" : "Zugangstoken eingeben / einfügen") : "Zugangstoken bereit · " + draftToken.Length + " Zeichen", () => OpenKeyboard(true));
             Button(2, allowHttp ? "Lokales HTTP: erlaubt (unverschlüsselt)" : "Lokales HTTP: aus · HTTPS empfohlen", () => { allowHttp = !allowHttp; ConnectionMenu(); });
             Button(3, "Verbindung prüfen & speichern", () =>
             {

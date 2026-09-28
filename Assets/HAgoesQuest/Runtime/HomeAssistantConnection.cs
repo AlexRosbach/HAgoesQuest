@@ -37,6 +37,14 @@ namespace HAgoesQuest
         public bool Demo { get; private set; }
         public bool Connecting { get; private set; }
         public string BaseUrl => settings?.baseUrl ?? "";
+        public bool AllowsInsecureHttp => remembered?.allowInsecureHttp ?? false;
+        ConnectionSettings remembered;
+        public bool CanReuseToken(string url, bool allowHttp)
+        {
+            if (remembered == null || string.IsNullOrWhiteSpace(remembered.accessToken)) return false;
+            try { return HaAddress.Parse(url.Trim(), allowHttp) == HaAddress.Parse(remembered.baseUrl, remembered.allowInsecureHttp); }
+            catch { return false; }
+        }
         public string ServerIdentity { get; private set; }
         public float LastSnapshot { get; private set; } = -100;
         public bool Fresh => Online && Time.realtimeSinceStartup - LastSnapshot < 6;
@@ -67,6 +75,7 @@ namespace HAgoesQuest
                 if (string.IsNullOrWhiteSpace(settings.accessToken) || settings.accessToken.Contains("\n") || settings.accessToken.Contains("\r"))
                     throw new ArgumentException();
                 ServerIdentity = address.AbsoluteUri;
+                remembered = settings;
             }
             catch
             {
@@ -112,6 +121,8 @@ namespace HAgoesQuest
             try
             {
                 candidate = HaAddress.Parse(url.Trim(), allowHttp);
+                // A blank field reuses only validated credentials for the exact same server.
+                if (string.IsNullOrWhiteSpace(token) && CanReuseToken(url, allowHttp)) token = remembered.accessToken;
                 if (string.IsNullOrWhiteSpace(token) || token.Contains("\n") || token.Contains("\r")) throw new ArgumentException();
             }
             catch { Status = "Basis-URL und Token prüfen. HTTP muss ausdrücklich erlaubt sein."; done(false); return; }
@@ -138,6 +149,7 @@ namespace HAgoesQuest
                     {
                         var next = ParseEntities(request.downloadHandler.text);
                         bool saved = ConnectionVault.Save(settings);
+                        remembered = settings;
                         Entities.Clear();
                         foreach (var entity in next) Entities[entity.Id] = entity;
                         ServerIdentity = address.AbsoluteUri;
@@ -162,6 +174,7 @@ namespace HAgoesQuest
         public void ForgetConnection()
         {
             ConnectionVault.Forget();
+            remembered = null;
             EnterDemo();
         }
 

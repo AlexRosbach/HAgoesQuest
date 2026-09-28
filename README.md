@@ -2,7 +2,9 @@
 
 Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Fingerzeiger auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: installierbare Entwicklungs-APK 0.3.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 48 Kernprüfungen und 27 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+**Stand: installierbare Entwicklungs-APK 0.3.1 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 48 Kernprüfungen und 32 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+
+Neu in 0.3.1: gespeicherten Token bei Updates und im Verbindungsmenü weiterverwenden; Signaturkontrolle für kompatible APKs. [Update-Anleitung](docs/VERSION-0.3.1.md).
 
 Neu in 0.3.0: keine virtuellen Hände, Boundaryless-AR, Typ-/Raumfilter und Suche, kompakte Icons mit Namen/Werten ab 30 cm Nähe, Fingerstrahl und QR-Zugang. [Details und QR-Anleitung](docs/VERSION-0.3.0.md).
 
