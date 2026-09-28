@@ -20,7 +20,7 @@ namespace HAgoesQuest
 
     public sealed class HaEntity
     {
-        public string Id, Name, State, Unit;
+        public string Id, Name, State, Unit, AreaId = "", AreaName = "";
         public string DisplayValue => State == "on" ? "An" : State == "off" ? "Aus" :
             State == "unavailable" ? "Nicht verfügbar" : State == "unknown" ? "Unbekannt" :
             State + (string.IsNullOrEmpty(Unit) ? "" : " " + Unit);
@@ -44,6 +44,10 @@ namespace HAgoesQuest
         Uri address;
         int generation;
         bool refresh;
+        readonly Dictionary<string, string[]> areas = new Dictionary<string, string[]>();
+        public string AreaStatus { get; private set; } = "Räume noch nicht geladen";
+        public bool AreasLoading { get; private set; }
+        int connectionRevision;
 
         void Start()
         {
@@ -75,13 +79,14 @@ namespace HAgoesQuest
                 Connecting = true;
                 StartCoroutine(ValidateConnection(_ => { }));
             }
-            else StartCoroutine(Poll());
+            else { StartCoroutine(Poll()); RefreshAreas(); }
         }
 
         public void EnterDemo()
         {
             StopAllCoroutines();
             generation++;
+            connectionRevision++; areas.Clear(); AreasLoading = false;
             settings = null;
             address = null;
             Demo = Online = true;
@@ -90,6 +95,10 @@ namespace HAgoesQuest
             Entities.Clear();
             Entities["light.demo"] = new HaEntity { Id = "light.demo", Name = "Leselampe", State = "off", Unit = "" };
             Entities["sensor.demo_temperature"] = new HaEntity { Id = "sensor.demo_temperature", Name = "Raumtemperatur", State = "21.5", Unit = "°C" };
+            Entities["switch.demo"] = new HaEntity { Id = "switch.demo", Name = "Steckdose", State = "off", Unit = "", AreaId = "living", AreaName = "Wohnzimmer" };
+            Entities["light.demo"].AreaId = "living"; Entities["light.demo"].AreaName = "Wohnzimmer";
+            Entities["sensor.demo_temperature"].AreaId = "kitchen"; Entities["sensor.demo_temperature"].AreaName = "Küche";
+            AreaStatus = "Demo-Räume";
             LastSnapshot = Time.realtimeSinceStartup;
             Status = "DEMO · Über „Verbinden“ dein Zuhause einrichten.";
             ServerChanged?.Invoke();
@@ -108,6 +117,7 @@ namespace HAgoesQuest
             catch { Status = "Basis-URL und Token prüfen. HTTP muss ausdrücklich erlaubt sein."; done(false); return; }
             StopAllCoroutines();
             generation++;
+            connectionRevision++; areas.Clear(); AreasLoading = false;
             Demo = Online = Busy = false;
             Connecting = true;
             settings = new ConnectionSettings { baseUrl = candidate.AbsoluteUri, accessToken = token.Trim(), allowInsecureHttp = allowHttp };
@@ -144,7 +154,7 @@ namespace HAgoesQuest
                     : "Verbindung fehlgeschlagen · Adresse, WLAN und Zertifikat prüfen.";
             }
             Connecting = false;
-            if (success) { ServerChanged?.Invoke(); StartCoroutine(Poll()); }
+            if (success) { ServerChanged?.Invoke(); StartCoroutine(Poll()); RefreshAreas(); }
             Changed?.Invoke();
             done(success);
         }
@@ -191,7 +201,7 @@ namespace HAgoesQuest
                                 {
                                     var next = ParseEntities(request.downloadHandler.text);
                                     Entities.Clear();
-                                    foreach (var entity in next) Entities[entity.Id] = entity;
+                                    foreach (var entity in next) { ApplyArea(entity); Entities[entity.Id] = entity; }
                                     Online = true;
                                     LastSnapshot = Time.realtimeSinceStartup;
                                     Status = "Home Assistant verbunden";
@@ -227,6 +237,44 @@ namespace HAgoesQuest
                     State = (string)item["state"] ?? "unknown", Unit = (string)attributes?["unit_of_measurement"] ?? "" });
             }
             return result;
+        }
+
+        void ApplyArea(HaEntity entity)
+        {
+            if (areas.TryGetValue(entity.Id, out var area)) { entity.AreaId = area[0]; entity.AreaName = area[1]; }
+        }
+
+        public void RefreshAreas()
+        {
+            if (Demo || Connecting || AreasLoading || address == null) return;
+            StartCoroutine(LoadAreas(connectionRevision));
+        }
+
+        IEnumerator LoadAreas(int revision)
+        {
+            AreasLoading = true; AreaStatus = "Räume werden geladen …";
+            // HA resolves the entity's explicit area, falling back to its device's area.
+            const string template = "[{% for s in states %}{\"entity_id\":{{ s.entity_id | to_json }},\"area_id\":{{ area_id(s.entity_id) | to_json }},\"area_name\":{{ area_name(s.entity_id) | to_json }}}{% if not loop.last %},{% endif %}{% endfor %}]";
+            using (var request = Request("api/template", UnityWebRequest.kHttpVerbPOST, new JObject { ["template"] = template }.ToString()))
+            {
+                yield return request.SendWebRequest();
+                if (revision != connectionRevision) yield break;
+                try
+                {
+                    if (request.result != UnityWebRequest.Result.Success) throw new InvalidOperationException();
+                    var parsed = JArray.Parse(request.downloadHandler.text);
+                    areas.Clear();
+                    foreach (JObject item in parsed)
+                    {
+                        string id = (string)item["entity_id"];
+                        if (id != null) areas[id] = new[] { (string)item["area_id"] ?? "", (string)item["area_name"] ?? "" };
+                    }
+                    foreach (var entity in Entities.Values) ApplyArea(entity);
+                    AreaStatus = "Home-Assistant-Räume geladen";
+                }
+                catch { AreaStatus = "Räume nicht verfügbar · neu laden oder HA-Berechtigung prüfen"; }
+            }
+            AreasLoading = false; Changed?.Invoke();
         }
 
         public void Switch(string id)

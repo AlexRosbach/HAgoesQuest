@@ -18,3 +18,5 @@ Builds/
 TestResults/
 tests/bin/
 tests/obj/
+/Assets/Resources/DevAgentSettings.asset
+/Assets/Resources/DevAgentSettings.asset.meta

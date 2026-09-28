@@ -17,6 +17,8 @@ namespace HAgoesQuest
         CanvasGroup group;
         bool focused;
         float shownAt, pulseAt = -100;
+        float detailAlpha;
+        bool showDetails;
         string lastState;
         static Sprite rounded;
         static readonly System.Collections.Generic.Dictionary<string, Sprite> icons = new System.Collections.Generic.Dictionary<string, Sprite>();
@@ -64,7 +66,31 @@ namespace HAgoesQuest
 
         public void Focus(bool focused)
         {
-            this.focused = focused && Interactable;
+            this.focused = focused && (Interactable || IsMarker);
+        }
+
+        public void SetNearby(bool nearby) { showDetails = nearby; }
+
+        public void MakeCompactMarker()
+        {
+            IsMarker = true;
+            GetComponent<RectTransform>().sizeDelta = new Vector2(90, 90);
+            GetComponent<BoxCollider>().size = new Vector3(90, 90, 18);
+            background.enabled = false;
+            GetComponent<Outline>().enabled = false;
+            if (icon)
+            {
+                icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = Vector2.one * 0.5f;
+                icon.rectTransform.anchoredPosition = Vector2.zero;
+                icon.rectTransform.sizeDelta = new Vector2(90, 90);
+            }
+            Label.rectTransform.anchorMin = Label.rectTransform.anchorMax = new Vector2(0.5f, 0);
+            Label.rectTransform.pivot = new Vector2(0.5f, 1);
+            Label.rectTransform.sizeDelta = new Vector2(270, 85);
+            Label.rectTransform.anchoredPosition = new Vector2(0, -8);
+            Label.fontSize = 18;
+            Label.alignment = TextAnchor.UpperCenter;
+            Label.color = Color.clear;
         }
 
         public void Activate()
@@ -120,6 +146,11 @@ namespace HAgoesQuest
             float size = Mathf.Lerp(0.9f, 1, ease) * (focused ? 1.025f : 1) * (1 + Mathf.Sin(pulse * Mathf.PI) * 0.035f);
             transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * (size * 0.001f), 1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
             group.alpha = ease;
+            if (IsMarker)
+            {
+                detailAlpha = Mathf.MoveTowards(detailAlpha, showDetails ? 1 : 0, Time.unscaledDeltaTime * 8);
+                Label.color = new Color(1, 1, 1, detailAlpha);
+            }
             Color target = focused ? new Color(0.025f, 0.24f, 0.27f, 0.98f) : idle;
             target = Color.Lerp(target, new Color(0.1f, 0.58f, 0.48f, 1), pulse * 0.6f);
             background.color = Color.Lerp(background.color, target, 1 - Mathf.Exp(-14 * Time.unscaledDeltaTime));

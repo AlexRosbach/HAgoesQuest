@@ -13,6 +13,11 @@ http.createServer((req, res) => {
   if (req.headers.authorization !== 'Bearer test-token') return reply(401, {message: 'Unauthorized'});
   if (!online) return reply(503, {message: 'Offline'});
   if (req.url === '/api/states' && req.method === 'GET') return reply(200, entities());
+  if (req.url === '/api/template' && req.method === 'POST') return reply(200, [
+    { entity_id: 'light.test', area_id: 'living', area_name: 'Wohnzimmer' },
+    { entity_id: 'sensor.temperature', area_id: 'kitchen', area_name: 'Küche' },
+    { entity_id: 'lock.door', area_id: null, area_name: null },
+  ]);
   if (req.method === 'POST' && /^\/api\/services\/light\/turn_(on|off)$/.test(req.url)) {
     let body = '';
     req.on('data', chunk => { body += chunk; });

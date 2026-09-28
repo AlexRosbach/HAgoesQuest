@@ -20,7 +20,7 @@ namespace HAgoesQuest
             display = WorldCard.Create(parent, new Vector3(0, 0.27f, 0), new Vector2(740, 65), "");
             display.Interactable = false;
             display.Label.fontSize = 21;
-            string[] rows = { "1234567890", "qwertzuiop", "asdfghjkl", "yxcvbnm.-_/:" };
+            string[] rows = { "1234567890", "qwertzuiopü", "asdfghjklöä", "yxcvbnm.-_/:" };
             for (int row = 0; row < rows.Length; row++)
             for (int col = 0; col < rows[row].Length; col++)
             {
@@ -33,6 +33,7 @@ namespace HAgoesQuest
             Small(-0.09f, "Löschen", () => { if (value.Length > 0) value = value.Substring(0, value.Length - 1); Refresh(); });
             Small(0.09f, "Leeren", () => { value = ""; Refresh(); });
             Small(0.27f, "Einfügen", () => { string pasted = GUIUtility.systemCopyBuffer; if (!string.IsNullOrEmpty(pasted) && pasted.Length <= 4096) value = pasted.Trim(); Refresh(); });
+            if (!secret) WorldCard.Create(parent, new Vector3(0, -0.235f, 0), new Vector2(350, 32), "Leerzeichen", () => { if (value.Length < 4096) value += " "; Refresh(); });
             WorldCard.Create(parent, new Vector3(-0.19f, -0.29f, 0), new Vector2(350, 65), "Zurück", cancel);
             WorldCard.Create(parent, new Vector3(0.19f, -0.29f, 0), new Vector2(350, 65), "Übernehmen", () => accept(value));
             Refresh();
@@ -43,7 +44,7 @@ namespace HAgoesQuest
         {
             display.Label.text = secret ? new string('•', Math.Min(32, value.Length)) + "  (" + value.Length + " Zeichen)" :
                 value.Length > 60 ? "…" + value.Substring(value.Length - 60) : value;
-            if (value.Length == 0) display.Label.text = secret ? "Token eingeben oder einfügen" : "Adresse eingeben";
+            if (value.Length == 0) display.Label.text = secret ? "Token eingeben oder einfügen" : "Text eingeben";
         }
     }
 }

@@ -28,8 +28,8 @@ namespace HAgoesQuest.Editor
         {
             PlayerSettings.companyName = "HAgoesQuest";
             PlayerSettings.productName = "HA goes Quest";
-            PlayerSettings.bundleVersion = "0.2.0";
-            PlayerSettings.Android.bundleVersionCode = 2;
+            PlayerSettings.bundleVersion = "0.3.0";
+            PlayerSettings.Android.bundleVersionCode = 3;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.alexrosbach.hagoesquest");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
@@ -42,7 +42,7 @@ namespace HAgoesQuest.Editor
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
             QualitySettings.antiAliasing = 4;
-            foreach (string iconName in new[] { "lamp", "map", "sensor" })
+            foreach (string iconName in new[] { "lamp", "map", "sensor", "switch" })
             {
                 string iconPath = "Assets/HAgoesQuest/Resources/Icons/" + iconName + ".png";
                 var importer = AssetImporter.GetAtPath(iconPath) as TextureImporter;
@@ -66,6 +66,7 @@ namespace HAgoesQuest.Editor
             config.sceneSupport = OVRProjectConfig.FeatureSupport.Required;
             config.insightPassthroughSupport = OVRProjectConfig.FeatureSupport.Required;
             config.systemLoadingScreenBackground = OVRProjectConfig.SystemLoadingScreenBackground.ContextualPassthrough;
+            config.isPassthroughCameraAccessEnabled = true;
             OVRProjectConfig.CommitProjectConfig(config);
 
             if (!EditorBuildSettings.TryGetConfigObject(XRGeneralSettings.k_SettingsKey, out XRGeneralSettingsPerBuildTarget all))
@@ -108,6 +109,7 @@ namespace HAgoesQuest.Editor
             if (File.Exists(ScenePath))
             {
                 EditorSceneManager.OpenScene(ScenePath);
+                UpgradeScene();
                 return;
             }
             Directory.CreateDirectory("Assets/HAgoesQuest/Scenes");
@@ -136,6 +138,7 @@ namespace HAgoesQuest.Editor
             home.Rig = rig;
             home.LeftHand = CreateHand(rig.leftHandAnchor, 0);
             home.RightHand = CreateHand(rig.rightHandAnchor, 1);
+            UpgradeScene();
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             Selection.activeGameObject = app;
@@ -160,6 +163,19 @@ namespace HAgoesQuest.Editor
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
             return go.GetComponent<OVRHand>();
+        }
+
+        static void UpgradeScene()
+        {
+            // Keep only invisible tracking; the user's real hands remain visible in passthrough.
+            foreach (var hand in UnityEngine.Object.FindObjectsByType<OVRHand>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                foreach (var mesh in hand.GetComponentsInChildren<OVRMeshRenderer>(true)) mesh.enabled = false;
+                foreach (var renderer in hand.GetComponentsInChildren<Renderer>(true)) renderer.enabled = false;
+            }
+            var home = UnityEngine.Object.FindFirstObjectByType<QuestHome>();
+            if (home && !home.GetComponent<QrTokenScanner>()) home.gameObject.AddComponent<QrTokenScanner>();
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene(), ScenePath);
         }
 
         [MenuItem("HA goes Quest/3 - Entwicklungs-APK bauen")]
@@ -201,11 +217,13 @@ namespace HAgoesQuest.Editor
             new XDocument(new XElement("network-security-config",
                 new XElement("base-config", new XAttribute("cleartextTrafficPermitted", "true"))))
                 .Save(Path.Combine(resources, "hagoesquest_network_config.xml"));
-            foreach (string permission in new[] { "android.permission.INTERNET", "com.oculus.permission.USE_SCENE", "com.oculus.permission.USE_ANCHOR_API" })
+            foreach (string permission in new[] { "android.permission.INTERNET", "com.oculus.permission.USE_SCENE", "com.oculus.permission.USE_ANCHOR_API", "horizonos.permission.HEADSET_CAMERA" })
             {
                 if (!xml.Root.Elements("uses-permission").Any(e => (string)e.Attribute(android + "name") == permission))
                     xml.Root.Add(new XElement("uses-permission", new XAttribute(android + "name", permission)));
             }
+            if (!xml.Root.Elements("uses-feature").Any(e => (string)e.Attribute(android + "name") == "com.oculus.feature.BOUNDARYLESS_APP"))
+                xml.Root.Add(new XElement("uses-feature", new XAttribute(android + "name", "com.oculus.feature.BOUNDARYLESS_APP"), new XAttribute(android + "required", "true")));
             xml.Save(manifest);
         }
     }
