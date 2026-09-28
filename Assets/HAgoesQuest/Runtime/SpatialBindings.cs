@@ -12,6 +12,7 @@ namespace HAgoesQuest
     [Serializable] public sealed class BindingRecord { public string entityId; public string anchorUuid; public bool displayOnly; }
     [Serializable] public sealed class BindingFile { public int version = 1; public List<BindingRecord> bindings = new List<BindingRecord>(); }
 
+    [DefaultExecutionOrder(10000)]
     public sealed class SpatialBindings : MonoBehaviour
     {
         public readonly Dictionary<string, OVRSpatialAnchor> Loaded = new Dictionary<string, OVRSpatialAnchor>();
@@ -22,6 +23,58 @@ namespace HAgoesQuest
         public bool Ready { get; private set; }
         BindingFile data = new BindingFile();
         string path;
+        readonly Core.TrackingGate headGate = new Core.TrackingGate();
+        readonly Dictionary<string, Core.TrackingGate> poseGates = new Dictionary<string, Core.TrackingGate>();
+        readonly Dictionary<string, Pose> previousPoses = new Dictionary<string, Pose>();
+        readonly HashSet<string> trackedIds = new HashSet<string>();
+        public bool TrackingReady { get; private set; }
+        int trackingEpoch;
+        float retryAt;
+        public bool CanShow(string id) => trackedIds.Contains(id) && Loaded.TryGetValue(id, out var anchor) && anchor && anchor.IsTracked && TrackingReady;
+
+        public void InvalidateTracking()
+        {
+            trackingEpoch++;
+            TrackingReady = false;
+            headGate.Reset(); trackedIds.Clear(); poseGates.Clear(); previousPoses.Clear();
+        }
+
+        void OnApplicationPause(bool paused) { InvalidateTracking(); }
+        void OnApplicationFocus(bool focused) { InvalidateTracking(); }
+
+        void LateUpdate()
+        {
+            if (Application.isEditor) return;
+            bool headTracked = Application.isFocused && OVRManager.hasVrFocus && OVRManager.hasInputFocus &&
+                OVRManager.isHmdPresent && OVRManager.tracker != null && OVRManager.tracker.isPositionTracked && Camera.main;
+            if (TrackingReady && !headTracked) InvalidateTracking();
+            TrackingReady = headGate.Step(headTracked, false, Time.unscaledTime);
+            trackedIds.Clear();
+            foreach (var pair in Loaded)
+            {
+                if (!poseGates.TryGetValue(pair.Key, out var gate)) poseGates[pair.Key] = gate = new Core.TrackingGate();
+                var anchor = pair.Value;
+                if (!anchor) { gate.Reset(); continue; }
+                var pose = new Pose(anchor.transform.position, anchor.transform.rotation);
+                bool moved = !previousPoses.TryGetValue(pair.Key, out var previous) ||
+                    Vector3.Distance(previous.position, pose.position) > 0.03f || Quaternion.Angle(previous.rotation, pose.rotation) > 3;
+                // Compare against the start of the stable interval, not just the previous frame.
+                if (moved) previousPoses[pair.Key] = pose;
+                if (gate.Step(TrackingReady && anchor.Localized && anchor.IsTracked, moved, Time.unscaledTime)) trackedIds.Add(pair.Key);
+            }
+            if (Ready && !Busy && TrackingReady && Loaded.Count < data.bindings.Count && Time.unscaledTime >= retryAt)
+            {
+                retryAt = Time.unscaledTime + 15;
+                _ = Load();
+            }
+        }
+
+        async Task<bool> WaitForTracking()
+        {
+            float deadline = Time.realtimeSinceStartup + 20;
+            while (this && !TrackingReady && Time.realtimeSinceStartup < deadline) await Task.Yield();
+            return this && TrackingReady;
+        }
         public IEnumerable<string> EntityIds => data.bindings.Select(b => b.entityId).ToArray();
         public bool Contains(string id) => data.bindings.Any(b => b.entityId == id);
         public bool DisplayOnly(string id) => data.bindings.FirstOrDefault(b => b.entityId == id)?.displayOnly ?? false;
@@ -35,6 +88,7 @@ namespace HAgoesQuest
                 if (pair.Value) Destroy(pair.Value.gameObject);
             }
             Loaded.Clear();
+            InvalidateTracking();
             data = new BindingFile();
             Ready = false;
             Initialize(server);
@@ -62,7 +116,7 @@ namespace HAgoesQuest
                 }
                 Ready = true;
             }
-            catch { Status = "Zuordnungsdatei beschädigt. Datei sichern und reparieren; sie wird nicht überschrieben."; }
+            catch { Status = L10n.T("Zuordnungsdatei beschädigt. Datei sichern und reparieren; sie wird nicht überschrieben."); }
         }
 
         void Persist()
@@ -77,60 +131,68 @@ namespace HAgoesQuest
         {
             if (Busy || !Ready) return;
             Busy = true;
-            Status = "Gespeicherte Positionen werden gesucht …";
+            Status = L10n.T("Gespeicherte Positionen werden gesucht …");
             try
             {
+                if (!await WaitForTracking()) { Status = L10n.T("Raumtracking wird gesucht. Bitte umsehen; Positionen werden automatisch erneut geladen."); return; }
                 var pending = data.bindings.Where(b => !Loaded.ContainsKey(b.entityId)).ToArray();
                 if (pending.Length > 0)
                 {
                     var unbound = new List<OVRSpatialAnchor.UnboundAnchor>();
                     var result = await OVRSpatialAnchor.LoadUnboundAnchorsAsync(pending.Select(b => Guid.Parse(b.anchorUuid)), unbound);
                     if (!result.Success) throw new InvalidOperationException();
-                    foreach (var item in unbound.ToArray())
-                    {
-                        if (!await item.LocalizeAsync(10)) continue;
-                        if (!this) return;
-                        var record = pending.FirstOrDefault(b => b.anchorUuid == item.Uuid.ToString());
-                        if (record == null || !item.TryGetPose(out var pose)) continue;
-                        var go = new GameObject("HA Anchor");
-                        go.transform.SetPositionAndRotation(pose.position, pose.rotation);
-                        var anchor = go.AddComponent<OVRSpatialAnchor>();
-                        item.BindTo(anchor);
-                        Loaded[record.entityId] = anchor;
-                        Added?.Invoke(record.entityId, anchor.transform);
-                    }
+                    // Rooms that cannot currently be seen must not delay all other rooms serially.
+                    await Task.WhenAll(unbound.Select(item => BindLoaded(item, pending)).ToArray());
                 }
                 int missing = data.bindings.Count - Loaded.Count;
-                Status = missing == 0 ? "Gespeicherte Positionen geladen." : missing + " Position(en) noch nicht gefunden. Im jeweiligen Raum erneut laden.";
+                Status = missing == 0 ? L10n.T("Anker geladen. Icons erscheinen bei stabilem Raumtracking.") : missing + L10n.T(" Position(en) noch nicht gefunden. Bitte im jeweiligen Raum umsehen; erneuter Versuch automatisch.");
             }
-            catch { Status = "Positionen konnten nicht geladen werden. Raum/Berechtigung prüfen und erneut laden."; }
-            finally { Busy = false; }
+            catch { Status = L10n.T("Positionen konnten nicht geladen werden. Raum/Berechtigung prüfen und erneut laden."); }
+            finally { Busy = false; retryAt = Time.unscaledTime + 15; }
         }
 
-        public async Task Place(string entityId, Vector3 position, bool displayOnly = false)
+        async Task BindLoaded(OVRSpatialAnchor.UnboundAnchor item, BindingRecord[] pending)
         {
-            if (Busy || !Ready || Contains(entityId)) return;
-            if (data.bindings.Count >= 50) { Status = "Der Prototyp unterstützt bis zu 50 Zuordnungen."; return; }
+            if (!await item.LocalizeAsync(10) || !this) return;
+            var record = pending.FirstOrDefault(b => b.anchorUuid == item.Uuid.ToString());
+            if (record == null || Loaded.ContainsKey(record.entityId) || !item.TryGetPose(out var pose)) return;
+            var go = new GameObject("HA Anchor");
+            go.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            var anchor = go.AddComponent<OVRSpatialAnchor>();
+            item.BindTo(anchor);
+            Loaded[record.entityId] = anchor;
+            Added?.Invoke(record.entityId, anchor.transform);
+        }
+
+        public async Task Place(string entityId, Vector3 position, bool displayOnly = false, Quaternion? rotation = null)
+        {
+            if (Busy || !Ready || !Core.EntityPolicy.Visible(entityId) || Contains(entityId)) return;
+            if (!TrackingReady) { Status = L10n.T("Bitte warten, bis das Raumtracking wieder stabil ist, und erneut platzieren."); return; }
+            if (data.bindings.Count >= 50) { Status = L10n.T("Der Prototyp unterstützt bis zu 50 Zuordnungen."); return; }
             Busy = true;
-            Status = "Position wird gespeichert …";
+            Status = L10n.T("Position wird gespeichert …");
             OVRSpatialAnchor anchor = null;
             BindingRecord added = null;
             bool saved = false;
+            int epoch = trackingEpoch;
             try
             {
                 var go = new GameObject("HA Anchor");
                 go.transform.position = position;
+                go.transform.rotation = rotation ?? Quaternion.identity;
                 anchor = go.AddComponent<OVRSpatialAnchor>();
                 if (!await anchor.WhenCreatedAsync() || !await anchor.WhenLocalizedAsync()) throw new InvalidOperationException();
+                if (!TrackingReady || epoch != trackingEpoch) throw new InvalidOperationException();
                 var result = await anchor.SaveAnchorAsync();
                 if (!result.Success) throw new IOException();
                 saved = true;
+                if (!TrackingReady || epoch != trackingEpoch) throw new InvalidOperationException();
                 added = new BindingRecord { entityId = entityId, anchorUuid = anchor.Uuid.ToString(), displayOnly = displayOnly };
                 data.bindings.Add(added);
                 Persist();
                 Loaded[entityId] = anchor;
                 Added?.Invoke(entityId, anchor.transform);
-                Status = "Position gespeichert.";
+                Status = L10n.T("Position gespeichert.");
             }
             catch
             {
@@ -144,7 +206,7 @@ namespace HAgoesQuest
                     }
                     Destroy(anchor.gameObject);
                 }
-                Status = "Position konnte nicht gespeichert werden. Berechtigung und Raumtracking prüfen.";
+                Status = L10n.T("Position konnte nicht gespeichert werden. Berechtigung und Raumtracking prüfen.");
             }
             finally { Busy = false; }
         }
@@ -164,17 +226,17 @@ namespace HAgoesQuest
                 Loaded.Remove(id);
                 Removed?.Invoke(id);
                 if (anchor) Destroy(anchor.gameObject);
-                Status = "Zuordnung entfernt.";
+                Status = L10n.T("Zuordnung entfernt.");
                 // Removing a placement must not depend on finding its room again.
                 // The persisted association is authoritative even if OS cleanup fails.
                 if (!Application.isEditor)
                 {
                     var cleanup = EraseSavedAnchor(Guid.Parse(record.anchorUuid));
                     if (await Task.WhenAny(cleanup, Task.Delay(5000)) != cleanup || !await cleanup)
-                        Status = "Zuordnung entfernt. Raumanker konnte noch nicht bereinigt werden.";
+                        Status = L10n.T("Zuordnung entfernt. Raumanker konnte noch nicht bereinigt werden.");
                 }
             }
-            catch { Status = Contains(id) ? "Löschen fehlgeschlagen. Zuordnungsdatei prüfen." : "Zuordnung entfernt; Raumanker-Bereinigung fehlgeschlagen."; }
+            catch { Status = Contains(id) ? L10n.T("Löschen fehlgeschlagen. Zuordnungsdatei prüfen.") : L10n.T("Zuordnung entfernt; Raumanker-Bereinigung fehlgeschlagen."); }
             finally { Busy = false; }
         }
 

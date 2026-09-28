@@ -81,3 +81,27 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - Mit rechtem Daumen/Zeigefinger lange die Quest-Neukalibrierung ausführen. Finger lösen; der rechte Zeiger muss weiter auf Icons und Menü zeigen und neue Pinches erkennen.
 - Linker Pinch öffnet, nach Loslassen schließt ein weiterer Pinch auch Untermenüs. Gedrückthalten darf das Menü nicht wiederholt umschalten.
 - Drei getrennte Vorwärtsstöße mit jeweiligem Zurücknehmen ausführen, ohne auf das Ende der Fluganimation zu warten. Pro Geste maximal ein Befehl, kein automatisch wiederholtes Schalten.
+
+## Tracking und mehrere Räume ab 0.5.0
+
+- Zwei Entitäten in unterschiedlichen Räumen platzieren. App vollständig schließen, in einem anderen Raum mit anderer Blickrichtung neu starten. Icons müssen erst nach verlässlichem Tracking an ihren ursprünglichen realen Orten erscheinen.
+- Während des Starts Kameras kurz verdecken; keine Entität darf am Ursprung oder an einer veralteten Position sichtbar oder schaltbar sein. Nach Freigabe umsehen; fehlende Anker werden automatisch erneut gesucht.
+- Nach Trackingverlust, langem rechten Kalibrierungs-Pinch sowie Abschluss/Abbruch der Raumerfassung müssen Icons kurz verborgen bleiben und anschließend wieder am realen Ort erscheinen.
+- Platzierung einfrieren, dann kalibrieren oder den Systemdialog öffnen. Die alte Vorschau darf anschließend nicht gespeichert werden können; erneut platzieren.
+- Durch die Wohnung laufen: räumlich gefundene Icons sollen stehen bleiben. Kopfbewegung darf keine Entitäten in einen anderen Raum verschieben.
+- APK als Update installieren: vorhandener Token und Zuordnungen bleiben erhalten. Verlorene Anker dürfen keine neuen Zuordnungen erzeugen oder bestehende UUIDs überschreiben.
+
+## Bedienung und Oberfläche ab 0.5.0
+
+- Rechter ausgestreckter Zeigefinger: Strahl auch ohne Treffer sichtbar, bei Entity-Treffer stärker. Pinchen nach schnellem Zielen, Gedrückthalten, Zielwechsel und verlorenes Tracking prüfen; keine doppelten Befehle.
+- ISDK-Antippen von vorne und schräg mit der rechten Fingerspitze; andere Finger und Annäherung von der Rückseite dürfen keine unbeabsichtigten Aktionen auslösen.
+- Mindestens 30 Entitäten aus vier HA-Räumen: acht vollständige Zeilen, letzte Zeile erreichbar, laufende Werte aktuell. Pinch-and-drag und direktes Wischen dürfen nicht versehentlich eine Zeile öffnen. Kombinierte Filter prüfen.
+- Uhrmodus speichern, App neu starten, Uhr antippen. Panel muss ruhig vor dem Kopf stehen und nicht dem bewegten Arm folgen. Linker Pinch bleibt verwendbar.
+- DE/EN umschalten und neu starten; Menüs, Statusmeldungen, Suche, Magie-Hinweise und Sensorzustände prüfen. Individuelle HA-Namen unverändert lassen.
+- Adresse, Token und Suche in der Meta-Systemtastatur bearbeiten, bestätigen und abbrechen. Nach jedem Fokuswechsel rechte Hand weiter verwendbar; Token bleibt verdeckt.
+- Sensor aus mehreren Metern mittig anschauen: Wert über Icon sichtbar, Wegschauen blendet ihn aus. Reiner Blick darf keine Geräte steuern.
+- Dimmbare Lampe und Lautsprecher separat testen: richtigen Regler greifen, seitlich ziehen, loslassen. HA-Wert muss folgen. Ein/Aus-Lampe ohne Dimmfähigkeit darf keinen Helligkeitsregler erhalten.
+- Übungsziel für Magie nutzen: keine HA-Befehle; grüne Bereitschaft sichtbar; mehrere Stöße nacheinander. Danach echte Lampe und Schalter prüfen.
+- Kamera- und Bildrahmen platzieren, App aus anderem Raum neu starten: Position und Wandorientierung erhalten. HA offline schalten, Berechtigung entziehen und zurückkehren: keine stillschweigend als aktuell ausgegebenen alten Bilder.
+- Sounds unterscheiden Lampe/Schalter, lassen sich abschalten und dürfen nach einem fehlgeschlagenen HA-Befehl keine bestätigte Aktion vortäuschen.
+- Bildrate und Speicherverbrauch mit vielen Icons und zwei sichtbaren Kamerarahmen über mindestens 30 Minuten auf der echten Quest messen.

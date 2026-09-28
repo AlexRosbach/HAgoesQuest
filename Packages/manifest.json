@@ -10,6 +10,7 @@
   ],
   "dependencies": {
     "com.meta.xr.sdk.core": "207.0.0",
+    "com.meta.xr.sdk.interaction": "207.0.0",
     "com.meta.xr.mrutilitykit": "207.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.unity.xr.management": "4.5.3",

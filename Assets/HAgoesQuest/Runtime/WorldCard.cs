@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using Oculus.Interaction;
+using Oculus.Interaction.Surfaces;
 
 namespace HAgoesQuest
 {
@@ -9,6 +11,15 @@ namespace HAgoesQuest
         public Action Press;
         public string EntityId;
         public bool IsMarker;
+        public bool IsMedia;
+        public bool IsEntityRow;
+        public float UnitScale = 0.001f;
+        public WorldCard Adjustment;
+        public bool IsFocused => focused;
+        float lastFocused = -100;
+        RayInteractable sdkRay;
+        PokeInteractable sdkPoke;
+        BoundsClipper sdkBounds;
         public bool ReadOnly;
         public bool Interactable = true;
         public Text Label;
@@ -27,7 +38,7 @@ namespace HAgoesQuest
         string lastState;
         static Sprite rounded;
         static readonly System.Collections.Generic.Dictionary<string, Sprite> icons = new System.Collections.Generic.Dictionary<string, Sprite>();
-        readonly Color idle = new Color(0.025f, 0.045f, 0.075f, 0.94f);
+        readonly Color idle = new Color(0.065f, 0.068f, 0.085f, 0.97f);
         public string Key => GetInstanceID().ToString();
 
         public static WorldCard Create(Transform parent, Vector3 localPosition, Vector2 size, string label, Action press = null)
@@ -48,7 +59,7 @@ namespace HAgoesQuest
             card.group = go.GetComponent<CanvasGroup>();
             card.shownAt = Time.unscaledTime;
             var outline = go.AddComponent<Outline>();
-            outline.effectColor = new Color(0.14f, 0.6f, 0.65f, 0.3f);
+            outline.effectColor = new Color(0.62f, 0.64f, 0.8f, 0.18f);
             outline.effectDistance = new Vector2(1, -1);
 
             var text = new GameObject("Text", typeof(RectTransform), typeof(Text));
@@ -66,12 +77,19 @@ namespace HAgoesQuest
             card.Label.supportRichText = false;
             card.Label.raycastTarget = false;
             card.Label.text = label;
+            var surface=go.AddComponent<ColliderSurface>();surface.InjectAllColliderSurface(go.GetComponent<Collider>());
+            card.sdkRay=go.AddComponent<RayInteractable>();card.sdkRay.InjectAllRayInteractable(surface);
+            var plane=go.AddComponent<PlaneSurface>();
+            card.sdkBounds=go.AddComponent<BoundsClipper>();card.sdkBounds.Size=new Vector3(size.x,size.y,1);
+            var patch=go.AddComponent<ClippedPlaneSurface>();patch.InjectAllClippedPlaneSurface(plane,new[]{card.sdkBounds});
+            card.sdkPoke=go.AddComponent<PokeInteractable>();card.sdkPoke.InjectAllPokeInteractable(patch);
             return card;
         }
 
         public void Focus(bool focused)
         {
             this.focused = focused && (Interactable || IsMarker);
+            if (this.focused) lastFocused=Time.unscaledTime;
         }
 
         public void SetNearby(bool nearby) { showDetails = nearby; }
@@ -79,6 +97,13 @@ namespace HAgoesQuest
         {
             showDetails = distance <= 0.30f;
             proximity = 1 - Mathf.InverseLerp(0.3f, 1.2f, distance);
+        }
+        public void ShowSensorValue(bool gaze)
+        {
+            if (gaze) showDetails = true;
+            Label.rectTransform.pivot = new Vector2(0.5f, 0);
+            Label.rectTransform.anchorMin = Label.rectTransform.anchorMax = new Vector2(0.5f, 1);
+            Label.rectTransform.anchoredPosition = new Vector2(0, 12);
         }
 
         public void MakeCompactMarker()
@@ -133,11 +158,10 @@ namespace HAgoesQuest
             if (string.IsNullOrEmpty(name)) return;
             if (!icons.TryGetValue(name, out var sprite))
             {
-                var texture = Resources.Load<Texture2D>("Icons/" + name);
-                if (!texture) return;
-                sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f, 100);
+                sprite = IconLibrary.Get(name);
                 icons[name] = sprite;
             }
+            if(icon && icon.sprite==sprite)return;
             if (!icon)
             {
                 var go = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -147,6 +171,12 @@ namespace HAgoesQuest
                 icon.preserveAspect = true;
             }
             icon.sprite = sprite;
+            if(IsMarker&&!IsMedia)
+            {
+                icon.rectTransform.anchorMin=icon.rectTransform.anchorMax=Vector2.one*.5f;
+                icon.rectTransform.anchoredPosition=Vector2.zero;icon.rectTransform.sizeDelta=new Vector2(68,68);
+                return;
+            }
             var ownRect = GetComponent<RectTransform>();
             float side = Mathf.Min(ownRect.sizeDelta.y - 14, 90);
             icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0, 0.5f);
@@ -159,21 +189,26 @@ namespace HAgoesQuest
         void Update()
         {
             if (!background || !group) return;
+            bool canHit=GetComponent<Collider>().enabled;
+            if(sdkRay)sdkRay.enabled=canHit&&(IsMarker||Press!=null);
+            if(sdkPoke)sdkPoke.enabled=canHit&&Interactable&&Press!=null;
+            if(sdkBounds){var rect=GetComponent<RectTransform>().sizeDelta;sdkBounds.Size=new Vector3(rect.x,rect.y,1);}
+            if (Adjustment) Adjustment.gameObject.SetActive(Interactable && (focused || Adjustment.IsFocused || Time.unscaledTime-lastFocused<1.5f));
             float appear = Mathf.Clamp01((Time.unscaledTime - shownAt) / 0.24f);
             float ease = 1 - Mathf.Pow(1 - appear, 3);
             float pulse = Mathf.Clamp01(1 - (Time.unscaledTime - pulseAt) / 0.4f);
             float size = Mathf.Lerp(0.9f, 1, ease) * (focused ? 1.025f : 1) * (1 + Mathf.Sin(pulse * Mathf.PI) * 0.035f);
-            if (IsMarker) size *= Mathf.Lerp(1, 1.8f, proximity);
-            transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * (size * 0.001f), 1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
+            if (IsMarker && !IsMedia) size *= Mathf.Lerp(1, 1.8f, proximity);
+            transform.localScale = Vector3.Lerp(transform.localScale, Vector3.one * (size * UnitScale), 1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
             group.alpha = ease;
             if (IsMarker)
             {
-                detailAlpha = Mathf.MoveTowards(detailAlpha, showDetails ? 1 : 0, Time.unscaledDeltaTime * 8);
+                detailAlpha = Mathf.MoveTowards(detailAlpha, showDetails || IsMedia ? 1 : 0, Time.unscaledDeltaTime * 8);
                 Label.color = new Color(1, 1, 1, detailAlpha);
-                if (ring) ring.color = magicFocus ? new Color(0.12f, 1, 0.3f, magicArmed ? 1 : 0.5f) : focused ? new Color(0.3f, 1, 0.9f, 1) : new Color(0.14f, 0.6f, 0.65f, 0.85f);
+                if (ring) ring.color = magicFocus ? new Color(0.12f, 1, 0.3f, magicArmed ? 1 : 0.5f) : focused ? new Color(0.78f, 0.72f, 1, 1) : new Color(0.55f, 0.54f, 0.75f, 0.85f);
             }
-            Color target = focused ? new Color(0.025f, 0.24f, 0.27f, 0.98f) : idle;
-            target = Color.Lerp(target, new Color(0.1f, 0.58f, 0.48f, 1), pulse * 0.6f);
+            Color target = focused ? new Color(0.18f, 0.14f, 0.29f, 0.98f) : idle;
+            target = Color.Lerp(target, new Color(0.43f, 0.32f, 0.7f, 1), pulse * 0.6f);
             background.color = Color.Lerp(background.color, target, 1 - Mathf.Exp(-14 * Time.unscaledDeltaTime));
         }
 

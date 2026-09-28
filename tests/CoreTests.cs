@@ -19,6 +19,17 @@ public static class CoreTests
     {
         try
         {
+            var tracking = new TrackingGate();
+            Check(!tracking.Step(false, false, 0), "Untracked startup anchor stays hidden");
+            Check(!tracking.Step(true, false, 1), "First tracked pose is not displayed immediately");
+            Check(tracking.Step(true, false, 1.8), "Stable tracked pose becomes visible");
+            Check(!tracking.Step(false, false, 2), "Tracking loss hides an already localized anchor");
+            Check(!tracking.Step(true, false, 3), "Recovery must settle again");
+            Check(!tracking.Step(true, true, 3.6), "Relocalization jump restarts stability interval");
+            Check(!tracking.Step(true, false, 4), "Jump cannot use previous tracked interval");
+            Check(tracking.Step(true, false, 4.4), "Recovered anchor is visible after settling");
+            tracking.Reset();
+            Check(!tracking.Step(true, false, 10), "Recenter invalidates a previously stable pose");
             var gate = new FocusPinchGate();
             Check(!gate.Step("lamp", false, true, 0), "Looking alone does not activate");
             Check(gate.Step("lamp", true, true, .4), "Fresh pinch after dwell activates");

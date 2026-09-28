@@ -1,43 +1,35 @@
 # Build und Prüfungen
 
-Datum: 28. September 2026. Ziel: Meta Quest 3, Version 0.4.1.
+Datum: 2026-09-29. Ziel: Meta Quest 3, Version 0.5.0.
 
 | Prüfung | Ergebnis |
 | --- | --- |
-| Unity 6000.0.66f2 Paketimport | erfolgreich |
-| Vollständige C#-Kompilierung im Editor | erfolgreich |
-| Unabhängiger App-Kern | 68 Assertions erfolgreich |
-| Unity-Netzwerkclient im Play Mode | 54 Assertions erfolgreich |
-| Android ARM64 / IL2CPP | erfolgreich gebaut |
-| APK-Signatur | gültige Entwicklungssignatur; identisch mit 0.2.0 und 0.3.0 |
-| APK-Inhalt | Paketname, Version, ARM64, IL2CPP, GameActivity, VR-Kategorie und Berechtigungen geprüft |
-| HTTP-Opt-in | eigene Netzwerkpolicy in der fertigen APK bestätigt; App-Freigabe bleibt erforderlich |
-| Installation und Start auf Quest | noch nicht geprüft |
-| Handtracking, Raumscan, Ankerpersistenz | noch nicht auf Quest geprüft |
-| Android-Keystore-Speicherung | kompiliert; Gerätetest offen |
+| Unity 6000.0.66f2, Meta XR Core / MRUK / Interaction SDK 207 | Paketimport und C#-Kompilierung erfolgreich |
+| Unabhängiger App-Kern | 77 Assertions erfolgreich |
+| Unity Play Mode mit lokalem HA-Testserver | 82 Assertions erfolgreich |
+| Menüvorschau | mit Unity gerendert und visuell geprüft |
+| Android ARM64 / IL2CPP | APK erfolgreich gebaut |
+| Signatur | gültig, identisch mit vorherigen Testversionen |
+| APK-Manifest | GameActivity, VR, Handtracking, Passthrough, Raum, Anker, Kamera, Boundaryless und Systemtastatur geprüft |
+| HTTP-Opt-in | Netzwerkpolicy vorhanden, ausdrückliche Freigabe in der App weiterhin nötig |
+| Installation, Gesten und Systemtastatur auf Quest | Gerätetest offen |
+| Mehrraum-Lokalisierung / Android-Keystore beim Update | Gerätetest offen |
+| Performance und längere Sitzungen | Gerätetest offen |
 
-Der Netzwerktest verwendet einen lokalen Testserver und den echten Unity-Netzwerkclient. Er prüft Anmeldung, JSON-Zustände und Einheit, einen Licht-Schaltbefehl, anschließende Statusaktualisierung, gesperrte Sensor-/Offline-Befehle, Wiederverbindung, ungültige Token und die ausdrückliche HTTP-Freigabe. Es wurde keine reale Home-Assistant-Instanz angesprochen.
+Die Tests prüfen unter anderem Meta-SDK-Ray-/Poke-Auswahl, keine wiederholte Aktion beim Halten, Wiederaufnahme nach Trackingverlust, zwei unabhängige gespeicherte Anker-UUIDs, verworfene alte Platzierung nach Neukalibrierung, acht sichtbare Listeneinträge und Scrollen, Slider-Geste und HA-Helligkeits-/Lautstärkeaufrufe, vier HA-Raumzuordnungen, Sprachwechsel sowie authentifizierte Kamera-/Bildabfragen und Bilddekodierung. Frühere Prüfungen für Verbindung, QR, Update-Zugangsdaten, Filtern, Löschen, Marker und Feuerbälle bleiben enthalten. Es wurde keine reale Home-Assistant-Instanz angesprochen.
 
-Die Tests belegen keine Darstellung, Trackingqualität oder Persistenz auf einer echten Quest. Dafür gilt die [Quest-Abnahmeliste](QUEST-TEST.md).
+Diese Nachweise bestätigen keine korrekte Lokalisierung im echten Gebäude. Ein vom Betriebssystem stabil, aber falsch erkannter Anker lässt sich allein über Trackingflags nicht zuverlässig erkennen. Dafür ist die [Quest-Abnahmeliste](QUEST-TEST.md) verbindliche Arbeitsgrundlage.
 
 ## APK
 
-- Datei: `HAgoesQuest-0.4.1.apk`
-- Paket: `com.alexrosbach.hagoesquest`
-- Version: 0.4.1 (Code 7)
-- Größe: 65.134.367 Bytes
-- SHA-256: `822434d28328aca084bba608f67588f46214bfc105741fd1adac746121369a6e`
+- Datei: HAgoesQuest-0.5.0.apk
+- Paket: com.alexrosbach.hagoesquest
+- Version: 0.5.0, Android-Code 8
+- Größe: 68097874 Bytes
+- SHA-256: b86eaf40e326e63690f30554d1d474b29d4d15a40f42f69c5f6988ad2a6e3171
 - Mindest-Android-API: 32; ARM64; Unity IL2CPP; Entwicklungsbuild.
-- Android verwendet ausschließlich das neue Unity-Eingabesystem.
+- Entwicklungssignatur SHA-256: 345caca35c4a1ad2eb8f2243a0ccda712945c87b9b089714f2778c007c76e5b2
 
-Die APK wurde mit `apksigner verify` und `aapt` geprüft. Die Bibliotheken `libil2cpp.so` und `libunity.so` sind enthalten. Das finale Manifest enthält den immersiven VR-Start, Passthrough sowie Handtracking-, Raum- und Ankerberechtigungen. Eine Meta-Vorprüfung meldet beim Build ohne eigenes Quellmanifest eine GameActivity-Warnung; das tatsächlich erzeugte und im APK geprüfte Manifest verwendet korrekt `UnityPlayerGameActivity`.
+Die fertige Datei wurde mit apksigner und aapt geprüft. Paketname, Signatur, Android-Keystore-Alias und gespeicherte Datenformate bleiben für ein Update erhalten. Nicht deinstallieren oder App-Daten löschen. Ein tatsächlich durchgeführtes Update auf Quest ist weiterhin Teil der Geräteabnahme.
 
-Version 0.3.1 ergänzt Tests für den tatsächlichen QR-Codec (Erzeugen/Lesen), QR-Datenvalidierung, kombinierte Typ-/Raum-/Suchfilter, Raumzuordnungen nach Status-Polling und das Einblenden kompakter Marker. Die gespeicherte Unity-Szene wurde auf zwei unsichtbare Tracking-Hände, aktives Passthrough und die QR-Komponente geprüft. Das fertige APK enthält die Headset-Kameraberechtigung und `com.oculus.feature.BOUNDARYLESS_APP`.
-
-Update: Wiederverwendung der letzten bestätigten Zugangsdaten, Schutz gegen Serverwechsel und Wiederverbindung mit leerem Tokenfeld im Integrationstest bestätigt. Echtes APK-Update mit Android-Keystore auf Quest noch nicht geprüft.
-
-0.3.2: Zusätzliche Unity-Prüfungen für wachsende runde Marker, persistentes Löschen ohne lokalisierten Raumanker, Einfrieren/Korrigieren/Speichern einer Vorschau, Löschen aus dem Verwaltungsmenü und Neuausrichtung nach Fokuswechsel. Der Wiederholungsbuild beendet Unity erfolgreich; die erste APK-Erzeugung war erfolgreich, der erste Editor-Prozess meldete anschließend ein Beendigungs-Timeout. Finale APK und Signatur erneut geprüft. Der tatsächliche Quest-Systemdialog und die Handverfolgung sind weiterhin Hardwareprüfungen.
-
-0.4.0: 62 Kernprüfungen inklusive Zielwechsel, Vorwärtsstoß, seitlichem/langsamem/rückwärtigem Bewegen, Tracking-Sprung, Latch und Wiederfreigabe. 48 Unity-Prüfungen inklusive OVR/OpenXR-Handgeometrie, gespeicherter Magie-Einstellung und tatsächlichen Feuerball-Objekten (Flug, Aufprallring, Aufräumen). Generierte PNG mit echtem Alphakanal geprüft; für Quest auf maximal 512 Pixel importiert. ARM64-Build und Signaturprüfung erfolgreich; Editor sauber beendet. Geste und Effektwirkung auf echter Quest bleiben offen.
-
-0.4.1: 68 Kernprüfungen und 54 Unity-Prüfungen bestanden. Ungebundene Zeigerpose reproduziert den Koordinatenversatz; nach Zuordnung zum TrackingSpace trifft der Physics-Strahl nach Translation und Rotation weiterhin ein Weltmenü. Szenendatei enthält beide PointerPose-Root-Verweise. Menüwechsel, drei Stoßgesten nacheinander und gleichzeitig laufende Feuerbälle geprüft. APK-Build und kompatible Signatur erfolgreich. Reale Quest-Neukalibrierung weiterhin als Gerätetest offen.
+Die Meta-Vorprüfung kann ohne eigenes Quellmanifest eine GameActivity-Warnung ausgeben; maßgeblich ist das geprüfte finale APK-Manifest. SDK-Warnungen sind keine Meta-Zertifizierung. GitHub Actions prüft den .NET-App-Kern und baut keine APK.
