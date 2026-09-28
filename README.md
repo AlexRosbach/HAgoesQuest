@@ -1,8 +1,10 @@
 # HA goes Quest
 
-Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Kopf-Blickrichtung auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
+Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Fingerzeiger auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: installierbare Entwicklungs-APK 0.2.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 46 Kernprüfungen und 13 Unity-Netzwerkprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+**Stand: installierbare Entwicklungs-APK 0.3.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 48 Kernprüfungen und 27 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+
+Neu in 0.3.0: keine virtuellen Hände, Boundaryless-AR, Typ-/Raumfilter und Suche, kompakte Icons mit Namen/Werten ab 30 cm Nähe, Fingerstrahl und QR-Zugang. [Details und QR-Anleitung](docs/VERSION-0.3.0.md).
 
 ## Ablauf
 
@@ -10,18 +12,18 @@ Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuord
 2. Raum laden; falls noch nicht vorhanden, öffnet sich Metas Raumerfassung. „Raum neu scannen“ startet sie erneut. Die Wohnungskarte zeigt erfasste Räume, Gerätepositionen und den Laufweg der aktuellen Sitzung.
 3. Home-Assistant-Entität aus der Liste wählen; bei Lampen/Schaltern zwischen reiner Anzeige und Bedienung wählen.
 4. Handplatzierung wählen, rechts Daumen und Zeigefinger zusammenführen, zum gewünschten Ort bewegen und loslassen. Anschließend die Position bestätigen. Alternativ eine Scanfläche oder einen festen Abstand verwenden.
-5. Menü schließen, Markierung anvisieren, mindestens 0,35 Sekunden fokussieren und rechts Daumen und Zeigefinger zusammenführen.
+5. Menü schließen, Mit dem Finger auf die Markierung zeigen, mindestens 0,35 Sekunden fokussieren und rechts Daumen und Zeigefinger zusammenführen.
 6. Bei bedienbaren Lampen und Schaltern wird der Zustand geändert. Sensoren zeigen ihren Wert samt Einheit.
 
-Die Quest 3 hat kein Eye-Tracking: „Anschauen“ bedeutet hier die Richtung des Headsets. Die Lampe wird über die ihr zugewiesene Markierung angesprochen. Ein Raumscan erkennt **nicht automatisch**, welche echte Lampe welcher Home-Assistant-Entität entspricht. Diese Zuordnung erfolgt einmal manuell.
+Die Quest 3 hat kein Eye-Tracking. Die Auswahl erfolgt mit der rechten Hand; ohne Handzeiger gibt es eine Kopf-/Controller-Alternative. Die Lampe wird über die ihr zugewiesene Markierung angesprochen. Ein Raumscan erkennt **nicht automatisch**, welche echte Lampe welcher Home-Assistant-Entität entspricht. Diese Zuordnung erfolgt einmal manuell.
 
 ## Enthalten
 
 - Passthrough-Szene, Meta MR Utility Kit und lokale Spatial Anchors.
 - Generierte transparente Symbole für Lampe, Karte und Sensor; animiertes Einblenden, Fokus und Rückmeldung bei Zustandsänderung. [Bildprompts und Herkunft](docs/ART-PROMPTS.md).
 - Wohnungskarte aus Metas Raumdaten. Die Erfassung erfolgt über den Quest-Systemdialog; der Laufweg ergänzt die Anzeige, erzeugt aber keine eigene kontinuierliche 3D-Rekonstruktion.
-- Entitätsauswahl mit Seiten; Unterstützung für `light`, `switch`, `sensor`, `binary_sensor`.
-- Kopf-Blickrichtung + rechter Pinch; rechter Controller-Trigger als Alternative.
+- Entitätsauswahl mit Seiten; Typ- und Raumfilter sowie Suche; alle Entitätsarten als Anzeige, `light`/`switch` zum Schalten.
+- Fingerzeiger + rechter Pinch; rechter Controller-Trigger als Alternative.
 - Linker Pinch oder X am linken Controller öffnet das Menü und bricht eine Platzierung ab.
 - Lokales Speichern und Wiederfinden von bis zu 50 Zuordnungen pro Home-Assistant-Server. In einem anderen Raum ggf. „Gespeicherte Positionen erneut laden“ verwenden.
 - Sensorwerte und Gerätezustände über REST-Polling, etwa alle 1,5 Sekunden plus Antwortzeit. Kein WebSocket-Livestream in dieser Version.

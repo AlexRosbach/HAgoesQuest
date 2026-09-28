@@ -47,3 +47,15 @@ Desktop-Prüfungen sind unten markiert. **Alle Gerätetests sind noch offen.** D
 - [ ] App pausieren/fortsetzen und Systemmenü öffnen erzeugt keine unbeabsichtigte Aktion.
 
 Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler ergänzen. Vor Nutzung als tägliche Haussteuerung diese Liste abschließen.
+
+## Ergänzungen für 0.3.0
+
+- [ ] Echte Hände im Passthrough sichtbar; keine virtuellen Handmodelle darüber.
+- [ ] Frei durch mehrere erfasste Räume gehen; Boundaryless-Verhalten auf dem verwendeten Horizon OS prüfen. Anker bleiben am physischen Ort.
+- [ ] Typ, HA-Raum und Suchtext kombinieren; leere Trefferliste und „Ohne Raumzuordnung“ prüfen. Danach Filter zurücksetzen.
+- [ ] Lampe, Schalter und reine Anzeige platzieren. Schalter hat eigenes Icon. Andere Domänen (z. B. climate/lock) bleiben reine Anzeigen.
+- [ ] Außerhalb von 30 cm nur Icon; innerhalb von 30 cm Name/Wert; beim Entfernen Text wieder weg.
+- [ ] Fingerstrahl endet am tatsächlich anvisierten Icon, auch bei Sensoren. Pinch schaltet nur Lampen/Schalter, ohne Zielsprung oder Mehrfachauslösung.
+- [ ] QR-Scan: Freigabe erlauben/ablehnen, Scan abbrechen, App pausieren, erneut starten. Kamera nur im aktiven Scan.
+- [ ] Token-QR und JSON-QR vom Handy lesen; Adresse vor Verbinden prüfen. QR darf keine automatische Verbindung oder HTTP-Freigabe auslösen.
+- [ ] Beschädigten QR, normalen Weblink und ungültigen Token prüfen; keine Zugangsdaten in Fehlermeldungen.

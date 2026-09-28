@@ -35,6 +35,10 @@ namespace HAgoesQuest
         string notice = "";
         int page;
         readonly List<Vector3> walkTrail = new List<Vector3>();
+        readonly EntityBrowser browser = new EntityBrowser();
+        QrTokenScanner qr;
+        bool qrMenu;
+        LineRenderer pointer;
 
         IEnumerator Start()
         {
@@ -45,6 +49,14 @@ namespace HAgoesQuest
             bindings.Removed += RemoveMarker;
             ha.ServerChanged += ServerChanged;
             rightSkeleton = RightHand ? RightHand.GetComponent<OVRSkeleton>() : null;
+            qr = GetComponent<QrTokenScanner>() ?? gameObject.AddComponent<QrTokenScanner>();
+            pointer = new GameObject("Finger selection ray").AddComponent<LineRenderer>();
+            pointer.positionCount = 2; pointer.useWorldSpace = true;
+            pointer.startWidth = 0.002f; pointer.endWidth = 0.001f;
+            pointer.material = new Material(Shader.Find("Sprites/Default"));
+            pointer.startColor = new Color(0.2f, 1, 0.9f, 0.8f);
+            pointer.endColor = new Color(0.5f, 1, 0.95f, 0.95f);
+            pointer.enabled = false;
             reticle = WorldCard.Create(null, Vector3.zero, new Vector2(16, 16), "");
             reticle.GetComponent<Collider>().enabled = false;
             Home();
@@ -102,6 +114,7 @@ namespace HAgoesQuest
 #endif
 
             if (status) status.Label.text = Short(ha.Status + "\n" + (string.IsNullOrEmpty(notice) ? bindings.Status : notice), 185);
+            if (qrMenu && status) status.Label.text = string.IsNullOrEmpty(qr.Status) ? notice : qr.Status;
             foreach (var pair in markers)
             {
                 var card = pair.Value;
@@ -110,6 +123,7 @@ namespace HAgoesQuest
                 if (!localized) continue;
                 card.GetComponent<Collider>().enabled = !menu && !operationBusy && placing == null;
                 card.Face(head);
+                card.SetNearby(Vector3.Distance(head.position, card.transform.position) <= 0.30f);
                 if (ha.Entities.TryGetValue(pair.Key, out var entity))
                 {
                     string value = ha.Fresh ? entity.DisplayValue : "Veraltet · " + entity.DisplayValue;
@@ -121,8 +135,9 @@ namespace HAgoesQuest
             }
 
             Ray ray = new Ray(head.position, head.forward);
-            if (menu && hand && RightHand.IsPointerPoseValid && RightHand.PointerPose)
+            if (hand && RightHand.IsPointerPoseValid && RightHand.PointerPose)
                 ray = new Ray(RightHand.PointerPose.position, RightHand.PointerPose.forward);
+            else if (controller) ray = new Ray(Rig.rightControllerAnchor.position, Rig.rightControllerAnchor.forward);
             Vector3 aim = ray.GetPoint(1.5f);
             if (focused) focused.Focus(false);
             focused = null;
@@ -171,17 +186,28 @@ namespace HAgoesQuest
             else if (!operationBusy && Physics.Raycast(ray, out var cardHit, 8))
             {
                 var card = cardHit.collider.GetComponent<WorldCard>();
-                if (card && card.Interactable && card.Press != null)
+                if (card && (card.IsMarker || (card.Interactable && card.Press != null)))
                 {
                     focused = card;
                     focused.Focus(true);
-                    key = card.Key;
+                    if (card.Interactable && card.Press != null) key = card.Key;
                 }
                 aim = cardHit.point - ray.direction * 0.01f;
             }
             reticle.transform.position = aim;
             reticle.Face(head);
             reticle.Focus(key != null);
+            reticle.gameObject.SetActive(inputAllowed && (focused || placing != null));
+            pointer.enabled = inputAllowed && tracked && focused && placing == null &&
+                (!hand || (RightHand.IsPointerPoseValid && RightHand.PointerPose));
+            if (pointer.enabled)
+            {
+                Vector3 start = ray.origin;
+                if (hand && rightSkeleton && rightSkeleton.Bones != null)
+                    foreach (var bone in rightSkeleton.Bones)
+                        if (bone.Id == OVRSkeleton.BoneId.Hand_IndexTip || bone.Id == OVRSkeleton.BoneId.XRHand_IndexTip) { start = bone.Transform.position; break; }
+                pointer.SetPosition(0, start); pointer.SetPosition(1, aim);
+            }
             if (gate.Step(key, down, tracked && !operationBusy && inputAllowed, Time.realtimeSinceStartup))
             {
                 if (placing != null && placementValid) Place(aim);
@@ -191,6 +217,7 @@ namespace HAgoesQuest
 
         void NewMenu(string title)
         {
+            if (qrMenu) { qr.Stop(); qrMenu = false; }
             keyboard = null;
             if (menu) { menu.SetActive(false); Destroy(menu); }
             gate.Reset();
@@ -213,6 +240,7 @@ namespace HAgoesQuest
 
         void CloseMenu()
         {
+            if (qrMenu) { qr.Stop(); qrMenu = false; }
             if (menu) { menu.SetActive(false); Destroy(menu); }
             menu = null;
             gate.Reset();
@@ -248,18 +276,40 @@ namespace HAgoesQuest
                     if (success) { draftToken = ""; Home(); }
                 });
             }, "lamp");
-            Button(4, "Anmeldung auf diesem Gerät entfernen", () =>
+            Button(4, "Token per QR-Code vom Handy einlesen", QrMenu);
+            Button(5, "Zurück / Anmeldung verwalten", () =>
             {
-                NewMenu("Anmeldung entfernen?");
-                Button(0, "Ja · Token auf dieser Quest löschen", () =>
+                NewMenu("Verbindung verwalten");
+                Button(0, "Zurück zum Hauptmenü", Home);
+                Button(1, "Anmeldung auf diesem Gerät entfernen", () =>
                 {
-                    try { ha.ForgetConnection(); draftToken = ""; Home(); }
-                    catch { notice = "Anmeldung konnte nicht entfernt werden."; }
+                    NewMenu("Anmeldung entfernen?");
+                    Button(0, "Ja · Token auf dieser Quest löschen", () =>
+                    {
+                        try { ha.ForgetConnection(); draftToken = ""; Home(); }
+                        catch { notice = "Anmeldung konnte nicht entfernt werden."; }
+                    });
+                    Button(1, "Abbrechen", ConnectionMenu);
                 });
-                Button(1, "Zurück", ConnectionMenu);
+                Button(2, "Zurück zur Verbindung", ConnectionMenu);
             });
-            Button(5, "Zurück", Home);
             notice = "In Home Assistant: Profil → Sicherheit → langlebigen Zugriffstoken erstellen. Hier einfügen. Anmeldung wird auf der Quest verschlüsselt gespeichert.";
+        }
+
+        void QrMenu()
+        {
+            NewMenu("Zugang per QR-Code");
+            qrMenu = true;
+            Button(0, "Scan starten / erneut versuchen", () => qr.Begin((url, token) =>
+            {
+                if (!string.IsNullOrEmpty(url)) draftUrl = url;
+                draftToken = token;
+                ConnectionMenu();
+                notice = "QR-Code gelesen. Adresse prüfen und „Verbindung prüfen & speichern“ wählen. HTTP bleibt eine separate Freigabe.";
+            }));
+            Button(1, "Zurück", ConnectionMenu);
+            notice = "Token-QR oder JSON mit baseUrl und accessToken. Die Verbindung erfolgt erst nach deiner Bestätigung.";
+            status.Label.text = notice;
         }
 
         void OpenKeyboard(bool token)
@@ -303,17 +353,75 @@ namespace HAgoesQuest
 
         void EntityMenu()
         {
-            var entities = ha.Entities.Values.OrderBy(e => e.Name, StringComparer.CurrentCultureIgnoreCase).ThenBy(e => e.Id).ToArray();
-            int pages = Math.Max(1, (entities.Length + 3) / 4);
+            var entities = browser.Apply(ha.Entities.Values).ToArray();
+            int pages = Math.Max(1, (entities.Length + 2) / 3);
             page = Math.Min(page, pages - 1);
-            NewMenu("Entitäten · Seite " + (page + 1) + "/" + pages);
-            for (int i = 0; i < 4 && page * 4 + i < entities.Length; i++)
+            NewMenu(entities.Length + " Entitäten · Seite " + (page + 1) + "/" + pages);
+            Button(0, "Suchen & Filtern · " + (browser.Domain.Length == 0 ? "Alle Arten" : EntityBrowser.DomainName(browser.Domain)), Filters);
+            for (int i = 0; i < 3 && page * 3 + i < entities.Length; i++)
             {
-                var entity = entities[page * 4 + i];
-                Button(i, Short(entity.Name, 30) + "\n" + entity.Id + (bindings.Contains(entity.Id) ? " ✓" : ""), () => { placementReadOnly = !EntityPolicy.CanSwitch(entity.Id, entity.State); Details(entity); }, IconFor(entity.Id));
+                var entity = entities[page * 3 + i];
+                Button(i + 1, Short(entity.Name, 30) + "\n" + Short(entity.Id + " · " + (entity.AreaName.Length == 0 ? "Ohne Raum" : entity.AreaName), 58) + (bindings.Contains(entity.Id) ? " ✓" : ""), () => { placementReadOnly = !EntityPolicy.CanSwitch(entity.Id, entity.State); Details(entity); }, IconFor(entity.Id));
             }
-            Button(4, "Nächste Seite", () => { page = (page + 1) % pages; EntityMenu(); });
+            Pager(4, () => { page = (page + pages - 1) % pages; EntityMenu(); }, () => { page = (page + 1) % pages; EntityMenu(); });
             Button(5, "Zurück", Home);
+            notice = entities.Length == 0 ? "Keine Treffer. Suche oder Filter ändern." : FilterSummary();
+        }
+
+        string FilterSummary() => "Raum: " + AreaLabel() + " · Suche: " + (browser.Search.Length == 0 ? "–" : browser.Search);
+        string AreaLabel() => browser.Area.Length == 0 ? "Alle" : browser.Area == "__none" ? "Ohne Raum" :
+            ha.Entities.Values.FirstOrDefault(e => e.AreaId == browser.Area)?.AreaName ?? browser.Area;
+        void Pager(int row, Action previous, Action next)
+        {
+            WorldCard.Create(menu.transform, new Vector3(-0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), "‹ Zurück", previous);
+            WorldCard.Create(menu.transform, new Vector3(0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), "Weiter ›", next);
+        }
+        void Filters()
+        {
+            NewMenu("Entitäten finden");
+            Button(0, "Art: " + (browser.Domain.Length == 0 ? "Alle" : EntityBrowser.DomainName(browser.Domain)), () => TypeMenu(0));
+            Button(1, "Raum: " + AreaLabel(), () => AreaMenu(0));
+            Button(2, "Suchen: " + (browser.Search.Length == 0 ? "Name oder Entitäts-ID" : Short(browser.Search, 35)), () =>
+            {
+                NewMenu("Entitäten suchen");
+                keyboard = new WorldKeyboard(menu.transform, browser.Search, false, value => { browser.Search = value.Trim(); page = 0; EntityMenu(); }, Filters);
+            });
+            Button(3, "Alle Filter zurücksetzen", () => { browser.Domain = browser.Area = browser.Search = ""; page = 0; EntityMenu(); });
+            Button(4, "Raumzuordnungen neu laden", () => { ha.RefreshAreas(); notice = ha.AreaStatus; });
+            Button(5, "Ergebnisse anzeigen", () => { page = 0; EntityMenu(); });
+            notice = ha.AreaStatus;
+        }
+        void TypeMenu(int index)
+        {
+            var types = ha.Entities.Values.Select(e => EntityPolicy.Domain(e.Id)).Distinct().OrderBy(EntityBrowser.DomainName).ToArray();
+            int pages = Math.Max(1, (types.Length + 2) / 3);
+            index = Math.Max(0, Math.Min(index, pages - 1));
+            NewMenu("Entitätsarten · " + (index + 1) + "/" + pages);
+            Button(0, "Alle Arten", () => { browser.Domain = ""; Filters(); });
+            for (int i = 0; i < 3 && index * 3 + i < types.Length; i++)
+            {
+                string type = types[index * 3 + i];
+                Button(i + 1, EntityBrowser.DomainName(type) + " · " + ha.Entities.Values.Count(e => EntityPolicy.Domain(e.Id) == type), () => { browser.Domain = type; Filters(); });
+            }
+            Pager(4, () => TypeMenu((index + pages - 1) % pages), () => TypeMenu((index + 1) % pages));
+            Button(5, "Zurück", Filters);
+        }
+        void AreaMenu(int index)
+        {
+            var areas = ha.Entities.Values.Where(e => e.AreaId.Length > 0).GroupBy(e => e.AreaId).Select(g => g.First()).OrderBy(e => e.AreaName).ToArray();
+            int pages = Math.Max(1, (areas.Length + 1) / 2);
+            index = Math.Max(0, Math.Min(index, pages - 1));
+            NewMenu("Räume · " + (index + 1) + "/" + pages);
+            Button(0, "Alle Räume", () => { browser.Area = ""; Filters(); });
+            Button(1, "Ohne Raumzuordnung", () => { browser.Area = "__none"; Filters(); });
+            for (int i = 0; i < 2 && index * 2 + i < areas.Length; i++)
+            {
+                var area = areas[index * 2 + i];
+                Button(i + 2, area.AreaName, () => { browser.Area = area.AreaId; Filters(); });
+            }
+            Pager(4, () => AreaMenu((index + pages - 1) % pages), () => AreaMenu((index + 1) % pages));
+            Button(5, "Zurück", Filters);
+            notice = ha.AreaStatus;
         }
 
         void Details(HaEntity entity)
@@ -432,6 +540,7 @@ namespace HAgoesQuest
             card.IsMarker = true;
             card.ReadOnly = bindings.DisplayOnly(id);
             card.SetIcon(IconFor(id));
+            card.MakeCompactMarker();
             markers[id] = card;
         }
 
@@ -483,7 +592,8 @@ namespace HAgoesQuest
         }
 
         static string Short(string value, int length) => value.Length <= length ? value : value.Substring(0, length - 1) + "…";
-        static string IconFor(string id) => EntityPolicy.Domain(id) == "sensor" || EntityPolicy.Domain(id) == "binary_sensor" ? "sensor" : "lamp";
+        static string IconFor(string id) => EntityPolicy.Domain(id) == "light" ? "lamp" : EntityPolicy.Domain(id) == "switch" ? "switch" : "sensor";
+        void OnDestroy() { if (pointer) { Destroy(pointer.material); Destroy(pointer.gameObject); } }
         void OnApplicationFocus(bool focus)
         {
             gate.Reset();

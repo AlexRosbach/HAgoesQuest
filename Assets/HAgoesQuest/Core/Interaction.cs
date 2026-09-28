@@ -61,7 +61,7 @@ namespace HAgoesQuest.Core
         public static bool Visible(string id)
         {
             string d = Domain(id);
-            return d == "light" || d == "switch" || d == "sensor" || d == "binary_sensor";
+            return d.Length > 0; // All HA domains can be displayed; commands remain restricted below.
         }
         public static bool CanSwitch(string id, string state)
         {

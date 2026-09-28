@@ -14,3 +14,8 @@ Use case: stylized-concept. Asset type: one production UI icon for a Quest 3 mix
 
 Use case: stylized-concept. Asset type: one production UI icon for a Quest 3 mixed-reality smart-home app, real transparent alpha background. Subject: one compact sculptural thermometer sensor symbol, rounded frosted glass tube with teal luminous inner column and rounded bulb, a few dark navy tick marks. Premium restrained 3D interface style matching a frosted glass lightbulb and isometric room icon. Readable at small size, centered with generous transparent padding. No enclosing tile, no text, no numbers, no backdrop, no watermark, no other objects.
 
+## switch.png (0.3.0)
+
+Built-in Imagegen, original transparent PNG retained.
+
+Use case: stylized-concept. Asset: single transparent PNG icon for a Meta Quest mixed reality home automation app. One distinct physical wall rocker switch, front view with subtle rounded 3D bevel, turquoise cyan illuminated rim and warm pale gold rocker, minimalist premium dark-navy accents. Clear silhouette readable at tiny size. Centered isolated object, fills 80% square canvas. No lamp, no hands, no text, no letters, no background plate, no shadow outside object. Actual transparent background.

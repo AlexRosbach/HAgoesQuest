@@ -59,6 +59,8 @@ public static class CoreTests
             Check(!EntityPolicy.Visible("light.x/../../lock.front_door"), "Path injection rejected");
             Check(!EntityPolicy.Visible(null), "Null entity rejected");
             Check(EntityPolicy.Visible("sensor.temperature_2"), "Sensor supported");
+            Check(EntityPolicy.Visible("climate.living_room"), "Other HA domains available for display and filtering");
+            Check(EntityPolicy.Visible("lock.front_door") && !EntityPolicy.CanSwitch("lock.front_door", "on"), "Display support does not grant control of locks");
 
             Check(HaAddress.Parse("https://ha.example.com", false).AbsoluteUri == "https://ha.example.com/", "HTTPS base normalized");
             Check(HaAddress.Parse("http://192.168.1.10:8123", true).Port == 8123, "Explicit LAN HTTP works");
