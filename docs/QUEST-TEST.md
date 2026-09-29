@@ -126,3 +126,13 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - Speichern, App-Neustart und Wechsel des Händermodus: passende Position bleibt erhalten. Abbrechen und Menü schließen ändern keinen gespeicherten Wert. Zurücksetzen betrifft nur das gewählte Handgelenk.
 - Tracking der Uhrenhand während Anpassung verlieren und wiederherstellen; Vorschau darf nicht an falscher Stelle erscheinen oder unabsichtlich gespeichert werden.
 - 0.6.0 → 0.6.1 ohne Deinstallation aktualisieren: Token und gespeicherte Entitäten bleiben erhalten.
+
+## Version 0.6.2
+
+- Entitätenliste und Filter bei direkter und stark seitlicher Ansicht mit beiden Augen prüfen. Hintergrund darf keine Buttons überdecken; Suchen & Filtern und Zurück bleiben sichtbar und bedienbar, während nur die Liste scrollt.
+- Suche sowie Typ- und HA-Raumfilter kombinieren, zurücksetzen und erneut öffnen.
+- Von Raum A nach B gehen: A-Marker einschließlich Kamerarahmen verschwinden, B-Marker erscheinen nach stabiler Lokalisierung. Wieder zurückgehen; Zuordnungen bleiben erhalten. Räume auf verschiedenen Etagen prüfen.
+- Beim laufenden Faustregler und beim geöffneten Slider durch eine Tür gehen: keine Übernahme an das alte Ziel. Außerhalb der gescannten Wohnung dürfen keine platzierten Entitäten sichtbar/bedienbar sein.
+- Faustdrehen für Helligkeit und Lautstärke: Rasterklicken bei Wertänderung, keine Wiederholung beim Halten oder an 0/100 %. Sound aus: alle Klicks stumm.
+- Bereitschaftsleuchten für beide Bedienhände prüfen; verliert die Hand Tracking oder das Ziel wechselt, muss der Effekt verschwinden. Keine künstlichen Hände.
+- Untertitel und Hand-Effekt getrennt aus-/einschalten; Einstellungen nach Neustart erhalten.

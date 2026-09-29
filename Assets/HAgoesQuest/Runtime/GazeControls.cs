@@ -9,6 +9,7 @@ namespace HAgoesQuest
         readonly GazeGestureGate grip = new GazeGestureGate();
         WorldCard sensorGaze;
         WorldCard gestureHint;
+        HandReadinessGlow readinessGlow;
         OVRHand ControlHand => ExperienceSettings.LeftHanded?LeftHand:RightHand;
         OVRHand MenuHand => ExperienceSettings.LeftHanded?RightHand:LeftHand;
         OVRSkeleton ControlSkeleton => ExperienceSettings.LeftHanded?leftSkeleton:rightSkeleton;
@@ -38,6 +39,7 @@ namespace HAgoesQuest
         void ResetGaze()
         {
             gazePinch.Reset();grip.Reset();
+            readinessGlow?.Hide();InteractionFeedback.Instance?.ResetAdjustment();
             if(focused){focused.SetMagicFocus(false);focused.Focus(false);}
             if(gestureHint)gestureHint.gameObject.SetActive(false);
         }
@@ -57,7 +59,7 @@ namespace HAgoesQuest
             HaEntity entity=null;
             bool practice=focused&&magic!=null&&focused==magic.PracticeTarget;
             if(focused&&!practice)ha.Entities.TryGetValue(focused.EntityId,out entity);
-            bool usable=focused&&(practice || (focused.Interactable&&!focused.ReadOnly&&ha.Fresh&&!ha.Busy));
+            bool usable=focused&&(practice || (EntityAllowedHere(focused.EntityId)&&focused.Interactable&&!focused.ReadOnly&&ha.Fresh&&!ha.Busy));
             bool adjustable=usable&&entity!=null&&(entity.CanDim||entity.CanVolume);
             bool canCast=usable&&magic!=null&&magic.Enabled&&(practice||(entity!=null&&EntityPolicy.CanSwitch(entity.Id,entity.State)));
             bool poseValid=HandReady(ControlHand)&&ControlHand.HandConfidence==OVRHand.TrackingConfidence.High&&ControlSkeleton&&ControlSkeleton.IsDataValid;
@@ -66,9 +68,16 @@ namespace HAgoesQuest
             bool wasClosed=grip.Closed;
             grip.Step(usable?focused.EntityId:null,allowed&&poseValid,fist,open,canCast,adjustable,entity?.Level??0,
                 poseValid?HandPose.Roll(ControlSkeleton,head):0,Time.unscaledTime);
+            InteractionFeedback.Instance?.PreviewLevel(entity?.Id,grip.Adjusting,grip.Value);
+            if(!readinessGlow){readinessGlow=new GameObject("Real hand readiness glow").AddComponent<HandReadinessGlow>();readinessGlow.Initialize();}
+            readinessGlow.Show(
+                MagicCasting.Bone(ControlSkeleton,OVRSkeleton.BoneId.Hand_WristRoot,OVRSkeleton.BoneId.XRHand_Wrist),
+                MagicCasting.Bone(ControlSkeleton,OVRSkeleton.BoneId.Hand_Index1,OVRSkeleton.BoneId.XRHand_IndexProximal),
+                MagicCasting.Bone(ControlSkeleton,OVRSkeleton.BoneId.Hand_Pinky1,OVRSkeleton.BoneId.XRHand_LittleProximal),head,
+                ExperienceSettings.HandGlow&&allowed&&poseValid&&(adjustable||canCast)&&(grip.Ready||grip.Closed),grip.Closed);
             if(focused&&canCast)focused.SetMagicFocus(true,grip.Ready||grip.Closed);
             bool consumed=wasClosed||grip.Closed||fist||grip.Commit||grip.Cast;
-            if(grip.Commit&&entity!=null)ha.SetLevel(entity.Id,grip.Value);
+            if(grip.Commit&&entity!=null&&EntityAllowedHere(entity.Id))ha.SetLevel(entity.Id,grip.Value);
             if(grip.Cast&&focused)
             {
                 var wrist=MagicCasting.Bone(ControlSkeleton,OVRSkeleton.BoneId.Hand_WristRoot,OVRSkeleton.BoneId.XRHand_Wrist);
@@ -77,7 +86,7 @@ namespace HAgoesQuest
             if(consumed)gazePinch.Reset();
             else if(gazePinch.Step(usable?focused.Key:null,down,tracked&&allowed&&(!HandReady(ControlHand)||poseValid),!HandReady(ControlHand)||HandPose.PinchIntent(ControlSkeleton),Time.unscaledTime)&&!practice)focused.Activate();
             if(!gestureHint){gestureHint=WorldCard.Create(null,Vector3.zero,new Vector2(600,84),"");gestureHint.Interactable=false;gestureHint.GetComponent<Collider>().enabled=false;gestureHint.Label.fontSize=24;}
-            gestureHint.gameObject.SetActive(allowed&&focused&&(adjustable||canCast));
+            gestureHint.gameObject.SetActive(ExperienceSettings.GestureHints&&allowed&&focused&&(adjustable||canCast));
             if(gestureHint.gameObject.activeSelf)
             {
                 gestureHint.transform.position=head.position+head.forward*1.15f-head.up*.25f;gestureHint.Face(head);

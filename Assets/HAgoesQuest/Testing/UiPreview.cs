@@ -62,6 +62,24 @@ namespace HAgoesQuest.Testing
                 File.WriteAllBytes(Environment.GetEnvironmentVariable("HA_QUEST_UI_PREVIEW").Replace("-menu.png","-watch.png"),image.EncodeToPNG());
                 RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
             }
+            foreach(string nextPage in new[]{"EntityMenu","Filters","FeedbackSettings"})
+            {
+                camera.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);
+                typeof(QuestHome).GetMethod(nextPage,flags).Invoke(home,null);
+                status=(WorldCard)typeof(QuestHome).GetField("status",flags).GetValue(home);
+                status.Label.text=(string)typeof(QuestHome).GetField("notice",flags).GetValue(home);
+                yield return new WaitForSeconds(.7f);
+                foreach(float angle in new[]{0f,-35f,35f})
+                {
+                    Vector3 center=new Vector3(0,-.025f,1.4f);
+                    camera.transform.position=center-Quaternion.Euler(10,angle,0)*Vector3.forward*1.4f;camera.transform.LookAt(center);
+                    Canvas.ForceUpdateCanvases();yield return null;
+                    target=new RenderTexture(1280,960,24);camera.targetTexture=target;camera.Render();RenderTexture.active=target;
+                    image=new Texture2D(1280,960,TextureFormat.RGB24,false);image.ReadPixels(new Rect(0,0,1280,960),0,0);image.Apply();
+                    File.WriteAllBytes(Environment.GetEnvironmentVariable("HA_QUEST_UI_PREVIEW").Replace("-menu.png","-"+nextPage+"-"+angle+".png"),image.EncodeToPNG());
+                    RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
+                }
+            }
             EditorApplication.Exit(0);
         }
     }

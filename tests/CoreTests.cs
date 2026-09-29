@@ -4,6 +4,23 @@ using HAgoesQuest.Core;
 public static class CoreTests
 {
     static int assertions;
+    static void DetentTests()
+    {
+        var tick=new AdjustmentClickGate();
+        Check(!tick.Step("light.a",true,.5f,0),"No click on grip start");
+        Check(!tick.Step("light.a",true,.51f,.1),"Small tracking jitter is silent");
+        Check(tick.Step("light.a",true,.55f,.15),"Turning across a value step clicks");
+        Check(!tick.Step("light.a",true,.60f,.16),"Fast samples cannot stack click bursts");
+        Check(tick.Step("light.a",true,.60f,.22),"Continued turning produces another detent");
+        Check(!tick.Step("light.a",true,.60f,.30),"Holding a value is silent");
+        Check(tick.Step("light.a",true,.55f,.40),"Reverse rotation also clicks");
+        Check(!tick.Step("light.b",true,.9f,.45),"Changing target resets audio baseline");
+        Check(!tick.Step("light.b",false,.4f,.5),"Closing adjustment cancels sound");
+        Check(!tick.Step("light.b",true,1,.55),"Resuming has no spurious click");
+        Check(!tick.Step("light.b",true,1,.65),"Turning against a clamped endpoint is silent");
+        Check(!tick.Step("light.b",true,.5f,1),"Tracking sample gap resets audio");
+        Check(!tick.Step("light.b",true,float.NaN,1.1),"Invalid value never produces sound");
+    }
     static void Check(bool condition, string name)
     {
         assertions++;
@@ -20,6 +37,7 @@ public static class CoreTests
         try
         {
             GazeTests();
+            DetentTests();
             var tracking = new TrackingGate();
             Check(!tracking.Step(false, false, 0), "Untracked startup anchor stays hidden");
             Check(!tracking.Step(true, false, 1), "First tracked pose is not displayed immediately");
