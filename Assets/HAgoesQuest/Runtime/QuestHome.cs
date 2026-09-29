@@ -70,7 +70,7 @@ namespace HAgoesQuest
             pointer.endColor = new Color(0.5f, 1, 0.95f, 0.95f);
             pointer.enabled = false;
             reticle = WorldCard.Create(null, Vector3.zero, new Vector2(16, 16), "");
-            reticle.GetComponent<Collider>().enabled = false;
+            reticle.GetComponent<Collider>().enabled = false; reticle.MakeCursor();
             Home();
             if (ExperienceSettings.Wrist && !ha.Demo) CloseMenu();
             while (string.IsNullOrEmpty(ha.ServerIdentity)) yield return null;
@@ -105,7 +105,7 @@ namespace HAgoesQuest
             bool wasPlacing = placing != null;
             CancelPlacement();
             if (wasPlacing && head && ha) Home();
-            RepairHandPointers(); gate.Reset(); menuGate.Reset(); magic?.Cancel(); RecenterMenu();
+            ResetGaze(); RepairHandPointers(); gate.Reset(); menuGate.Reset(); magic?.Cancel(); RecenterMenu();
         }
         void ToggleMenu()
         {
@@ -133,19 +133,19 @@ namespace HAgoesQuest
                 Rig.transform.Rotate(Vector3.right, -delta.y * 0.15f, Space.Self);
             }
 #endif
-            bool leftDown = HandReady(LeftHand) && LeftHand.GetFingerIsPinching(OVRHand.HandFinger.Index);
-            bool menuPressed = menuGate.Step("menu", leftDown, HandReady(LeftHand) && inputAllowed, Time.unscaledTime) || OVRInput.GetDown(OVRInput.RawButton.X);
+            bool leftDown = HandReady(MenuHand) && MenuHand.GetFingerIsPinching(OVRHand.HandFinger.Index);
+            bool menuPressed = menuGate.Step("menu", leftDown, HandReady(MenuHand) && inputAllowed, Time.unscaledTime) || OVRInput.GetDown(ExperienceSettings.LeftHanded?OVRInput.RawButton.A:OVRInput.RawButton.X);
 #if UNITY_EDITOR
             menuPressed |= UnityEngine.InputSystem.Keyboard.current?.tabKey.wasPressedThisFrame == true;
 #endif
             if (menuPressed && inputAllowed && !operationBusy && !ha.Connecting) ToggleMenu();
 
-            bool hand = HandReady(RightHand);
-            bool controller = !hand && OVRInput.IsControllerConnected(OVRInput.Controller.RTouch) &&
-                OVRInput.GetControllerPositionTracked(OVRInput.Controller.RTouch);
+            bool hand = HandReady(ControlHand);
+            bool controller = !hand && OVRInput.IsControllerConnected(ControlController) &&
+                OVRInput.GetControllerPositionTracked(ControlController);
             bool tracked = hand || controller;
-            bool down = hand ? RightHand.GetFingerIsPinching(OVRHand.HandFinger.Index) :
-                controller && OVRInput.Get(OVRInput.RawButton.RIndexTrigger);
+            bool down = hand ? ControlHand.GetFingerIsPinching(OVRHand.HandFinger.Index) :
+                controller && OVRInput.Get(ExperienceSettings.LeftHanded?OVRInput.RawButton.LIndexTrigger:OVRInput.RawButton.RIndexTrigger);
 #if UNITY_EDITOR
             tracked = true;
             down = mouse != null && mouse.leftButton.isPressed;
@@ -153,6 +153,7 @@ namespace HAgoesQuest
 
             if (status) status.Label.text = Short(ha.Status + "\n" + (string.IsNullOrEmpty(notice) ? bindings.Status : notice), 185);
             if (qrMenu && status) status.Label.text = string.IsNullOrEmpty(qr.Status) ? notice : qr.Status;
+            sensorGaze=!menu&&placing==null?GazeTarget():null;
             foreach (var pair in markers)
             {
                 var card = pair.Value;
@@ -162,7 +163,7 @@ namespace HAgoesQuest
                 card.GetComponent<Collider>().enabled = !menu && !operationBusy && placing == null;
                 if (!card.IsMedia) card.Face(head);
                 card.SetDistance(Vector3.Distance(head.position, card.transform.position));
-                if (EntityPolicy.Domain(pair.Key) == "sensor" || EntityPolicy.Domain(pair.Key) == "binary_sensor") card.ShowSensorValue(LookingAt(card));
+                if (EntityPolicy.Domain(pair.Key) == "sensor" || EntityPolicy.Domain(pair.Key) == "binary_sensor") card.ShowSensorValue(LookingAt(card), Vector3.Distance(head.position,card.transform.position));
                 if (ha.Entities.TryGetValue(pair.Key, out var entity))
                 {
                     string value = ha.Fresh ? entity.DisplayValue : L10n.T("Veraltet · ") + entity.DisplayValue;
@@ -175,12 +176,15 @@ namespace HAgoesQuest
                 else { card.Label.text = pair.Key + L10n.T("\nNicht verfügbar"); card.Interactable = false; }
             }
 
+            if(!menu && placing==null){ TickGaze(inputAllowed&&!operationBusy&&!scanBusy,tracked,down); return; }
+            if(gestureHint)gestureHint.gameObject.SetActive(false);
+            reticle.UnitScale=.001f;
             Ray ray = new Ray(head.position, head.forward);
-            if (hand && RightHand.IsPointerPoseValid && RightHand.PointerPose)
-                ray = new Ray(RightHand.PointerPose.position, RightHand.PointerPose.forward);
-            else if (controller) ray = new Ray(Rig.rightControllerAnchor.position, Rig.rightControllerAnchor.forward);
+            if (hand && ControlHand.IsPointerPoseValid && ControlHand.PointerPose)
+                ray = new Ray(ControlHand.PointerPose.position, ControlHand.PointerPose.forward);
+            else if (controller) ray = new Ray(ControllerAnchor.position, ControllerAnchor.forward);
             ray = SmoothAim(ray, down);
-            var fingerTip=MagicCasting.Bone(rightSkeleton,OVRSkeleton.BoneId.Hand_IndexTip,OVRSkeleton.BoneId.XRHand_IndexTip);
+            var fingerTip=MagicCasting.Bone(ControlSkeleton,OVRSkeleton.BoneId.Hand_IndexTip,OVRSkeleton.BoneId.XRHand_IndexTip);
             metaInput?.Step(ray,down,inputAllowed&&tracked&&!operationBusy,hand&&fingerTip,fingerTip?fingerTip.position:Vector3.zero);
             Vector3 aim = ray.GetPoint(5);
             if (focused) focused.Focus(false);
@@ -195,7 +199,7 @@ namespace HAgoesQuest
                 aim = heldPosition;
                 preview.transform.position = heldPosition;
                 preview.Face(head);
-                preview.Label.text = !positionTracked ? L10n.T("Rechte Hand ins Sichtfeld halten") :
+                preview.Label.text = !positionTracked ? Words("Bedienhand ins Sichtfeld halten","Keep your control hand visible") :
                     L10n.T("Hand zum Wunschort bewegen\nEinmal pinchen: Position festhalten");
                 placementValid = positionTracked;
                 key = placementValid ? "place:" + placing : null;
@@ -236,21 +240,21 @@ namespace HAgoesQuest
             reticle.Face(head);
             reticle.Focus(key != null);
             reticle.gameObject.SetActive(inputAllowed && (focused || placing != null));
-            pointer.enabled = inputAllowed && tracked && (focused || down || MagicCasting.IndexExtended(rightSkeleton) || (placing != null && !placementFrozen)) &&
-                (!hand || (RightHand.IsPointerPoseValid && RightHand.PointerPose));
+            pointer.enabled = inputAllowed && tracked && (focused || down || MagicCasting.IndexExtended(ControlSkeleton) || (placing != null && !placementFrozen)) &&
+                (!hand || (ControlHand.IsPointerPoseValid && ControlHand.PointerPose));
             if (pointer.enabled)
             {
                 Vector3 start = ray.origin;
-                if (hand && rightSkeleton && rightSkeleton.Bones != null)
+                if (hand && ControlSkeleton && ControlSkeleton.Bones != null)
                 {
-                    var tip = MagicCasting.Bone(rightSkeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip);
+                    var tip = MagicCasting.Bone(ControlSkeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip);
                     if (tip) start = tip.position;
                 }
                 pointer.SetPosition(0, start); pointer.SetPosition(1, aim);
                 UpdateBeam(start, aim, focused && focused.IsMarker);
             }
             else if (beamGlow) beamGlow.enabled = false;
-            magic?.Tick(RightHand, rightSkeleton, head, markers.Values, ha, inputAllowed && !menu && placing == null && !operationBusy && !scanBusy);
+
             bool consumed = UpdateAlternativeInput(inputAllowed, tracked, down, ray);
             bool placementPressed=placing!=null&&!placementFrozen&&gate.Step(consumed?null:key,down,tracked&&!operationBusy&&inputAllowed,Time.realtimeSinceStartup);
             bool selected=!consumed&&metaInput&&metaInput.RaySelected&&metaInput.RaySelected==focused&&key!=null;
@@ -263,6 +267,7 @@ namespace HAgoesQuest
 
         void NewMenu(string title)
         {
+            ResetGaze();
             magic?.Cancel();
             if (qrMenu) { qr.Stop(); qrMenu = false; }
             keyboard = null;
@@ -273,21 +278,24 @@ namespace HAgoesQuest
             Vector3 forward = Vector3.ProjectOnPlane(head.forward, Vector3.up).normalized;
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
             menu.transform.SetPositionAndRotation(head.position + forward * 1.4f, Quaternion.LookRotation(forward));
-            header = WorldCard.Create(menu.transform, new Vector3(0, 0.39f, 0), new Vector2(760, 90), title);
-            header.Interactable = false;
-            status = WorldCard.Create(menu.transform, new Vector3(0, -0.43f, 0), new Vector2(760, 150), "");
+            header = WorldCard.Create(menu.transform, new Vector3(0, 0.39f, 0), new Vector2(820, 90), title);
+            header.Interactable = false; header.SetSurface(WorldCard.Surface.Header);
+            MenuDesign.Frame(menu.transform);
+            status = WorldCard.Create(menu.transform, new Vector3(0, -0.44f, 0), new Vector2(800, 105), "");
             status.Label.fontSize = 19;
-            status.Interactable = false;
+            status.Interactable = false; status.SetSurface(WorldCard.Surface.Caption);
         }
 
         void Button(int row, string label, Action action, string icon = null)
         {
-            var card = WorldCard.Create(menu.transform, new Vector3(0, 0.275f - row * 0.1f, 0), new Vector2(720, 86), label, action);
+            var card = WorldCard.Create(menu.transform, new Vector3(0, 0.275f - row * 0.1f, 0), new Vector2(750, 82), label, action);
             card.SetIcon(icon);
+            if(row==0)card.SetSurface(WorldCard.Surface.Primary);
         }
 
         void CloseMenu()
         {
+            ResetGaze();
             if (qrMenu) { qr.Stop(); qrMenu = false; }
             if (menu) { menu.SetActive(false); Destroy(menu); }
             menu = null;
@@ -297,13 +305,19 @@ namespace HAgoesQuest
         void Home()
         {
             notice = "";
-            NewMenu(L10n.T("HA goes Quest\nDein Zuhause. Direkt vor dir."));
-            Button(0, ha.Demo ? L10n.T("Mit Home Assistant verbinden") : L10n.T("Home-Assistant-Verbindung"), ConnectionMenu, "lamp");
-            Button(1, L10n.T("Entität mit der Hand platzieren"), () => { page = 0; EntityMenu(); }, "lamp");
-            Button(2, L10n.T("Wohnung erfassen & Karte ansehen"), MapMenu, "map");
-            Button(3, L10n.T("Einstellungen · Bedienung & Aussehen"), ExperienceMenu, "settings");
-            Button(4, L10n.T("Menü schließen · Linker Pinch öffnet / schließt"), CloseMenu);
-            Button(5, L10n.T("Platzierte Entitäten verwalten / löschen"), () => PlacedMenu(0));
+            NewMenu(Words("Dein Zuhause","Your home"));
+            HomeTile(0,Words("Entitäten\nPlatzieren & steuern","Entities\nPlace & control"),()=>EntityMenu(),"lamp",true);
+            HomeTile(1,Words("Wohnung\nRäume & Karte","Apartment\nRooms & map"),MapMenu,"map");
+            HomeTile(2,Words("Verbindung\nHome Assistant","Connection\nHome Assistant"),ConnectionMenu,"connection");
+            HomeTile(3,Words("Einstellungen\nUhr & Gesten","Settings\nWatch & gestures"),ExperienceMenu,"settings");
+            var manage=WorldCard.Create(menu.transform,new Vector3(-.19f,-.235f,0),new Vector2(365,72),Words("Zuordnungen verwalten","Manage placements"),()=>PlacedMenu(0));manage.Label.fontSize=21;
+            var close=WorldCard.Create(menu.transform,new Vector3(.19f,-.235f,0),new Vector2(365,72),Words("Menü schließen","Close menu"),CloseMenu);close.Label.fontSize=21;
+            notice=Words("Ansehen + pinchen · Faust drehen: regeln\nMagie: Faust schließen und öffnen","Look + pinch · Twist fist to adjust\nMagic: close and open fist");
+        }
+        void HomeTile(int index,string label,Action action,string shape,bool primary=false)
+        {
+            var card=WorldCard.Create(menu.transform,new Vector3(index%2==0?-.195f:.195f,.205f-(index/2)*.20f,0),new Vector2(375,168),label,action);
+            if(primary)card.SetSurface(WorldCard.Surface.Primary);MenuDesign.Tile(card,shape);
         }
 
         void MagicSettings()
@@ -315,7 +329,7 @@ namespace HAgoesQuest
             Button(2, L10n.T("Übungsziel · ohne Geräte zu schalten"), StartMagicPractice);
             Button(3, L10n.T("Menü schließen & ausprobieren"), CloseMenu);
             Button(4, L10n.T("Zurück"), ExperienceMenu);
-            notice = L10n.T("Rechte Hand flach zum Icon richten, kurz ruhig halten, dann nach vorn stoßen. Grüner Rand = Ziel. Danach Hand zurücknehmen oder schließen. Für Lampen und Schalter.");
+            notice = Words("Ziel ansehen, Hand öffnen bis bereit. Faust schließen, dann öffnen: Feuerball. Faust drehen regelt stattdessen Helligkeit/Lautstärke.","Look at a target, open hand until ready. Close fist, then open to cast. Twisting adjusts brightness/volume instead.");
         }
 
         void ConnectionMenu()
@@ -534,15 +548,15 @@ namespace HAgoesQuest
         bool TryHandPosition(out Vector3 point)
         {
             point = heldPosition;
-            if (HandReady(RightHand) && rightSkeleton && rightSkeleton.Bones != null)
+            if (HandReady(ControlHand) && ControlSkeleton && ControlSkeleton.Bones != null)
             {
-                Transform index = MagicCasting.Bone(rightSkeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip);
-                Transform thumb = MagicCasting.Bone(rightSkeleton, OVRSkeleton.BoneId.Hand_ThumbTip, OVRSkeleton.BoneId.XRHand_ThumbTip);
+                Transform index = MagicCasting.Bone(ControlSkeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip);
+                Transform thumb = MagicCasting.Bone(ControlSkeleton, OVRSkeleton.BoneId.Hand_ThumbTip, OVRSkeleton.BoneId.XRHand_ThumbTip);
                 if (index && thumb) { point = (index.position + thumb.position) * 0.5f; return true; }
             }
-            if (OVRInput.IsControllerConnected(OVRInput.Controller.RTouch) && OVRInput.GetControllerPositionTracked(OVRInput.Controller.RTouch))
-            { point = Rig.rightControllerAnchor.position + Rig.rightControllerAnchor.forward * 0.12f; return true; }
-            if (HandReady(RightHand) && RightHand.PointerPose) { point = RightHand.PointerPose.position; return true; }
+            if (OVRInput.IsControllerConnected(ControlController) && OVRInput.GetControllerPositionTracked(ControlController))
+            { point = ControllerAnchor.position + ControllerAnchor.forward * 0.12f; return true; }
+            if (HandReady(ControlHand) && ControlHand.PointerPose) { point = ControlHand.PointerPose.position; return true; }
             if (Application.isEditor) { point = head.position + head.forward * 0.6f; return true; }
             return false;
         }
@@ -736,9 +750,11 @@ namespace HAgoesQuest
             if (beamTexture) Destroy(beamTexture);
             if (wristWatch) Destroy(wristWatch.gameObject);
             if (magicHint) Destroy(magicHint.gameObject);
+            if (gestureHint) Destroy(gestureHint.gameObject);
         }
         void OnApplicationFocus(bool focus)
         {
+            ResetGaze();
             magic?.Cancel();
             gate.Reset();
             menuGate.Reset();
@@ -747,6 +763,7 @@ namespace HAgoesQuest
         }
         void OnApplicationPause(bool pause)
         {
+            ResetGaze();
             magic?.Cancel();
             gate.Reset();
             menuGate.Reset();

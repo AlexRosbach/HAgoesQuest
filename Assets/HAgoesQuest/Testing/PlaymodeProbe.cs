@@ -113,6 +113,11 @@ namespace HAgoesQuest.Testing
             if (!Check(marker.Label.color.a > 0.99f, "Nearby entity label appears")) yield break;
             marker.SetIcon("temperature");marker.SetIcon("temperature");
             if(!Check(marker.GetComponentsInChildren<UnityEngine.UI.Image>().Single(i=>i.name=="Icon").rectTransform.anchoredPosition==Vector2.zero,"Refreshing a marker icon preserves its centered layout"))yield break;
+            marker.ShowSensorValue(true,1);float nearText=marker.Label.rectTransform.lossyScale.x;
+            marker.ShowSensorValue(true,4);float farText=marker.Label.rectTransform.lossyScale.x;
+            if(!Check(Mathf.Abs(farText/nearText-4)<.01f&&marker.Label.fontSize>=28,"Sensor label keeps constant angular size at one and four meters"))yield break;
+            marker.ShowSensorValue(true,100);
+            if(!Check(marker.Label.rectTransform.lossyScale.x<=.0093f,"Angular label scaling has a far-distance limit"))yield break;
             Destroy(marker.gameObject);
             var handFixture = new GameObject("Synthetic right-hand geometry");
             var skeleton = handFixture.AddComponent<OVRSkeleton>(); skeleton.enabled = false;
@@ -154,7 +159,14 @@ namespace HAgoesQuest.Testing
             if (!Check(MagicCasting.OpenPalm(skeleton, out _, out palmNormal) && palmNormal.z > 0.99f &&
                 MagicCasting.Bone(skeleton, OVRSkeleton.BoneId.Hand_IndexTip, OVRSkeleton.BoneId.XRHand_IndexTip) == indexTip,
                 "OpenXR bone identifiers stay distinct from overlapping OVR identifiers")) yield break;
-            Destroy(handFixture);
+            if(!Check(!HandPose.IsFist(skeleton)&&HandPose.PinchIntent(skeleton),"Open hand is valid pinch intent but not a fist"))yield break;
+            for(int i=0;i<3;i++)bones[3+i*3].Transform.position=new Vector3(-.03f+i*.02f,.065f,.47f);
+            if(!Check(HandPose.IsFist(skeleton)&&!HandPose.PinchIntent(skeleton),"Curled tracked fingers distinguish a fist from selection"))yield break;
+            var rollHead=new GameObject("Roll reference").transform;
+            float rollBefore=HandPose.Roll(skeleton,rollHead);handFixture.transform.Rotate(Vector3.forward,30);
+            float rollAfter=HandPose.Roll(skeleton,rollHead);
+            if(!Check(Mathf.Abs(Mathf.Abs(Mathf.DeltaAngle(rollBefore,rollAfter))-30)<.1f,"Fist roll follows actual hand-bone rotation"))yield break;
+            Destroy(rollHead.gameObject);Destroy(handFixture);
             var magicPreference = new MagicCasting(); bool oldMagic = magicPreference.Enabled;
             magicPreference.SetEnabled(!oldMagic);
             bool rememberedMagic = new MagicCasting().Enabled;
@@ -223,6 +235,27 @@ namespace HAgoesQuest.Testing
             void Invoke(string method, params object[] args) => typeof(QuestHome).GetMethod(method, flags).Invoke(ui, args);
             void Press(string prefix) => ((GameObject)Get("menu")).GetComponentsInChildren<WorldCard>().Single(c => c.Press != null && c.Label.text.StartsWith(prefix)).Activate();
             Set("head", testHead); Set("ha", ha); Set("bindings", spatial);
+            var leftFixture=new GameObject("Left preference hand").AddComponent<OVRHand>();leftFixture.enabled=false;
+            var rightFixture=new GameObject("Right preference hand").AddComponent<OVRHand>();rightFixture.enabled=false;
+            ui.LeftHand=leftFixture;ui.RightHand=rightFixture;
+            bool priorLeft=ExperienceSettings.LeftHanded;
+            ExperienceSettings.LeftHanded=false;
+            bool rightDefault=typeof(QuestHome).GetProperty("ControlHand",flags).GetValue(ui)==rightFixture&&typeof(QuestHome).GetProperty("MenuHand",flags).GetValue(ui)==leftFixture;
+            ExperienceSettings.LeftHanded=true;
+            bool leftMirrored=typeof(QuestHome).GetProperty("ControlHand",flags).GetValue(ui)==leftFixture&&typeof(QuestHome).GetProperty("MenuHand",flags).GetValue(ui)==rightFixture;
+            ExperienceSettings.LeftHanded=priorLeft;ui.LeftHand=ui.RightHand=null;Destroy(leftFixture.gameObject);Destroy(rightFixture.gameObject);
+            if(!Check(rightDefault&&leftMirrored,"Handedness mirrors control hand and watch hand together"))yield break;
+            testHead.position=new Vector3(30,0,0);
+            var gazeA=WorldCard.Create(null,new Vector3(30,0,3),new Vector2(90,90),"gaze A");gazeA.MakeCompactMarker();gazeA.EntityId="sensor.a";
+            var gazeB=WorldCard.Create(null,new Vector3(30.07f,0,3),new Vector2(90,90),"gaze B");gazeB.MakeCompactMarker();gazeB.EntityId="sensor.b";
+            var gazeMarkers=(System.Collections.Generic.Dictionary<string,WorldCard>)Get("markers");gazeMarkers.Add(gazeA.EntityId,gazeA);gazeMarkers.Add(gazeB.EntityId,gazeB);
+            yield return null;Physics.SyncTransforms();
+            if(!Check((WorldCard)typeof(QuestHome).GetMethod("GazeTarget",flags).Invoke(ui,null)==gazeA,"Head-center targeting selects the centered entity independently of hand aim"))yield break;
+            gazeA.gameObject.SetActive(false);
+            if(!Check((WorldCard)typeof(QuestHome).GetMethod("GazeTarget",flags).Invoke(ui,null)==gazeB,"Untracked hidden entity cannot remain the gaze target"))yield break;
+            gazeB.transform.position=new Vector3(31,0,3);Physics.SyncTransforms();
+            if(!Check(typeof(QuestHome).GetMethod("GazeTarget",flags).Invoke(ui,null)==null,"Looking away cancels gaze target"))yield break;
+            gazeMarkers.Clear();Destroy(gazeA.gameObject);Destroy(gazeB.gameObject);testHead.position=Vector3.zero;
             Invoke("BeginPlacement", "light.cancel_on_recenter", 1f);
             Invoke("FreezePlacement", new Vector3(0.2f, 0, 1));
             Invoke("RestoreHandInput");

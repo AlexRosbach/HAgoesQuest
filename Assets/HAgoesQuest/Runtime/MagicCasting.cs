@@ -32,6 +32,13 @@ namespace HAgoesQuest
             if (PracticeTarget) Object.Destroy(PracticeTarget.gameObject);
             PracticeTarget = null;
         }
+        public bool CastAt(Vector3 origin,WorldCard target,Transform head,HomeAssistantConnection ha)
+        {
+            effects.RemoveAll(effect=>!effect);
+            if(!Enabled||!target||!target.gameObject.activeInHierarchy||effects.Count>=4)return false;
+            if(target!=PracticeTarget&&(!target.Interactable||target.ReadOnly||!ha.Switch(target.EntityId)))return false;
+            effects.Add(MagicFireball.Launch(origin,target,head));target.Pulse();return true;
+        }
         public void Tick(OVRHand hand, OVRSkeleton skeleton, Transform head,
             IEnumerable<WorldCard> markers, HomeAssistantConnection ha, bool allowed)
         {
