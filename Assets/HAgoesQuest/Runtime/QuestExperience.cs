@@ -36,6 +36,7 @@ namespace HAgoesQuest
             wristWatch.Label.rectTransform.anchoredPosition=Vector2.zero;
             wristWatch.Label.rectTransform.anchorMin=wristWatch.Label.rectTransform.anchorMax=Vector2.one*.5f;
             wristWatch.Label.rectTransform.pivot=Vector2.one*.5f;wristWatch.Label.rectTransform.sizeDelta=new Vector2(85,75);wristWatch.Label.fontSize=22;wristWatch.Label.color=Color.white;
+            wristWatch.gameObject.AddComponent<WristDial>().Initialize(wristWatch);
             wristWatch.gameObject.SetActive(false);
             StartCoroutine(StartupAnimation());
         }
@@ -58,31 +59,23 @@ namespace HAgoesQuest
         {
             if(wristWatch)
             {
-                var wrist=MagicCasting.Bone(leftSkeleton,OVRSkeleton.BoneId.Hand_WristRoot,OVRSkeleton.BoneId.XRHand_Wrist);
-                bool visible=ExperienceSettings.Wrist&&HandReady(LeftHand)&&wrist;
+                var wrist=MagicCasting.Bone(WatchSkeleton,OVRSkeleton.BoneId.Hand_WristRoot,OVRSkeleton.BoneId.XRHand_Wrist);
+                bool visible=ExperienceSettings.Wrist&&HandReady(MenuHand)&&wrist;
                 wristWatch.gameObject.SetActive(visible);
                 if(visible)
                 {
-                    var palm=MagicCasting.Bone(leftSkeleton,OVRSkeleton.BoneId.Hand_Middle1,OVRSkeleton.BoneId.XRHand_MiddleProximal);
+                    var palm=MagicCasting.Bone(WatchSkeleton,OVRSkeleton.BoneId.Hand_Middle1,OVRSkeleton.BoneId.XRHand_MiddleProximal);
                     Vector3 towardArm=palm?(wrist.position-palm.position).normalized:Vector3.zero;
-                    wristWatch.transform.position=wrist.position+towardArm*.045f+(head.position-wrist.position).normalized*.035f;
-                    wristWatch.Face(head);wristWatch.Label.text=System.DateTime.Now.ToString("HH:mm")+"\nHA";
+                    wristWatch.transform.position=wrist.position+towardArm*.055f+(head.position-wrist.position).normalized*.035f;
+                    wristWatch.Face(head);wristWatch.Label.text=System.DateTime.Now.ToString("HH:mm");
+                    wristWatch.GetComponent<WristDial>()?.SetConnection(ha.Fresh);
                 }
             }
-            if(magic!=null&&magic.Enabled&&!menu)
-            {
-                if(!magicHint){magicHint=WorldCard.Create(null,Vector3.zero,new Vector2(640,70),"");magicHint.Interactable=false;magicHint.GetComponent<Collider>().enabled=false;magicHint.Label.fontSize=20;}
-                magicHint.gameObject.SetActive(true);magicHint.transform.position=head.position+head.forward*1.15f-head.up*.34f;magicHint.Face(head);
-                magicHint.Label.text=magic.Hint;
-            }
-            else if(magicHint)magicHint.gameObject.SetActive(false);
         }
         bool LookingAt(WorldCard card)
         {
             // Quest 3 has no eye tracking. The center of the head view is the gaze proxy.
-            var direction=card.transform.position-head.position;
-            if(Vector3.Angle(head.forward,direction)>4)return false;
-            return Physics.Raycast(new Ray(head.position,direction.normalized),out var hit,direction.magnitude+.1f)&&hit.collider.GetComponent<WorldCard>()==card;
+            return card==sensorGaze;
         }
         Ray SmoothAim(Ray source,bool pinching)
         {
@@ -106,8 +99,8 @@ namespace HAgoesQuest
         }
         bool UpdateAlternativeInput(bool allowed,bool tracked,bool down,Ray ray)
         {
-            var tip=MagicCasting.Bone(rightSkeleton,OVRSkeleton.BoneId.Hand_IndexTip,OVRSkeleton.BoneId.XRHand_IndexTip);
-            bool finger=allowed&&HandReady(RightHand)&&tip;
+            var tip=MagicCasting.Bone(ControlSkeleton,OVRSkeleton.BoneId.Hand_IndexTip,OVRSkeleton.BoneId.XRHand_IndexTip);
+            bool finger=allowed&&HandReady(ControlHand)&&tip;
             if(!allowed||!tracked){entityList?.CancelDrag();touchingCard=null;levelDragging=false;rayReady=false;touchArmed=false;return false;}
             if(levelControl&&menu)
             {
@@ -138,12 +131,12 @@ namespace HAgoesQuest
         {
             NewMenu(L10n.T("Einstellungen"));
             Button(0,L10n.T("Magie · Anleitung & Übungsziel"),MagicSettings,"automation");
-            Button(1,ExperienceSettings.Wrist?L10n.T("Start: HA-Uhr am linken Arm"):L10n.T("Start: Menü vor dir"),()=>{ExperienceSettings.Wrist=!ExperienceSettings.Wrist;ExperienceMenu();});
+            Button(1,Words("Uhr & Bedienhand","Watch & handedness"),WatchSettings,"settings");
             Button(2,ExperienceSettings.English?L10n.T("Language: English · Deutsch"):L10n.T("Sprache: Deutsch · English"),()=>{ExperienceSettings.English=!ExperienceSettings.English;ExperienceMenu();});
             Button(3,ExperienceSettings.Sound?L10n.T("Schaltgeräusche: an"):L10n.T("Schaltgeräusche: aus"),()=>{ExperienceSettings.Sound=!ExperienceSettings.Sound;ExperienceMenu();},"speaker");
             Button(4,ExperienceSettings.English?"About · privacy & licenses":"Über · Datenschutz & Lizenzen",AboutMenu,"sensor");
             Button(5,L10n.T("Zurück"),Home);
-            notice=L10n.T("Zeigen + pinchen: auswählen · nah: antippen · Listen: pinchen und ziehen oder wischen. Die Uhr öffnet ein stabiles Panel vor dir.");
+            notice=Words("Entität ansehen + pinchen. Faust drehen: regeln. Menüs: Zeigen oder antippen. Die Uhr öffnet ein ortsfestes Panel.","Look at entity + pinch. Twist fist to adjust. Menus: point or tap. The watch opens a stationary panel.");
         }
         void StartMagicPractice()
         {
@@ -173,7 +166,7 @@ namespace HAgoesQuest
         }
         void AboutMenu()
         {
-            NewMenu("HA goes Quest · 0.5.0");
+            NewMenu("HA goes Quest · 0.6.0");
             var info=WorldCard.Create(menu.transform,new Vector3(0,.12f,0),new Vector2(720,300),ExperienceSettings.English?
                 "Independent development app. Not affiliated with Meta or Home Assistant.\n\nCredentials are encrypted on this Quest. Device commands and media go to your configured HA server. QR camera frames are processed locally. Spatial tracking uses Meta platform services.\n\nThird-party licenses are included below.":
                 "Unabhängige Entwicklungs-App. Keine offizielle App von Meta oder Home Assistant.\n\nAnmeldung verschlüsselt auf dieser Quest. Befehle und Medien gehen an deinen HA-Server. QR-Kamerabilder werden lokal verarbeitet. Raumtracking nutzt Meta-Plattformdienste.\n\nDrittanbieter-Lizenzen sind unten enthalten.");

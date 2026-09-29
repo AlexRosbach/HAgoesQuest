@@ -1,8 +1,10 @@
 # HA goes Quest
 
-Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, per Fingerzeiger auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
+Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, über einen Punkt in der Blickmitte auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: installierbare Entwicklungs-APK 0.5.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 77 Kernprüfungen und 82 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+**Stand: installierbare Entwicklungs-APK 0.6.0 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 99 Kernprüfungen und 91 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+
+Neu in 0.6.0: Blickpunkt + Pinch, Faustdrehen für Helligkeit/Lautstärke, Faust öffnen zum Feuerballwerfen, größere entfernungsabhängige Sensorbeschriftung, überarbeitete Uhr mit Rechts-/Linkshändermodus und Menükacheln mit eigenen 3D-Symbolen. [Bedienung und Abnahme](docs/VERSION-0.6.0.md).
 
 Neu in 0.5.0: Meta Interaction SDK für Zeigen und Antippen, leuchtender Strahl, acht sichtbare Entitäten mit Scrollen, Helligkeits-/Lautstärkeregler, Sensorwerte beim Hinschauen, HA-Uhr, Systemtastatur, Deutsch/Englisch, Klickgeräusche und Kamera-/Bilderrahmen. Gespeicherte Anker werden erst bei stabilem Tracking eingeblendet und parallel wiedergefunden. [Anleitung](docs/VERSION-0.5.0.md) · [English guide](docs/USER-GUIDE-EN.md) · [Meta-Recherche](docs/DESIGN-RESEARCH.md) · [Verkauf/Lizenzen](docs/COMMERCIAL-READINESS.md).
 
@@ -22,10 +24,10 @@ Neu in 0.3.0: keine virtuellen Hände, Boundaryless-AR, Typ-/Raumfilter und Such
 2. Raum laden; falls noch nicht vorhanden, öffnet sich Metas Raumerfassung. „Raum neu scannen“ startet sie erneut. Die Wohnungskarte zeigt erfasste Räume, Gerätepositionen und den Laufweg der aktuellen Sitzung.
 3. Home-Assistant-Entität aus der Liste wählen; bei Lampen/Schaltern zwischen reiner Anzeige und Bedienung wählen.
 4. Zeigerplatzierung wählen, auf den Wunschort zeigen und einmal pinchen. Vorschau bestätigen oder weiter verschieben. Alternativ direkt an der Hand oder auf einer Scanfläche platzieren; auch dort einmal pinchen und bestätigen.
-5. Menü schließen, mit dem Finger auf die Markierung zeigen und rechts Daumen und Zeigefinger zusammenführen. Im Nahbereich ist Antippen möglich. Für Helligkeit/Lautstärke den Regler unter einem unterstützten Icon öffnen und mit Pinch seitlich ziehen.
+5. Menü schließen, den Blickpunkt auf die Markierung richten und mit der Bedienhand pinchen. Für Helligkeit/Lautstärke kurz die Hand öffnen, Faust schließen und drehen; Öffnen bestätigt den Prozentwert. Die Schieberegler bleiben alternativ verfügbar.
 6. Bei bedienbaren Lampen und Schaltern wird der Zustand geändert. Sensoren zeigen ihren Wert samt Einheit.
 
-Die Quest 3 hat kein Eye-Tracking. Die Auswahl erfolgt mit der rechten Hand; ohne Handzeiger gibt es eine Kopf-/Controller-Alternative. Die Lampe wird über die ihr zugewiesene Markierung angesprochen. Ein Raumscan erkennt **nicht automatisch**, welche echte Lampe welcher Home-Assistant-Entität entspricht. Diese Zuordnung erfolgt einmal manuell.
+Die Quest 3 hat kein Eye-Tracking. Die Entitätsauswahl folgt der Kopfmitte, die Bestätigung der Bedienhand (standardmäßig rechts). Menüs unterstützen SDK-Zeiger und direktes Antippen. Der Linkshändermodus spiegelt die Hände. Die Lampe wird über die ihr zugewiesene Markierung angesprochen. Ein Raumscan erkennt **nicht automatisch**, welche echte Lampe welcher Home-Assistant-Entität entspricht. Diese Zuordnung erfolgt einmal manuell.
 
 ## Enthalten
 
@@ -33,8 +35,8 @@ Die Quest 3 hat kein Eye-Tracking. Die Auswahl erfolgt mit der rechten Hand; ohn
 - Generierte transparente Symbole für Lampe, Karte und Sensor; animiertes Einblenden, Fokus und Rückmeldung bei Zustandsänderung. [Bildprompts und Herkunft](docs/ART-PROMPTS.md).
 - Wohnungskarte aus Metas Raumdaten. Die Erfassung erfolgt über den Quest-Systemdialog; der Laufweg ergänzt die Anzeige, erzeugt aber keine eigene kontinuierliche 3D-Rekonstruktion.
 - Scrollbare Entitätsauswahl mit acht sichtbaren Einträgen und aktuellen Werten; Typ- und Raumfilter sowie Suche; alle Entitätsarten als Anzeige, `light`/`switch` zum Schalten.
-- Fingerzeiger + rechter Pinch; rechter Controller-Trigger als Alternative.
-- Linker Pinch oder X am linken Controller öffnet das Menü und bricht eine Platzierung ab.
+- Blickpunkt + Pinch der Bedienhand; Controller-Trigger als Alternative. Fingerzeiger und Antippen bleiben für Menüs und Platzierung.
+- Pinch der Uhrenhand öffnet/schließt das Menü und bricht eine Platzierung ab. Standardmäßig links; im Linkshändermodus rechts.
 - Lokales Speichern und Wiederfinden von bis zu 50 Zuordnungen pro Home-Assistant-Server. Nicht erkannte Anker werden automatisch erneut gesucht; im betreffenden Raum kann „Gespeicherte Positionen wiederfinden“ zusätzlich angestoßen werden. HA-Raumfilter und physische Meta-Räume sind getrennte Zuordnungen.
 - Sensorwerte und Gerätezustände über REST-Polling, etwa alle 1,5 Sekunden plus Antwortzeit. Kein WebSocket-Livestream in dieser Version.
 - Explizite `turn_on`-/`turn_off`-Aufrufe, keine automatische Wiederholung von Schaltbefehlen nach Fehlern. Anzeigen werden durch die nächste Statusabfrage bestätigt.

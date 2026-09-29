@@ -105,3 +105,16 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - Kamera- und Bildrahmen platzieren, App aus anderem Raum neu starten: Position und Wandorientierung erhalten. HA offline schalten, Berechtigung entziehen und zurückkehren: keine stillschweigend als aktuell ausgegebenen alten Bilder.
 - Sounds unterscheiden Lampe/Schalter, lassen sich abschalten und dürfen nach einem fehlgeschlagenen HA-Befehl keine bestätigte Aktion vortäuschen.
 - Bildrate und Speicherverbrauch mit vielen Icons und zwei sichtbaren Kamerarahmen über mindestens 30 Minuten auf der echten Quest messen.
+
+## Bedienung ab 0.6.0 (ersetzt die älteren Gestenabläufe)
+
+- [ ] Entität mit dem Punkt in der Kopfmitte auswählen. Handrichtung verändern: Das Ziel darf sich dadurch nicht ändern. Beim Wegschauen muss die Aufhellung verschwinden.
+- [ ] Bewusster Pinch schaltet einmal. Eine Faust langsam und schnell schließen: kein unbeabsichtigter Pinch-Befehl. Gehaltene Finger und Fokusverlust erzeugen keine Wiederholung.
+- [ ] Lampe und Lautsprecher ansehen, Hand kurz öffnen, Faust schließen und in beide Richtungen drehen. Prozentvorschau prüfen. Erst Öffnen übernimmt den Wert.
+- [ ] Während der Drehung wegschauen, Systemmenü öffnen oder Hand verdecken: kein Wert darf durch verlorenes Tracking bestätigt werden.
+- [ ] Magie: Bereitschaftsring ansehen, Faust schließen und öffnen. Drei Würfe hintereinander; pro Geste nur ein Befehl. Bei vorheriger Drehung nur Wertübernahme, kein Feuerball.
+- [ ] Sensoren aus 0,5 / 1 / 3 / 6 Metern ansehen. Schrift soll ungefähr dieselbe Winkelgröße behalten, lesbar sein und benachbarte Icons nicht dauerhaft verdecken.
+- [ ] Uhr links mit rechter Fingerspitze öffnen/schließen, dann Linkshändermodus wählen: Uhr rechts, Tippen/Pinch/Faustbedienung links. Präferenz nach Neustart erhalten.
+- [ ] Uhrzeit, Datum und Verbindungsanzeige ohne Überlappung; beim Armbewegen bleibt das geöffnete Menü ortsfest.
+- [ ] Hauptkacheln, 3D-Symbole und Beschriftung mit beiden Augen prüfen: keine Doppelbilder, fehlenden Objekte oder Tiefenkonflikte. Hover und Klickfeedback prüfen.
+- [ ] Zwei Räume, Kaltstart im anderen Raum und Systemkalibrierung wie oben erneut prüfen. Neue Gesten dürfen die räumliche Zuordnung nicht verändern.

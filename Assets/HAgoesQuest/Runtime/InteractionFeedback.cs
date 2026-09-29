@@ -33,6 +33,7 @@ namespace HAgoesQuest
         {
             if (ExperienceSettings.Sound && source) source.PlayOneShot(entityId.StartsWith("switch.") ? switchClick : lightClick);
         }
+        public void PlayUI(){if(ExperienceSettings.Sound&&source)source.PlayOneShot(lightClick,.45f);}
         void OnDestroy() { if (Instance == this) Instance = null; Destroy(lightClick); Destroy(switchClick); }
     }
 }

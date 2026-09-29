@@ -25,3 +25,11 @@ Magie bleibt eine ausdrücklich optionale, experimentelle Zusatzgeste, kein von 
 ## Grenzen
 
 Die eigene Welt-UI ist über `RayInteractable` und `PokeInteractable` an Metas Interaction SDK 207 angebunden. Ein Root-Treiber versorgt `RayInteractor` und `PokeInteractor` mit der Runtime-Aim-Pose, dem Pinchzustand und der Fingerspitze. Auswahl und Antippen verwenden die SDK-Zustandsübergänge; Scrollen und Regler interpretieren die anschließende Bewegung. Es ist kein unverändert übernommenes Meta-UI-Set. Dokumentierte Designentscheidungen und Rechnerprüfungen sind keine Meta-Zulassung.
+
+## Änderung in 0.6.0
+
+Die neu gewünschte Entitätsbedienung verwendet einen sichtbaren Punkt in Kopf-Blickrichtung, bestätigt durch Pinch. Die Fingerzeiger bleiben ausschließlich für Menü und Platzierung, damit zwei Fernziel-Modi nicht gleichzeitig um dieselbe Entität konkurrieren. Eine kurze Klassifikationszeit und Fingerhaltung unterscheiden Pinch und Faust. Faustdrehen und Faustöffnen sind eigene App-Gesten, keine von Meta garantierten Standardgesten.
+
+Die Hauptansicht ordnet Aktionen in große Kacheln mit einer primären Aktion. Selbst erstellte räumliche Symbole dienen als zusätzliche visuelle Hinweise; die beschriftete Kachel bleibt die unveränderte Trefferfläche. Die Uhr wird für Linkshänder gespiegelt und öffnet weiterhin ein ortsfestes Panel. Sensorbeschriftungen skalieren proportional zur Entfernung mit Unter-/Obergrenze.
+
+Ergänzende Quellen: [Button-Hierarchie und Trefferflächen](https://developers.meta.com/horizon/design/buttons_bp/), [Button-Zustände](https://developers.meta.com/horizon/design/buttons_specs/), [winkelabhängige Skalierung](https://developers.meta.com/horizon/design/mr-design-guideline/), [Wrist button](https://developers.meta.com/horizon/design/wrist-buttons/). Die Plattformwerte in dp lassen sich nicht pauschal mit den Weltmetern der eigenen Unity-Oberfläche gleichsetzen. Lesbarkeit und Trefferflächen müssen deshalb zusätzlich in der Brille geprüft werden.

@@ -1,4 +1,4 @@
-# HA goes Quest 0.5.0
+# HA goes Quest 0.6.0
 
 Install the APK over your existing installation to retain your token and placements. Do not uninstall or clear application data.
 
@@ -6,12 +6,12 @@ Install the APK over your existing installation to retain your token and placeme
 2. Use Quest room setup to capture the rooms. Your Home Assistant areas organize the entity browser; they are separate from Meta's physical room records.
 3. Search or combine type and room filters. The scrolling list shows eight complete entries with their current values. Pinch and drag vertically, or swipe directly with your index finger.
 4. Select an entity, point to its position or move your hand there, pinch once to freeze the preview, and confirm. Sensors are display-only. Camera and image entities become fixed frames.
-5. Extend your right index finger to see the aiming ray. Pinch to select; nearby buttons also support direct index-finger touch. Left pinch toggles the menu; release between gestures.
-6. Point at an adjustable light or speaker and select the small sun/speaker control below it. Pinch the slider and drag sideways. Releasing sends the selected absolute brightness or volume. Unsupported devices do not offer the control.
-7. Look directly at a sensor icon to reveal its reading from a distance. Quest 3 uses head direction, not eye tracking, for this behavior.
-8. Settings include English/German, sound and wrist-watch startup. Touching the watch opens a stable panel in front of you; it does not follow the moving wrist.
+5. Aim the center dot at an entity and pinch with your control hand to select. Keep the other fingers loosely extended. Menus retain ray and direct index-finger touch. Pinch the watch hand to toggle the menu.
+6. Look at an adjustable light or speaker, briefly open your hand until ready, close your fist and twist. Opening sends the displayed brightness or volume once. Looking away or losing tracking cancels. Sliders remain available as an alternative.
+7. Look directly at a sensor icon to reveal its reading from a distance. Quest 3 uses head direction, not eye tracking, for this behavior. Text scales with distance between 0.45 and 8 meters.
+8. Settings include English/German, sound, wrist-watch startup and handedness. Left-handed mode mirrors the watch and control hand. Touching the watch opens a stable panel in front of you; it does not follow the moving wrist.
 
-Optional magic has a practice target that never controls devices. Open your right palm, aim toward the target, hold briefly until ready, then push forward about 12 cm. Pull back or close your hand before the next cast. Follow the live prompts. This experimental gesture is separate from standard pinch/poke input.
+Optional magic has a practice target that never controls devices. Look at the target and briefly open the control hand until ready. Close your fist, then open to cast. Twisting takes priority: opening then confirms the value and does not cast. Follow the live prompts. This experimental gesture is separate from standard pinch/poke input.
 
 Camera frames show repeatedly refreshed snapshots, up to two requests per second plus network latency. They are not full-rate video streams. Static HA image entities refresh about every ten seconds. Only the configured HA server receives the access token; frames stop fetching when hidden.
 

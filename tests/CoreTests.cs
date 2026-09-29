@@ -19,6 +19,7 @@ public static class CoreTests
     {
         try
         {
+            GazeTests();
             var tracking = new TrackingGate();
             Check(!tracking.Step(false, false, 0), "Untracked startup anchor stays hidden");
             Check(!tracking.Step(true, false, 1), "First tracked pose is not displayed immediately");
@@ -163,5 +164,55 @@ public static class CoreTests
         var gate = new MagicPushGate(); time=0;
         for (int i=0;i<9;i++) gate.Step("light.test", true, true, new PushVector(), new PushVector(0,0,1), time=i*.05);
         return gate;
+    }
+    static GazeGestureGate ReadyGrip(out double t)
+    {
+        var g=new GazeGestureGate();t=0;
+        for(int i=0;i<6;i++){g.Step("light.a",true,false,true,true,true,.5f,0,t);t+=.05;}
+        return g;
+    }
+    static void GazeTests()
+    {
+        double t;var g=ReadyGrip(out t);Check(g.Ready,"Open hand on looked-at target becomes ready");
+        g.Step("light.a",true,true,false,true,true,.5f,0,t+=.05);Check(g.Closed&&!g.Cast,"Fist arms without switching");
+        g.Step("light.a",true,true,false,true,true,.5f,0,t+=.15);
+        g.Step("light.a",true,false,true,true,true,.5f,0,t+=.05);Check(!g.Cast,"Opening is debounced");
+        g.Step("light.a",true,false,true,true,true,.5f,0,t+=.10);Check(g.Cast&&!g.Commit,"Opening armed stationary fist casts once");
+        g.Step("light.a",true,false,true,true,true,.5f,0,t+=.05);Check(!g.Cast,"Held open hand cannot repeat fireball");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,true,true,.5f,0,t+=.05);
+        g.Step("light.a",true,true,false,true,true,.5f,42,t+=.15);Check(g.Adjusting&&Math.Abs(g.Value-.75f)<.001,"Twist previews brightness after dead zone");
+        g.Step("light.a",true,false,true,true,true,.5f,42,t+=.05);g.Step("light.a",true,false,true,true,true,.5f,42,t+=.1);
+        Check(g.Commit&&!g.Cast,"Twist release commits instead of throwing");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,true,true,.5f,0,t+=.05);
+        g.Step("light.b",true,false,true,true,true,.5f,0,t+=.15);Check(!g.Cast&&!g.Commit&&!g.Closed,"Looking at another entity cancels grip");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,true,true,.5f,0,t+=.05);
+        g.Step("light.a",false,false,true,true,true,.5f,0,t+=.1);Check(!g.Cast&&!g.Commit&&!g.Closed,"Lost tracking never counts as opening fist");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,true,true,.5f,0,t+=.05);
+        g.Step("light.a",true,true,false,true,true,.5f,100,t+=.1);Check(!g.Closed,"Orientation discontinuity cancels adjustment");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,true,true,.5f,179,t+=.05);
+        g.Step("light.a",true,true,false,true,true,.5f,-179,t+=.15);Check(g.Closed&&!g.Adjusting,"Angle wrap is two degrees, not a full rotation");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,false,true,.1f,0,t+=.05);
+        g.Step("light.a",true,true,false,false,true,.1f,-60,t+=.15);Check(g.Value==0,"Volume cannot go below zero");
+        g.Step("light.a",true,false,true,false,true,.1f,-60,t+=.05);g.Step("light.a",true,false,true,false,true,.1f,-60,t+=.1);Check(g.Commit&&!g.Cast,"Normal mode supports level adjustment without magic");
+        g=ReadyGrip(out t);g.Step("light.a",true,true,false,true,true,.5f,0,t+=.05);
+        g.Step("light.a",true,false,true,true,true,.5f,0,t+=1);Check(!g.Cast&&!g.Closed,"Long sample gap cancels gesture");
+        g=new GazeGestureGate();for(int i=0;i<8;i++)g.Step("light.a",true,true,false,true,true,.5f,0,i*.05);Check(!g.Closed&&!g.Cast,"Startup with held fist cannot arm");
+        int casts=0;t=0;g=new GazeGestureGate();
+        for(int cycle=0;cycle<3;cycle++)
+        {
+            for(int i=0;i<12;i++)g.Step("light.a",true,false,true,true,false,0,0,t+=.05);
+            for(int i=0;i<4;i++)g.Step("light.a",true,true,false,true,false,0,0,t+=.05);
+            for(int i=0;i<4;i++){g.Step("light.a",true,false,true,true,false,0,0,t+=.05);if(g.Cast)casts++;}
+        }
+        Check(casts==3,"Three close-open gestures produce exactly three casts");
+        var p=new GazePinchGate();p.Step("a",false,true,true,0);
+        Check(!p.Step("a",true,true,true,.05),"Pinch waits for intent classification");
+        Check(p.Step("a",true,true,true,.18),"Deliberate gaze pinch selects");
+        Check(!p.Step("a",true,true,true,.2),"Held gaze pinch cannot repeat");
+        p.Reset();p.Step("a",false,true,true,0);p.Step("a",true,true,true,.05);
+        Check(!p.Step("a",true,true,false,.1)&&!p.Step("a",true,true,true,.2),"Closing fist cancels pending pinch until release");
+        p.Reset();p.Step("a",false,true,true,0);p.Step("a",true,true,true,.05);
+        Check(!p.Step("b",true,true,true,.2),"Gaze target change cancels pending pinch");
+        p.Reset();p.Step("a",true,false,true,0);Check(!p.Step("a",true,true,true,.1),"Tracking recovery while pinched cannot select");
     }
 }

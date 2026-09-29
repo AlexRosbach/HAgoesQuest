@@ -38,7 +38,16 @@ namespace HAgoesQuest
         string lastState;
         static Sprite rounded;
         static readonly System.Collections.Generic.Dictionary<string, Sprite> icons = new System.Collections.Generic.Dictionary<string, Sprite>();
-        readonly Color idle = new Color(0.065f, 0.068f, 0.085f, 0.97f);
+        Color idle = new Color(.115f,.12f,.15f,1);
+        public enum Surface { Secondary, Primary, Header, Caption, Panel }
+        public void SetSurface(Surface style)
+        {
+            idle=style==Surface.Primary?new Color(.30f,.24f,.67f,1):style==Surface.Panel?new Color(.038f,.043f,.06f,.98f):style==Surface.Header||style==Surface.Caption?new Color(.055f,.06f,.08f,.96f):new Color(.115f,.12f,.15f,1);
+            if(style==Surface.Header){Label.fontSize=30;Label.fontStyle=FontStyle.Bold;Label.alignment=TextAnchor.MiddleLeft;background.enabled=false;GetComponent<Outline>().enabled=false;}
+            if(style==Surface.Caption)Label.color=new Color(.76f,.79f,.85f);
+            background.color=idle;
+        }
+        public void MakeCursor(){background.sprite=Circle(false);background.type=Image.Type.Simple;GetComponent<Outline>().enabled=false;idle=Color.white;}
         public string Key => GetInstanceID().ToString();
 
         public static WorldCard Create(Transform parent, Vector3 localPosition, Vector2 size, string label, Action press = null)
@@ -98,12 +107,18 @@ namespace HAgoesQuest
             showDetails = distance <= 0.30f;
             proximity = 1 - Mathf.InverseLerp(0.3f, 1.2f, distance);
         }
-        public void ShowSensorValue(bool gaze)
+        public void ShowSensorValue(bool gaze, float distance = 1)
         {
             if (gaze) showDetails = true;
+            // Constant angular text size, independent of the icon's proximity animation.
+            float parentScale=Mathf.Max(.0001f,transform.lossyScale.x);
+            float target=Mathf.Clamp(distance,.45f,8)*.00115f/parentScale;
+            Label.rectTransform.localScale=Vector3.one*target;
+            Label.fontSize=28;
+            Label.rectTransform.sizeDelta=new Vector2(420,105);
             Label.rectTransform.pivot = new Vector2(0.5f, 0);
             Label.rectTransform.anchorMin = Label.rectTransform.anchorMax = new Vector2(0.5f, 1);
-            Label.rectTransform.anchoredPosition = new Vector2(0, 12);
+            Label.rectTransform.anchoredPosition = new Vector2(0, 16*target);
         }
 
         public void MakeCompactMarker()
@@ -121,7 +136,7 @@ namespace HAgoesQuest
             ring.raycastTarget = false;
             ring.sprite = Circle(true);
             ring.rectTransform.sizeDelta = new Vector2(90, 90);
-            ring.color = new Color(0.14f, 0.6f, 0.65f, 0.85f);
+            ring.color = new Color(.68f,.58f,1,.9f);
             if (icon)
             {
                 icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = Vector2.one * 0.5f;
@@ -141,6 +156,7 @@ namespace HAgoesQuest
         {
             if (!Interactable) return;
             Pulse();
+            if(!IsMarker&&Press!=null)InteractionFeedback.Instance?.PlayUI();
             Press?.Invoke();
         }
 
@@ -206,8 +222,9 @@ namespace HAgoesQuest
                 detailAlpha = Mathf.MoveTowards(detailAlpha, showDetails || IsMedia ? 1 : 0, Time.unscaledDeltaTime * 8);
                 Label.color = new Color(1, 1, 1, detailAlpha);
                 if (ring) ring.color = magicFocus ? new Color(0.12f, 1, 0.3f, magicArmed ? 1 : 0.5f) : focused ? new Color(0.78f, 0.72f, 1, 1) : new Color(0.55f, 0.54f, 0.75f, 0.85f);
+                if(ring)ring.transform.localScale=Vector3.one*(magicArmed?1.04f+.035f*Mathf.Sin(Time.unscaledTime*5):1);
             }
-            Color target = focused ? new Color(0.18f, 0.14f, 0.29f, 0.98f) : idle;
+            Color target = focused ? Color.Lerp(idle,new Color(.54f,.48f,.9f,1),.55f) : idle;
             target = Color.Lerp(target, new Color(0.43f, 0.32f, 0.7f, 1), pulse * 0.6f);
             background.color = Color.Lerp(background.color, target, 1 - Mathf.Exp(-14 * Time.unscaledDeltaTime));
         }
