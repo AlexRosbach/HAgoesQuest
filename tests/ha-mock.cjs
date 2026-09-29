@@ -22,9 +22,9 @@ http.createServer((req, res) => {
     return res.end(require('node:fs').readFileSync(require('node:path').join(__dirname,'../Assets/HAgoesQuest/Resources/Icons/switch.png')));
   }
   if (req.url === '/api/template' && req.method === 'POST') return reply(200, [
-    { entity_id: 'light.test', area_id: 'living', area_name: 'Wohnzimmer' },
+    { entities: ['light.test'], area_id: 'living', area_name: 'Wohnzimmer' },
     { entity_id: 'sensor.temperature', area_id: 'kitchen', area_name: 'Küche' },
-    { entity_id: 'lock.door', area_id: null, area_name: null },
+    { entities: [], area_id: 'empty', area_name: 'Gästezimmer' },
     { entity_id: 'media_player.speaker', area_id: 'bedroom', area_name: 'Schlafzimmer' },
     { entity_id: 'camera.front', area_id: 'hall', area_name: 'Flur' },
   ]);

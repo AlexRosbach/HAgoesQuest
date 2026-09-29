@@ -28,6 +28,13 @@ namespace HAgoesQuest
             ray=gameObject.AddComponent<RayInteractor>();ray.InjectAllRayInteractor(this,rayOrigin);ray.MaxRayLength=8;ray.IsRootDriver=false;
             poke=gameObject.AddComponent<PokeInteractor>();poke.InjectAllPokeInteractor(tip);poke.IsRootDriver=false;
         }
+        public void Cancel(bool ready=false)
+        {
+            Hovered=RaySelected=PokeSelected=null;released=delivered=rayAllowed=pokeAllowed=false;
+            released=ready;
+            if(pressed){pressed=false;WhenUnselected();}
+            if(ray)ray.Disable();if(poke)poke.Disable();
+        }
         public void Step(Ray aim,bool down,bool allowed,bool fingerValid,Vector3 fingerPosition)
         {
             Hovered=RaySelected=PokeSelected=null;

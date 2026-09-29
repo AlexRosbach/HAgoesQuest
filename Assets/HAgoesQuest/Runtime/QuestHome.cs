@@ -58,6 +58,8 @@ namespace HAgoesQuest
             ha.ServerChanged += ServerChanged;
             rightSkeleton = RightHand ? RightHand.GetComponent<OVRSkeleton>() : null;
             RepairHandPointers();
+            RouteHands();
+            if(areaMenuPage>=0&&displayedAreaRevision!=ha.AreaRevision)AreaMenu(areaMenuPage);
             OVRManager.InputFocusAcquired += RestoreHandInput;
             subscribedDisplay = OVRManager.display;
             if (subscribedDisplay != null) subscribedDisplay.RecenteredPose += RestoreHandInput;
@@ -135,12 +137,15 @@ namespace HAgoesQuest
             }
 #endif
             bool leftDown = HandReady(MenuHand) && MenuHand.GetFingerIsPinching(OVRHand.HandFinger.Index);
-            bool menuPressed = menuGate.Step("menu", leftDown, HandReady(MenuHand) && inputAllowed, Time.unscaledTime) || OVRInput.GetDown(ExperienceSettings.LeftHanded?OVRInput.RawButton.A:OVRInput.RawButton.X);
+            bool menuContext=!capturedTarget&&!grip.Closed&&(menu?!HandOverMenuControl():!GazeTarget());
+            inputAllowed &= NavigationAllowed();
+            bool menuPressed = menuGate.Step("menu", leftDown, HandReady(MenuHand) && inputAllowed && menuContext, Time.unscaledTime) || OVRInput.GetDown(ExperienceSettings.LeftHanded?OVRInput.RawButton.A:OVRInput.RawButton.X);
 #if UNITY_EDITOR
             menuPressed |= UnityEngine.InputSystem.Keyboard.current?.tabKey.wasPressedThisFrame == true;
 #endif
             if (menuPressed && inputAllowed && !operationBusy && !ha.Connecting) ToggleMenu();
 
+            inputAllowed &= NavigationAllowed();
             bool hand = HandReady(ControlHand);
             bool controller = !hand && OVRInput.IsControllerConnected(ControlController) &&
                 OVRInput.GetControllerPositionTracked(ControlController);
@@ -271,6 +276,7 @@ namespace HAgoesQuest
 
         void NewMenu(string title)
         {
+            BlockNavigation();
             watchEditing=false;
             ResetGaze();
             magic?.Cancel();
@@ -302,6 +308,7 @@ namespace HAgoesQuest
 
         void CloseMenu()
         {
+            BlockNavigation();
             watchEditing=false;
             ResetGaze();
             if (qrMenu) { qr.Stop(); qrMenu = false; }
@@ -448,7 +455,7 @@ namespace HAgoesQuest
 
         string FilterSummary() => Words("Art: ","Type: ")+(browser.Domain.Length==0?L10n.T("Alle"):EntityBrowser.DomainName(browser.Domain))+" · "+L10n.T("Raum: ") + AreaLabel() + L10n.T(" · Suche: ") + (browser.Search.Length == 0 ? "–" : browser.Search);
         string AreaLabel() => browser.Area.Length == 0 ? L10n.T("Alle") : browser.Area == "__none" ? L10n.T("Ohne Raum") :
-            ha.Entities.Values.FirstOrDefault(e => e.AreaId == browser.Area)?.AreaName ?? browser.Area;
+            (ha.AreaNames.TryGetValue(browser.Area,out var name)?name:ha.Entities.Values.FirstOrDefault(e => e.AreaId == browser.Area)?.AreaName ?? browser.Area);
         void Pager(int row, Action previous, Action next)
         {
             WorldCard.Create(menu.transform, new Vector3(-0.19f, 0.275f - row * 0.1f, 0), new Vector2(350, 86), L10n.T("‹ Zurück"), previous);
@@ -486,10 +493,13 @@ namespace HAgoesQuest
         }
         void AreaMenu(int index)
         {
-            var areas = ha.Entities.Values.Where(e => e.AreaId.Length > 0).GroupBy(e => e.AreaId).Select(g => g.First()).OrderBy(e => e.AreaName).ToArray();
+            bool opening=areaMenuPage<0;
+            var areas = ha.AreaNames.Select(p=>new HaEntity{AreaId=p.Key,AreaName=p.Value}).Concat(ha.Entities.Values.Where(e=>!string.IsNullOrEmpty(e.AreaId))).GroupBy(e=>e.AreaId).Select(g=>g.First()).OrderBy(e=>e.AreaName).ToArray();
             int pages = Math.Max(1, (areas.Length + 1) / 2);
             index = Math.Max(0, Math.Min(index, pages - 1));
             NewMenu(L10n.T("Räume · ") + (index + 1) + "/" + pages);
+            areaMenuPage=index;displayedAreaRevision=ha.AreaRevision;
+            if(opening&&areas.Length==0&&!ha.AreasLoading)ha.RefreshAreas();
             Button(0, L10n.T("Alle Räume"), () => { browser.Area = ""; Filters(); });
             Button(1, L10n.T("Ohne Raumzuordnung"), () => { browser.Area = "__none"; Filters(); });
             for (int i = 0; i < 2 && index * 2 + i < areas.Length; i++)

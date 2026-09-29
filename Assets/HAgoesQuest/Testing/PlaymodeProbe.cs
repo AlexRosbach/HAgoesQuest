@@ -366,7 +366,8 @@ namespace HAgoesQuest.Testing
             ha.Connect("http://127.0.0.1:18123", "test-token", false, ok => { completed = true; accepted = ok; });
             if (!Check(completed && !accepted, "HTTP requires opt-in in the actual client")) yield break;
             WatchPlacementProbe.Run((ok,name)=>Check(ok,name));
-            InteractionRevisionProbe.Run(ha,(ok,name)=>Check(ok,name));
+            yield return Wait(()=>!ha.AreasLoading&&ha.AreaNames.ContainsKey("empty"),12,"Area catalog completes after reconnect");
+            InteractionRevisionProbe.Run(ha,(ok,name)=>{if(!Check(ok,name))throw new Exception(name);});
             File.WriteAllText(resultPath, "PASS: " + assertions + " Unity network integration assertions.");
             EditorApplication.Exit(0);
         }

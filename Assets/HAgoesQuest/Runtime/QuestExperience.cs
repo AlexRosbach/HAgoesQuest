@@ -123,10 +123,10 @@ namespace HAgoesQuest
                     return true;
                 }
             }
-            if(entityList&&entityList.Handle(ray,down,finger,finger?tip.position:Vector3.zero))return true;
             var candidate=metaInput?metaInput.PokeSelected:null;
             if(candidate&&!candidate.IsEntityRow&&candidate.Interactable&&Time.unscaledTime>=touchNext)
-            {touchNext=Time.unscaledTime+.4f;candidate.Activate();return true;}
+            {touchNext=Time.unscaledTime+.4f;entityList?.CancelDrag();candidate.Activate();return true;}
+            if(entityList&&entityList.Handle(ray,down,finger,finger?tip.position:Vector3.zero))return true;
             return false;
         }
         void ExperienceMenu()
@@ -178,7 +178,7 @@ namespace HAgoesQuest
         }
         void AboutMenu()
         {
-            NewMenu("HA goes Quest · 0.6.2");
+            NewMenu("HA goes Quest · 0.6.3");
             var info=WorldCard.Create(menu.transform,new Vector3(0,.12f,0),new Vector2(720,300),ExperienceSettings.English?
                 "Independent development app. Not affiliated with Meta or Home Assistant.\n\nCredentials are encrypted on this Quest. Device commands and media go to your configured HA server. QR camera frames are processed locally. Spatial tracking uses Meta platform services.\n\nThird-party licenses are included below.":
                 "Unabhängige Entwicklungs-App. Keine offizielle App von Meta oder Home Assistant.\n\nAnmeldung verschlüsselt auf dieser Quest. Befehle und Medien gehen an deinen HA-Server. QR-Kamerabilder werden lokal verarbeitet. Raumtracking nutzt Meta-Plattformdienste.\n\nDrittanbieter-Lizenzen sind unten enthalten.");

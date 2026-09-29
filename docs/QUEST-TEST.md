@@ -136,3 +136,14 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - Faustdrehen für Helligkeit und Lautstärke: Rasterklicken bei Wertänderung, keine Wiederholung beim Halten oder an 0/100 %. Sound aus: alle Klicks stumm.
 - Bereitschaftsleuchten für beide Bedienhände prüfen; verliert die Hand Tracking oder das Ziel wechselt, muss der Effekt verschwinden. Keine künstlichen Hände.
 - Untertitel und Hand-Effekt getrennt aus-/einschalten; Einstellungen nach Neustart erhalten.
+
+## Version 0.6.3
+
+- Räume öffnen, während HA die Bereiche noch lädt; danach auswählbare Bereiche einschließlich leerer Räume prüfen. Bereich wechseln, Filter kombinieren und zurücksetzen.
+- Zurück per Pinch und Antippen: darunterliegende Entitäten dürfen keine Details öffnen. Finger nach dem Wechsel zurückziehen und neu antippen.
+- Links und rechts nacheinander schalten, platzieren, scrollen und regeln. Gleichzeitig begonnene Gesten dürfen höchstens einen Befehl senden. Bereits gehaltene zweite Hand darf die laufende Aktion nicht übernehmen.
+- Faust bei einer dimmbaren Lampe schließen, Kopf seitlich drehen und weiterregeln. Öffnen übernimmt genau am ursprünglichen Ziel. Dasselbe für Lautstärke; reine Kopfbewegung darf den Wert nicht ändern.
+- Trackingverlust und Raumwechsel während der Faustregelung: keine Bestätigung, neu beginnen.
+- Beide Handflächen und Faust aus verschiedenen Blickwinkeln: offene Lichtbögen folgen den Knochen, lassen die echte Hand sichtbar und erzeugen kein Flackern.
+- Menü-Pinch abseits der Entitäten sowie Uhr antippen mit beiden Uhrseiten testen.
+- Update 0.6.2 → 0.6.3 ohne Deinstallation: Token, Anker und Einstellungen bleiben bestehen.

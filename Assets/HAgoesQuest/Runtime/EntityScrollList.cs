@@ -14,6 +14,7 @@ namespace HAgoesQuest
         float scroll, startScroll, startY;
         bool wasDown, dragging, touching;
         WorldCard pressed;
+        string pressedId;
         Transform viewport;
         public int Count => entities?.Length ?? 0;
         public float Offset => scroll;
@@ -62,7 +63,7 @@ namespace HAgoesQuest
             bool hit=plane.Raycast(ray,out float distance) && distance>0 && distance<8;
             Vector3 local=hit?transform.InverseTransformPoint(ray.GetPoint(distance)):Vector3.one*100;
             Vector3 fingertip=transform.InverseTransformPoint(finger);
-            bool near=fingerValid && Mathf.Abs(fingertip.x)<0.41f && fingertip.y>-.265f && fingertip.y<.205f && fingertip.z>-.035f && fingertip.z<.012f;
+            bool near=fingerValid && !down && Mathf.Abs(fingertip.x)<0.41f && fingertip.y>-.265f && fingertip.y<.205f && fingertip.z>-.035f && fingertip.z<.012f;
             bool active=down || near;
             if(near){local=fingertip;touching=true;}
             bool inside=Mathf.Abs(local.x)<0.41f && local.y>-.265f && local.y<.205f;
@@ -70,13 +71,14 @@ namespace HAgoesQuest
             {
                 dragging=true;startY=local.y;startScroll=scroll;pressed=null;
                 foreach(var card in rows) if(card.gameObject.activeInHierarchy && card.GetComponent<Collider>().enabled && card.GetComponent<Collider>().bounds.Contains(ray.GetPoint(distance))) {pressed=card;break;}
-                if(near) foreach(var card in rows) if(card.gameObject.activeInHierarchy && Vector3.Distance(card.transform.position,finger)<.065f) {pressed=card;break;}
+                if(near) foreach(var card in rows) if(card.gameObject.activeInHierarchy && card.GetComponent<Collider>().enabled && Vector3.Distance(card.transform.position,finger)<.065f) {pressed=card;break;}
+                pressedId=pressed?pressed.EntityId:null;
             }
             bool consume=inside||dragging;
             if(dragging&&active&&(hit||near)) {scroll=startScroll;ScrollBy(local.y-startY);}
             if(dragging&&!active)
             {
-                dragging=false;if(Mathf.Abs(scroll-startScroll)<.012f&&pressed)pressed.Activate();pressed=null;touching=false;
+                dragging=false;if(Mathf.Abs(scroll-startScroll)<.012f&&pressed&&pressed.EntityId==pressedId)pressed.Activate();pressed=null;touching=false;
             }
             wasDown=active;
 #if UNITY_EDITOR

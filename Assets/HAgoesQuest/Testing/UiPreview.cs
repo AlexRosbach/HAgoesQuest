@@ -62,10 +62,11 @@ namespace HAgoesQuest.Testing
                 File.WriteAllBytes(Environment.GetEnvironmentVariable("HA_QUEST_UI_PREVIEW").Replace("-menu.png","-watch.png"),image.EncodeToPNG());
                 RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
             }
-            foreach(string nextPage in new[]{"EntityMenu","Filters","FeedbackSettings"})
+            ha.AreaNames["living"]="Wohnzimmer";ha.AreaNames["office"]="Arbeitszimmer";
+            foreach(string nextPage in new[]{"EntityMenu","Filters","AreaMenu","FeedbackSettings"})
             {
                 camera.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);
-                typeof(QuestHome).GetMethod(nextPage,flags).Invoke(home,null);
+                typeof(QuestHome).GetMethod(nextPage,flags).Invoke(home,nextPage=="AreaMenu"?new object[]{0}:null);
                 status=(WorldCard)typeof(QuestHome).GetField("status",flags).GetValue(home);
                 status.Label.text=(string)typeof(QuestHome).GetField("notice",flags).GetValue(home);
                 yield return new WaitForSeconds(.7f);
@@ -80,6 +81,17 @@ namespace HAgoesQuest.Testing
                     RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
                 }
             }
+            typeof(QuestHome).GetMethod("CloseMenu",flags).Invoke(home,null);yield return null;
+            camera.transform.SetPositionAndRotation(Vector3.zero,Quaternion.identity);camera.orthographicSize=.12f;
+            var wrist=new GameObject("Preview wrist").transform;wrist.position=new Vector3(0,-.06f,1);
+            var index=new GameObject("Preview index knuckle").transform;index.position=new Vector3(.03f,.025f,1);
+            var little=new GameObject("Preview little knuckle").transform;little.position=new Vector3(-.03f,.015f,1);
+            var glow=new GameObject("Readiness preview").AddComponent<HandReadinessGlow>();glow.Initialize();glow.Show(wrist,index,little,camera.transform,true,true);
+            yield return null;
+            target=new RenderTexture(1280,960,24);camera.targetTexture=target;camera.Render();RenderTexture.active=target;
+            image=new Texture2D(1280,960,TextureFormat.RGB24,false);image.ReadPixels(new Rect(0,0,1280,960),0,0);image.Apply();
+            File.WriteAllBytes(Environment.GetEnvironmentVariable("HA_QUEST_UI_PREVIEW").Replace("-menu.png","-hand-effect.png"),image.EncodeToPNG());
+            RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
             EditorApplication.Exit(0);
         }
     }
