@@ -115,7 +115,8 @@ namespace HAgoesQuest
             float target=Mathf.Clamp(distance,.45f,8)*.00115f/parentScale;
             Label.rectTransform.localScale=Vector3.one*target;
             Label.fontSize=28;
-            Label.rectTransform.sizeDelta=new Vector2(420,105);
+            Label.rectTransform.sizeDelta=new Vector2(420,150);
+            Label.alignment=TextAnchor.LowerCenter;
             Label.rectTransform.pivot = new Vector2(0.5f, 0);
             Label.rectTransform.anchorMin = Label.rectTransform.anchorMax = new Vector2(0.5f, 1);
             Label.rectTransform.anchoredPosition = new Vector2(0, 16*target);

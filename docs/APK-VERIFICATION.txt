@@ -1,18 +1,18 @@
-HA goes Quest 0.5.0 – APK-Prüfung
-Datum: 2026-09-29 00:32
-Datei: HAgoesQuest-0.5.0.apk
-Dateigröße: 68097874 Bytes
-SHA-256: b86eaf40e326e63690f30554d1d474b29d4d15a40f42f69c5f6988ad2a6e3171
+HA goes Quest 0.6.0 – APK-Prüfung
+Datum: 2026-09-29 09:11
+Datei: HAgoesQuest-0.6.0.apk
+Dateigröße: 94650117 Bytes
+SHA-256: 61e84403c69402519141b7b87801dd7b368ac8d873ebfec0bc68ef155e646ac4
 
 Bestätigt:
 - Android-Signatur gültig; identisch mit 0.2.0 und 0.3.0 (Build-Signaturprüfung).
-- Paketname com.alexrosbach.hagoesquest, Version 0.5.0.
+- Paketname com.alexrosbach.hagoesquest, Version 0.6.0.
 - Mindest-Android-API 32, Architektur ARM64, Unity IL2CPP.
 - Immersiver Quest-Start über GameActivity.
 - Handtracking, Passthrough, Raum-, Anker- und Kameraberechtigungen vorhanden.
 - Boundaryless-App im Android-Manifest deklariert.
 - Netzwerkpolicy erlaubt HTTP; die App verlangt dafür eine ausdrückliche Freigabe.
-- 77 Kernprüfungen und 82 Unity-Integrationsprüfungen erfolgreich.
+- 99 Kernprüfungen und 91 Unity-Integrationsprüfungen erfolgreich.
 
 Noch offen: Installation und Start auf einer echten Quest, Darstellung, Handtracking,
 Raumscan, Ankerpersistenz und Android-Keystore im Gerätetest.

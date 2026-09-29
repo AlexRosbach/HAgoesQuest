@@ -23,7 +23,7 @@ namespace HAgoesQuest
         WorldCard card;Material material;
         public void Initialize(WorldCard owner,string kind)
         {
-            card=owner;material=new Material(Resources.Load<Shader>("SpatialButton"));material.color=new Color(.77f,.72f,1);
+            card=owner;material=new Material(Resources.Load<Shader>("SpatialButton"));material.color=new Color(.77f,.72f,1);material.enableInstancing=true;
             if(kind=="lamp") {Part(PrimitiveType.Sphere,new Vector3(0,12,0),new Vector3(54,54,54));Part(PrimitiveType.Cylinder,new Vector3(0,-22,0),new Vector3(28,13,28));}
             else if(kind=="map") {Part(PrimitiveType.Cube,new Vector3(-20,0,0),new Vector3(26,65,15));Part(PrimitiveType.Cube,new Vector3(10,8,8),new Vector3(26,65,15));Part(PrimitiveType.Cube,new Vector3(35,0,0),new Vector3(20,65,15));}
             else if(kind=="settings") {Part(PrimitiveType.Cylinder,Vector3.zero,new Vector3(63,9,63),Quaternion.Euler(90,0,0));Part(PrimitiveType.Sphere,new Vector3(0,0,-12),new Vector3(27,27,15));}

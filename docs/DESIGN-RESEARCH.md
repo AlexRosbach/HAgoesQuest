@@ -1,5 +1,7 @@
 # Interaktion und Gestaltung: recherchierte Entscheidungen
 
+Aktueller Stand: 0.6.0. Der Abschnitt „Änderung in 0.6.0“ ersetzt die frühere Entitätsauswahl per Handstrahl und die Stoßgeste. Die folgenden ursprünglichen Entscheidungen dokumentieren die Grundlage aus 0.5.0; die aktuelle Bedienanleitung steht in [VERSION-0.6.0.md](VERSION-0.6.0.md).
+
 Recherche: 29. September 2026; Primärquellen von Meta und Home Assistant.
 
 ## Metas Empfehlungen und Umsetzung
