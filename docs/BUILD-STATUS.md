@@ -1,12 +1,12 @@
 # Build und Prüfungen
 
-Datum: 2026-09-29. Ziel: Meta Quest 3, Version 0.6.2.
+Datum: 2026-09-29. Ziel: Meta Quest 3, Version 0.6.3.
 
 | Prüfung | Ergebnis |
 | --- | --- |
 | Unity 6000.0.66f2, Meta XR Core / MRUK / Interaction SDK 207 | Paketimport und C#-Kompilierung erfolgreich |
-| Unabhängiger App-Kern | 112 Assertions erfolgreich |
-| Unity Play Mode mit lokalem HA-Testserver | 119 Assertions erfolgreich |
+| Unabhängiger App-Kern | 121 Assertions erfolgreich |
+| Unity Play Mode mit lokalem HA-Testserver | 130 Assertions erfolgreich |
 | Menüvorschau | mit Unity gerendert und visuell geprüft |
 | Android ARM64 / IL2CPP | APK erfolgreich gebaut |
 | Lokale SDK-Entwicklerdaten | Aus APK ausgeschlossen; gepackter Asset-Bericht geprüft |
@@ -17,17 +17,17 @@ Datum: 2026-09-29. Ziel: Meta Quest 3, Version 0.6.2.
 | Mehrraum-Lokalisierung / Android-Keystore beim Update | Gerätetest offen |
 | Performance und längere Sitzungen | Gerätetest offen |
 
-Neu in 0.6.2 geprüft: Menühierarchie und Filterzugang, aktuelle Raumgrenzen und gesperrte Befehle für andere Räume, Hand-Bereitschaft und unabhängig schaltbare Untertitel, mechanisches Rasterklicken ohne Jitter oder Wiederholung beim Halten. Aus 0.6.1 weiterhin geprüft: Uhrenposition relativ zum bewegten/gedrehten Handgelenk, getrennte Speicherung, Vorschau ohne Überschreiben, Grenzen, Reset, ungültige Daten, Abbruch sowie Textkontrast. Aus 0.6.0 weiterhin geprüft: Blickauswahl ohne Handrichtung, Abbruch beim Wegsehen, Faust/Pinch-Unterscheidung, Drehung und Winkelüberlauf, wiederholte Faust-Öffnen-Würfe, keine Aktion bei Trackingverlust, gespiegelte Bedienhände sowie proportionale Sensorbeschriftung. Die übrigen Tests prüfen unter anderem Meta-SDK-Ray-/Poke-Auswahl, keine wiederholte Aktion beim Halten, Wiederaufnahme nach Trackingverlust, zwei unabhängige gespeicherte Anker-UUIDs, verworfene alte Platzierung nach Neukalibrierung, acht sichtbare Listeneinträge und Scrollen, Slider-Geste und HA-Helligkeits-/Lautstärkeaufrufe, vier HA-Raumzuordnungen, Sprachwechsel sowie authentifizierte Kamera-/Bildabfragen und Bilddekodierung. Frühere Prüfungen für Verbindung, QR, Update-Zugangsdaten, Filtern, Löschen, Marker und Feuerbälle bleiben enthalten. Es wurde keine reale Home-Assistant-Instanz angesprochen.
+Neu in 0.6.3 geprüft: unabhängiger HA-Bereichskatalog mit leeren Räumen, Bereichsauswahl, Zurück ohne Listen-Durchklick, exklusive Handübernahme und Loslass-Sperre, festgehaltenes Ziel beim Wegschauen, Drehreferenz und Bestätigung nach Kopfbewegung. Weiterhin geprüft: Menühierarchie und Filterzugang, aktuelle Raumgrenzen und gesperrte Befehle für andere Räume, Hand-Bereitschaft und unabhängig schaltbare Untertitel, mechanisches Rasterklicken ohne Jitter oder Wiederholung beim Halten. Aus 0.6.1 weiterhin geprüft: Uhrenposition relativ zum bewegten/gedrehten Handgelenk, getrennte Speicherung, Vorschau ohne Überschreiben, Grenzen, Reset, ungültige Daten, Abbruch sowie Textkontrast. Aus 0.6.0 weiterhin geprüft: Blickauswahl ohne Handrichtung, Blickauswahl vor Beginn einer Geste, Faust/Pinch-Unterscheidung, Drehung und Winkelüberlauf, wiederholte Faust-Öffnen-Würfe, keine Aktion bei Trackingverlust, gespiegelte Bedienhände sowie proportionale Sensorbeschriftung. Die übrigen Tests prüfen unter anderem Meta-SDK-Ray-/Poke-Auswahl, keine wiederholte Aktion beim Halten, Wiederaufnahme nach Trackingverlust, zwei unabhängige gespeicherte Anker-UUIDs, verworfene alte Platzierung nach Neukalibrierung, acht sichtbare Listeneinträge und Scrollen, Slider-Geste und HA-Helligkeits-/Lautstärkeaufrufe, vier HA-Raumzuordnungen, Sprachwechsel sowie authentifizierte Kamera-/Bildabfragen und Bilddekodierung. Frühere Prüfungen für Verbindung, QR, Update-Zugangsdaten, Filtern, Löschen, Marker und Feuerbälle bleiben enthalten. Es wurde keine reale Home-Assistant-Instanz angesprochen.
 
 Diese Nachweise bestätigen keine korrekte Lokalisierung im echten Gebäude. Ein vom Betriebssystem stabil, aber falsch erkannter Anker lässt sich allein über Trackingflags nicht zuverlässig erkennen. Dafür ist die [Quest-Abnahmeliste](QUEST-TEST.md) verbindliche Arbeitsgrundlage.
 
 ## APK
 
-- Datei: HAgoesQuest-0.6.2.apk
+- Datei: HAgoesQuest-0.6.3.apk
 - Paket: com.alexrosbach.hagoesquest
-- Version: 0.6.2, Android-Code 11
-- Größe: 68170550 Bytes
-- SHA-256: 5890ff6e11ce4c0ff1276774999a900e0a7479da6a61b3f123381deee0ba2a12
+- Version: 0.6.3, Android-Code 12
+- Größe: 68173682 Bytes
+- SHA-256: ef95a28c3247c9a2aa51ac80d612fb3927ffd1f03e865d1e6499679ebd5732aa
 - Mindest-Android-API: 32; ARM64; Unity IL2CPP; Entwicklungsbuild.
 - Entwicklungssignatur SHA-256: 345caca35c4a1ad2eb8f2243a0ccda712945c87b9b089714f2778c007c76e5b2
 

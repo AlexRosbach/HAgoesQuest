@@ -6,17 +6,24 @@ namespace HAgoesQuest
     public sealed partial class QuestHome
     {
         readonly GazePinchGate gazePinch = new GazePinchGate();
-        readonly GazeGestureGate grip = new GazeGestureGate();
+        readonly GazeGestureGate leftGrip = new GazeGestureGate(), rightGrip = new GazeGestureGate();
+        readonly InteractionOwnership ownership = new InteractionOwnership();
+        readonly NavigationReleaseGate navigation = new NavigationReleaseGate();
+        GazeGestureGate grip => UsingLeft ? leftGrip : rightGrip;
+        bool UsingLeft => ownership.Owner < 0 ? ExperienceSettings.LeftHanded : ownership.Owner == 0;
+        WorldCard capturedTarget;
+        Quaternion capturedBasis;
         WorldCard sensorGaze;
         WorldCard gestureHint;
         HandReadinessGlow readinessGlow;
-        OVRHand ControlHand => ExperienceSettings.LeftHanded?LeftHand:RightHand;
+        OVRHand ControlHand => UsingLeft?LeftHand:RightHand;
         OVRHand MenuHand => ExperienceSettings.LeftHanded?RightHand:LeftHand;
-        OVRSkeleton ControlSkeleton => ExperienceSettings.LeftHanded?leftSkeleton:rightSkeleton;
+        OVRSkeleton ControlSkeleton => UsingLeft?leftSkeleton:rightSkeleton;
         OVRSkeleton WatchSkeleton => ExperienceSettings.LeftHanded?rightSkeleton:leftSkeleton;
         OVRInput.Controller ControlController => ExperienceSettings.LeftHanded?OVRInput.Controller.LTouch:OVRInput.Controller.RTouch;
         Transform ControllerAnchor => ExperienceSettings.LeftHanded?Rig.leftControllerAnchor:Rig.rightControllerAnchor;
         string Words(string de,string en)=>ExperienceSettings.English?en:de;
+        WorldCard GestureTarget()=>capturedTarget&&grip.Closed?capturedTarget:GazeTarget();
 
         WorldCard GazeTarget()
         {
@@ -38,7 +45,7 @@ namespace HAgoesQuest
         }
         void ResetGaze()
         {
-            gazePinch.Reset();grip.Reset();
+            gazePinch.Reset();leftGrip.Reset();rightGrip.Reset();capturedTarget=null;
             readinessGlow?.Hide();InteractionFeedback.Instance?.ResetAdjustment();
             if(focused){focused.SetMagicFocus(false);focused.Focus(false);}
             if(gestureHint)gestureHint.gameObject.SetActive(false);
@@ -47,7 +54,7 @@ namespace HAgoesQuest
         {
             pointer.enabled=false;if(beamGlow)beamGlow.enabled=false;
             if(focused){focused.Focus(false);focused.SetMagicFocus(false);}
-            focused=allowed?GazeTarget():null;
+            focused=allowed?GestureTarget():null;
             if(focused)focused.Focus(true);
             reticle.gameObject.SetActive(allowed);
             float distance=focused?Vector3.Distance(head.position,focused.transform.position):1.4f;
@@ -67,7 +74,15 @@ namespace HAgoesQuest
             bool open=poseValid&&MagicCasting.OpenPalm(ControlSkeleton,out _,out _);
             bool wasClosed=grip.Closed;
             grip.Step(usable?focused.EntityId:null,allowed&&poseValid,fist,open,canCast,adjustable,entity?.Level??0,
-                poseValid?HandPose.Roll(ControlSkeleton,head):0,Time.unscaledTime);
+                poseValid?HandPose.Roll(ControlSkeleton,wasClosed?capturedBasis:head.rotation):0,Time.unscaledTime);
+            if(!wasClosed&&grip.Closed){capturedTarget=focused;capturedBasis=head.rotation;}
+            if(!grip.Closed)capturedTarget=null;
+            if(ownership.Owner<0)
+            {
+                var other=UsingLeft?rightSkeleton:leftSkeleton;var otherHand=UsingLeft?RightHand:LeftHand;
+                bool valid=HandReady(otherHand)&&otherHand.HandConfidence==OVRHand.TrackingConfidence.High&&other&&other.IsDataValid;
+                (UsingLeft?rightGrip:leftGrip).Step(usable?focused.EntityId:null,allowed&&valid,false,valid&&MagicCasting.OpenPalm(other,out _,out _),canCast,adjustable,entity?.Level??0,valid?HandPose.Roll(other,head):0,Time.unscaledTime);
+            }
             InteractionFeedback.Instance?.PreviewLevel(entity?.Id,grip.Adjusting,grip.Value);
             if(!readinessGlow){readinessGlow=new GameObject("Real hand readiness glow").AddComponent<HandReadinessGlow>();readinessGlow.Initialize();}
             readinessGlow.Show(
@@ -114,14 +129,19 @@ namespace HAgoesQuest
                 Curled(MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_Middle1,OVRSkeleton.BoneId.XRHand_MiddleProximal),MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_Middle2,OVRSkeleton.BoneId.XRHand_MiddleIntermediate),MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_MiddleTip,OVRSkeleton.BoneId.XRHand_MiddleTip))&&
                 Curled(MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_Ring1,OVRSkeleton.BoneId.XRHand_RingProximal),MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_Ring2,OVRSkeleton.BoneId.XRHand_RingIntermediate),MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_RingTip,OVRSkeleton.BoneId.XRHand_RingTip));
         }
-        public static float Roll(OVRSkeleton skeleton,Transform head)
+        public static float Roll(OVRSkeleton skeleton,Transform head)=>Roll(skeleton,head.rotation);
+        public static float Roll(OVRSkeleton skeleton,Quaternion basis)
         {
             var a=MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_Index1,OVRSkeleton.BoneId.XRHand_IndexProximal);
             var b=MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_Pinky1,OVRSkeleton.BoneId.XRHand_LittleProximal);
             if(!a||!b)return float.NaN;
             var across=a.position-b.position;
-            if(Vector3.ProjectOnPlane(across,head.forward).magnitude<.008f)return float.NaN;
-            return Mathf.Atan2(-Vector3.Dot(across,head.up),Vector3.Dot(across,head.right))*Mathf.Rad2Deg;
+            return RollVector(across,basis);
+        }
+        public static float RollVector(Vector3 across,Quaternion basis)
+        {
+            if(Vector3.ProjectOnPlane(across,basis*Vector3.forward).magnitude<.008f)return float.NaN;
+            return Mathf.Atan2(-Vector3.Dot(across,basis*Vector3.up),Vector3.Dot(across,basis*Vector3.right))*Mathf.Rad2Deg;
         }
     }
 }

@@ -38,6 +38,17 @@ public static class CoreTests
         {
             GazeTests();
             DetentTests();
+            var owner=new InteractionOwnership();
+            owner.Step(true,true,false,false,0);Check(owner.Owner==1,"Simultaneous gestures use preferred hand");
+            owner.Step(true,false,false,false,.2);Check(owner.Owner==1,"Held second hand cannot steal ownership");
+            owner.Step(false,false,true,false,.3);Check(owner.Owner==1,"Open confirmation retains running action");
+            owner.Step(false,false,false,false,.4);owner.Step(false,false,false,false,.6);Check(owner.Owner==-1,"Neutral hands release ownership");
+            owner.Step(true,false,false,false,.7);Check(owner.Owner==0,"Left hand can acquire the next action");
+            var navigation=new NavigationReleaseGate();navigation.Block(0);
+            Check(!navigation.Step(true,.5),"Held click blocked after navigation");
+            Check(!navigation.Step(false,.6),"Release must settle before new page accepts input");
+            Check(navigation.Step(false,.8),"Fresh gesture accepted after release");
+            navigation.Block(1);Check(!navigation.Step(false,1.1),"Rapid page changes remain blocked");
             var tracking = new TrackingGate();
             Check(!tracking.Step(false, false, 0), "Untracked startup anchor stays hidden");
             Check(!tracking.Step(true, false, 1), "First tracked pose is not displayed immediately");

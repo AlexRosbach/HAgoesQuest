@@ -57,6 +57,8 @@ namespace HAgoesQuest
         int generation;
         bool refresh;
         readonly Dictionary<string, string[]> areas = new Dictionary<string, string[]>();
+        public readonly Dictionary<string,string> AreaNames = new Dictionary<string,string>();
+        public int AreaRevision { get; private set; }
         public string AreaStatus { get; private set; } = L10n.T("Räume noch nicht geladen");
         public bool AreasLoading { get; private set; }
         int connectionRevision;
@@ -99,7 +101,7 @@ namespace HAgoesQuest
         {
             StopAllCoroutines();
             generation++;
-            connectionRevision++; areas.Clear(); AreasLoading = false;
+            connectionRevision++; areas.Clear(); AreaNames.Clear(); AreaRevision++; AreasLoading = false;
             settings = null;
             address = null;
             Demo = Online = true;
@@ -132,7 +134,7 @@ namespace HAgoesQuest
             catch { Status = L10n.T("Basis-URL und Token prüfen. HTTP muss ausdrücklich erlaubt sein."); done(false); return; }
             StopAllCoroutines();
             generation++;
-            connectionRevision++; areas.Clear(); AreasLoading = false;
+            connectionRevision++; areas.Clear(); AreaNames.Clear(); AreaRevision++; AreasLoading = false;
             Demo = Online = Busy = false;
             Connecting = true;
             settings = new ConnectionSettings { baseUrl = candidate.AbsoluteUri, accessToken = token.Trim(), allowInsecureHttp = allowHttp };
@@ -265,6 +267,7 @@ namespace HAgoesQuest
         void ApplyArea(HaEntity entity)
         {
             if (areas.TryGetValue(entity.Id, out var area)) { entity.AreaId = area[0]; entity.AreaName = area[1]; }
+            else { entity.AreaId="";entity.AreaName=""; }
         }
 
         public void RefreshAreas()
@@ -277,7 +280,7 @@ namespace HAgoesQuest
         {
             AreasLoading = true; AreaStatus = L10n.T("Räume werden geladen …");
             // HA resolves the entity's explicit area, falling back to its device's area.
-            const string template = "[{% for s in states %}{\"entity_id\":{{ s.entity_id | to_json }},\"area_id\":{{ area_id(s.entity_id) | to_json }},\"area_name\":{{ area_name(s.entity_id) | to_json }}}{% if not loop.last %},{% endif %}{% endfor %}]";
+            const string template = "[{% for a in areas() %}{\"area_id\":{{ a | to_json }},\"area_name\":{{ area_name(a) | to_json }},\"entities\":{{ area_entities(a) | to_json }}}{% if not loop.last %},{% endif %}{% endfor %}]";
             using (var request = Request("api/template", UnityWebRequest.kHttpVerbPOST, new JObject { ["template"] = template }.ToString()))
             {
                 yield return request.SendWebRequest();
@@ -286,18 +289,23 @@ namespace HAgoesQuest
                 {
                     if (request.result != UnityWebRequest.Result.Success) throw new InvalidOperationException();
                     var parsed = JArray.Parse(request.downloadHandler.text);
-                    areas.Clear();
+                    var next=new Dictionary<string,string[]>();var names=new Dictionary<string,string>();
                     foreach (JObject item in parsed)
                     {
-                        string id = (string)item["entity_id"];
-                        if (id != null) areas[id] = new[] { (string)item["area_id"] ?? "", (string)item["area_name"] ?? "" };
+                        string areaId=(string)item["area_id"]??"", name=(string)item["area_name"]??areaId;
+                        if(areaId.Length>0)names[areaId]=name;
+                        if(item["entities"] is JArray members)foreach(var member in members)next[(string)member]=new[]{areaId,name};
+                        else if(item["entity_id"]!=null)next[(string)item["entity_id"]]=new[]{areaId,name};
                     }
+                    areas.Clear();AreaNames.Clear();
+                    foreach(var pair in next)areas[pair.Key]=pair.Value;
+                    foreach(var pair in names)AreaNames[pair.Key]=pair.Value;
                     foreach (var entity in Entities.Values) ApplyArea(entity);
                     AreaStatus = L10n.T("Home-Assistant-Räume geladen");
                 }
                 catch { AreaStatus = L10n.T("Räume nicht verfügbar · neu laden oder HA-Berechtigung prüfen"); }
             }
-            AreasLoading = false; Changed?.Invoke();
+            AreasLoading = false; AreaRevision++; Changed?.Invoke();
         }
 
         public bool Switch(string id)

@@ -30,3 +30,9 @@ Menu surfaces are now brighter and opaque. Start tiles use original detailed mes
 Search & filters remain at the top of the entity list. Menus now share one rendering hierarchy so backgrounds cannot cover buttons when viewed from the side. Placed entities are visible and controllable only within the same scanned Quest room as your headset; room height is included. Leaving the room cancels adjustments. The full HA catalogue remains available for initial placement, with separate HA area/type/search filters.
 
 Fist rotation and sliders produce quiet mechanical detents when values change. A translucent green glow follows your real tracked hand when the gesture is ready. Settings → Sound & gesture feedback offers independent switches for sounds, gesture captions and hand glow. No virtual hand model is added.
+
+## 0.6.3 interaction update
+
+Either hand can operate an entity. The first active hand owns the action; release both hands before switching. The handedness setting breaks simultaneous ties and still selects the watch side. A closed fist captures the target: looking away does not cancel brightness/volume adjustment or change its rotation reference. Open the hand to apply. Tracking loss, room changes and opening a menu still cancel.
+
+Navigation requires release before the next page accepts input. HA area filters include empty areas and refresh after loading. The green readiness effect uses open, hand-aligned light contours. Hardware validation is still pending.
