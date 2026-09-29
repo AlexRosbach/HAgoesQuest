@@ -200,9 +200,12 @@ namespace HAgoesQuest.Editor
                 throw new BuildFailedException("Zuerst in Build Profiles auf Android wechseln und die Neukompilierung abwarten.");
             if (!File.Exists(ScenePath)) throw new BuildFailedException("Zuerst die Startszene erstellen.");
             Directory.CreateDirectory("Builds");
-            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+            PrivateBuildSettings.Restore();
+            BuildReport report;
+            try { report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = new[] { ScenePath }, locationPathName = "Builds/HAgoesQuest.apk",
-                target = BuildTarget.Android, options = BuildOptions.Development });
+                target = BuildTarget.Android, options = BuildOptions.Development | BuildOptions.DetailedBuildReport }); }
+            finally { PrivateBuildSettings.Restore(); }
             if (report.summary.result != BuildResult.Succeeded) throw new BuildFailedException("APK-Build fehlgeschlagen. Unity-Konsole prüfen.");
             // BuildPlayer has finished all build steps; do not wait for unrelated editor async services.
             if (Application.isBatchMode) EditorApplication.Exit(0);

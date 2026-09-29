@@ -21,3 +21,7 @@ Version 0.6.1, Android-Code 10. Paketname und Entwicklungssignatur bleiben gleic
 99 Kernprüfungen und 104 Unity-Integrationsprüfungen bestanden. Neue Prüfungen: lokale Uhrenpose nach Bewegung und Drehung des Handgelenks, Speichern und erneutes Laden, Trennung beider Handgelenke, nicht gespeicherte Vorschau, Verschiebungsrichtung, Grenzen, Zurücksetzen, ungültige Speicherdaten, Abbruch beim Schließen und Textkontrast. Unity-Vorschauen für Startmenü und Uhrenanpassung werden separat geprüft. Installation und Bedienung auf einer echten Quest stehen aus.
 
 APK-Upload auf GitHub erfolgt wie vereinbart manuell. Quellcode und Dokumentation werden über einen PR zusammengeführt.
+
+## Ausschluss lokaler SDK-Daten
+
+Die Buildkontrolle hat festgestellt, dass Meta XR SDK 207 bei Entwicklungsbuilds automatisch lokale Editor-/AgentBridge-Verbindungsdaten in ein Resources-Asset einträgt. Der Build verschiebt dieses Asset nun nach den SDK-Vorbereitungsschritten vorübergehend in einen Editor-only-Ordner. Der gepackte Asset-Bericht muss bestätigen, dass es nicht in der APK enthalten ist; andernfalls schlägt der Build fehl. Danach wird die lokale Datei wiederhergestellt, auch bei Buildfehlern. Weder Dateiinhalte noch Zugangsdaten werden dafür ausgegeben oder in Git übernommen. Diese Daten gehören zum Unity-Entwicklungswerkzeug, nicht zur Home-Assistant-Verbindung. Frühere Entwicklungs-APKs konnten diese SDK-Daten enthalten; für die Weitergabe den korrigierten Build verwenden.
