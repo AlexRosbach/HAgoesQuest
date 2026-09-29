@@ -36,6 +36,7 @@ namespace HAgoesQuest.Testing
             string[] names={"Deckenlicht","Raumtemperatur","Steckdose Schreibtisch","Wohnzimmer Audio","Eingangskamera","Heizung","Luftfeuchtigkeit","Bilderrahmen","Rollladen","Saugroboter","Haustür","Ventilator"};
             for(int i=0;i<domains.Length;i++)ha.Entities[domains[i]+".preview"+i]=new HaEntity{Id=domains[i]+".preview"+i,Name=names[i],State=i==1?"21.5":i==6?"48":"on",Unit=i==1?"°C":i==6?"%":"",DeviceClass=i==1?"temperature":i==6?"humidity":"",AreaName=i%2==0?"Wohnzimmer":"Arbeitszimmer"};
             string page=Environment.GetEnvironmentVariable("HA_QUEST_PREVIEW_PAGE")??"Home";
+            typeof(QuestHome).GetField("watchDraft",flags).SetValue(home,new WatchPlacement());
             typeof(QuestHome).GetMethod(page,flags).Invoke(home,null);
             var status=(WorldCard)typeof(QuestHome).GetField("status",flags).GetValue(home);
             status.Label.text="Home Assistant · verbunden\n"+(string)typeof(QuestHome).GetField("notice",flags).GetValue(home);
@@ -49,7 +50,19 @@ namespace HAgoesQuest.Testing
             var target=new RenderTexture(1280,960,24);camera.targetTexture=target;camera.Render();RenderTexture.active=target;
             var image=new Texture2D(1280,960,TextureFormat.RGB24,false);image.ReadPixels(new Rect(0,0,1280,960),0,0);image.Apply();
             File.WriteAllBytes(Environment.GetEnvironmentVariable("HA_QUEST_UI_PREVIEW"),image.EncodeToPNG());
-            RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);EditorApplication.Exit(0);
+            RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
+            if(page=="Home")
+            {
+                typeof(QuestHome).GetMethod("WatchPositionMenu",flags).Invoke(home,null);
+                status=(WorldCard)typeof(QuestHome).GetField("status",flags).GetValue(home);
+                status.Label.text=(string)typeof(QuestHome).GetField("notice",flags).GetValue(home);
+                yield return new WaitForSeconds(.7f);
+                target=new RenderTexture(1280,960,24);camera.targetTexture=target;camera.Render();RenderTexture.active=target;
+                image=new Texture2D(1280,960,TextureFormat.RGB24,false);image.ReadPixels(new Rect(0,0,1280,960),0,0);image.Apply();
+                File.WriteAllBytes(Environment.GetEnvironmentVariable("HA_QUEST_UI_PREVIEW").Replace("-menu.png","-watch.png"),image.EncodeToPNG());
+                RenderTexture.active=null;camera.targetTexture=null;Destroy(target);Destroy(image);
+            }
+            EditorApplication.Exit(0);
         }
     }
 }

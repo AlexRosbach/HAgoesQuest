@@ -267,6 +267,7 @@ namespace HAgoesQuest
 
         void NewMenu(string title)
         {
+            watchEditing=false;
             ResetGaze();
             magic?.Cancel();
             if (qrMenu) { qr.Stop(); qrMenu = false; }
@@ -295,6 +296,7 @@ namespace HAgoesQuest
 
         void CloseMenu()
         {
+            watchEditing=false;
             ResetGaze();
             if (qrMenu) { qr.Stop(); qrMenu = false; }
             if (menu) { menu.SetActive(false); Destroy(menu); }
@@ -310,13 +312,13 @@ namespace HAgoesQuest
             HomeTile(1,Words("Wohnung\nRäume & Karte","Apartment\nRooms & map"),MapMenu,"map");
             HomeTile(2,Words("Verbindung\nHome Assistant","Connection\nHome Assistant"),ConnectionMenu,"connection");
             HomeTile(3,Words("Einstellungen\nUhr & Gesten","Settings\nWatch & gestures"),ExperienceMenu,"settings");
-            var manage=WorldCard.Create(menu.transform,new Vector3(-.19f,-.235f,0),new Vector2(365,72),Words("Zuordnungen verwalten","Manage placements"),()=>PlacedMenu(0));manage.Label.fontSize=21;
-            var close=WorldCard.Create(menu.transform,new Vector3(.19f,-.235f,0),new Vector2(365,72),Words("Menü schließen","Close menu"),CloseMenu);close.Label.fontSize=21;
+            var manage=WorldCard.Create(menu.transform,new Vector3(-.19f,-.275f,0),new Vector2(365,72),Words("Zuordnungen verwalten","Manage placements"),()=>PlacedMenu(0));manage.Label.fontSize=21;
+            var close=WorldCard.Create(menu.transform,new Vector3(.19f,-.275f,0),new Vector2(365,72),Words("Menü schließen","Close menu"),CloseMenu);close.Label.fontSize=21;
             notice=Words("Ansehen + pinchen · Faust drehen: regeln\nMagie: Faust schließen und öffnen","Look + pinch · Twist fist to adjust\nMagic: close and open fist");
         }
         void HomeTile(int index,string label,Action action,string shape,bool primary=false)
         {
-            var card=WorldCard.Create(menu.transform,new Vector3(index%2==0?-.195f:.195f,.205f-(index/2)*.20f,0),new Vector2(375,168),label,action);
+            var card=WorldCard.Create(menu.transform,new Vector3(index%2==0?-.195f:.195f,.19f-(index/2)*.255f,0),new Vector2(375,238),label,action);
             if(primary)card.SetSurface(WorldCard.Surface.Primary);MenuDesign.Tile(card,shape);
         }
 
@@ -772,3 +774,4 @@ namespace HAgoesQuest
         }
     }
 }
+
