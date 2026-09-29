@@ -2,7 +2,9 @@
 
 Mixed-Reality-Prototyp für Meta Quest 3: Home-Assistant-Geräte räumlich zuordnen, über einen Punkt in der Blickmitte auswählen und mit einer Pinch-Geste bedienen. Sensorwerte erscheinen am gespeicherten Ort in der Wohnung.
 
-**Stand: installierbare Entwicklungs-APK 0.6.1 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 99 Kernprüfungen und 104 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+**Stand: installierbare Entwicklungs-APK 0.6.2 gebaut und geprüft; Quest-Hardwaretest noch offen.** Unity-Paketimport, C#-Kompilierung und Android-ARM64/IL2CPP-Build sind erfolgreich. Signatur, Paketinhalt und erforderliche Quest-Berechtigungen wurden an der fertigen APK geprüft. Unter Windows bestanden 112 Kernprüfungen und 119 Unity-Integrationsprüfungen gegen einen lokalen Home-Assistant-Testserver. Details: [Buildstatus](docs/BUILD-STATUS.md), [Quest-Abnahme](docs/QUEST-TEST.md).
+
+Neu in 0.6.2: sichtbare Listenfilter, feste Menü-Zeichenreihenfolge, platzierte Entitäten nur im eigenen Quest-Raum, mechanische Drehgeräusche und grünes Bereitschaftsleuchten an der echten Hand. Gestenuntertitel separat schaltbar. [Anleitung](docs/VERSION-0.6.2.md).
 
 Neu in 0.6.1: hellere Menüflächen, detailliertere texturierte 3D-Symbole und eine pro Handgelenk einstellbare Uhrenposition mit Live-Vorschau, Speichern, Abbrechen und Zurücksetzen. [Anleitung](docs/VERSION-0.6.1.md).
 
@@ -122,4 +124,5 @@ Die notwendige Abnahme auf der Quest ist in [docs/QUEST-TEST.md](docs/QUEST-TEST
 - [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/)
 
 Meta- und Unity-Pakete behalten ihre jeweiligen Lizenzbedingungen.
+
 

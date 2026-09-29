@@ -8,6 +8,8 @@ namespace HAgoesQuest
         public static void Frame(Transform parent)
         {
             var frame=WorldCard.Create(parent,new Vector3(0,-.025f,.025f),new Vector2(900,1040),"");
+            // Keep the background before all controls inside the shared menu canvas.
+            frame.transform.SetAsFirstSibling();
             frame.Interactable=false;frame.GetComponent<Collider>().enabled=false;frame.SetSurface(WorldCard.Surface.Panel);
             var shadow=frame.gameObject.AddComponent<Shadow>();shadow.effectColor=new Color(0,0,0,.35f);shadow.effectDistance=new Vector2(8,-14);
         }

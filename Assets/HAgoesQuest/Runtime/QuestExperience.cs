@@ -117,8 +117,9 @@ namespace HAgoesQuest
                         plane.Raycast(ray,out float distance);
                         float x=menu.transform.InverseTransformPoint(levelTouch?tip.position:ray.GetPoint(distance)).x;
                         draftLevel=Mathf.InverseLerp(-.3f,.3f,x);UpdateLevelLabel();
+                        InteractionFeedback.Instance?.PreviewLevel(levelId,true,draftLevel);
                     }
-                    if(levelTouch?!near:!down){levelDragging=false;ha.SetLevel(levelId,draftLevel);}
+                    if(levelTouch?!near:!down){levelDragging=false;if(EntityAllowedHere(levelId))ha.SetLevel(levelId,draftLevel);InteractionFeedback.Instance?.ResetAdjustment();}
                     return true;
                 }
             }
@@ -134,10 +135,19 @@ namespace HAgoesQuest
             Button(0,L10n.T("Magie · Anleitung & Übungsziel"),MagicSettings,"automation");
             Button(1,Words("Uhr & Bedienhand","Watch & handedness"),WatchSettings,"settings");
             Button(2,ExperienceSettings.English?L10n.T("Language: English · Deutsch"):L10n.T("Sprache: Deutsch · English"),()=>{ExperienceSettings.English=!ExperienceSettings.English;ExperienceMenu();});
-            Button(3,ExperienceSettings.Sound?L10n.T("Schaltgeräusche: an"):L10n.T("Schaltgeräusche: aus"),()=>{ExperienceSettings.Sound=!ExperienceSettings.Sound;ExperienceMenu();},"speaker");
+            Button(3,Words("Ton & Gestenhinweise","Sound & gesture feedback"),FeedbackSettings,"speaker");
             Button(4,ExperienceSettings.English?"About · privacy & licenses":"Über · Datenschutz & Lizenzen",AboutMenu,"sensor");
             Button(5,L10n.T("Zurück"),Home);
             notice=Words("Entität ansehen + pinchen. Faust drehen: regeln. Menüs: Zeigen oder antippen. Die Uhr öffnet ein ortsfestes Panel.","Look at entity + pinch. Twist fist to adjust. Menus: point or tap. The watch opens a stationary panel.");
+        }
+        void FeedbackSettings()
+        {
+            NewMenu(Words("Ton & Gestenhinweise","Sound & gesture feedback"));
+            Button(0,Words("Geräusche: ","Sounds: ")+(ExperienceSettings.Sound?Words("an","on"):Words("aus","off")),()=>{ExperienceSettings.Sound=!ExperienceSettings.Sound;FeedbackSettings();},"speaker");
+            Button(1,Words("Gesten-Untertitel: ","Gesture captions: ")+(ExperienceSettings.GestureHints?Words("an","on"):Words("aus","off")),()=>{ExperienceSettings.GestureHints=!ExperienceSettings.GestureHints;FeedbackSettings();});
+            Button(2,Words("Grüner Hand-Effekt: ","Green hand glow: ")+(ExperienceSettings.HandGlow?Words("an","on"):Words("aus","off")),()=>{ExperienceSettings.HandGlow=!ExperienceSettings.HandGlow;FeedbackSettings();});
+            Button(5,L10n.T("Zurück"),ExperienceMenu);
+            notice=Words("Grün: Geste bereit. Beim Drehen klickt jede Wertstufe. Halten ist lautlos. Der Leuchteffekt ergänzt deine echte Hand.","Green means ready. Turning clicks through value steps; holding is silent. The glow follows your real hand.");
         }
         void StartMagicPractice()
         {
@@ -149,6 +159,7 @@ namespace HAgoesQuest
         }
         void OpenLevelControls(HaEntity entity)
         {
+            if(!EntityAllowedHere(entity.Id)){notice=Words("Diese Entität ist nicht in deinem aktuellen Raum.","This entity is not in your current room.");return;}
             NewMenu(entity.Name);levelId=entity.Id;draftLevel=entity.Level;levelDragging=false;
             levelControl=WorldCard.Create(menu.transform,new Vector3(0,.06f,0),new Vector2(700,105),"");
             levelControl.Press=()=>{};levelControl.SetIcon(entity.CanDim?"sun":"speaker");UpdateLevelLabel();
@@ -167,7 +178,7 @@ namespace HAgoesQuest
         }
         void AboutMenu()
         {
-            NewMenu("HA goes Quest · 0.6.1");
+            NewMenu("HA goes Quest · 0.6.2");
             var info=WorldCard.Create(menu.transform,new Vector3(0,.12f,0),new Vector2(720,300),ExperienceSettings.English?
                 "Independent development app. Not affiliated with Meta or Home Assistant.\n\nCredentials are encrypted on this Quest. Device commands and media go to your configured HA server. QR camera frames are processed locally. Spatial tracking uses Meta platform services.\n\nThird-party licenses are included below.":
                 "Unabhängige Entwicklungs-App. Keine offizielle App von Meta oder Home Assistant.\n\nAnmeldung verschlüsselt auf dieser Quest. Befehle und Medien gehen an deinen HA-Server. QR-Kamerabilder werden lokal verarbeitet. Raumtracking nutzt Meta-Plattformdienste.\n\nDrittanbieter-Lizenzen sind unten enthalten.");
@@ -186,4 +197,5 @@ namespace HAgoesQuest
         }
     }
 }
+
 

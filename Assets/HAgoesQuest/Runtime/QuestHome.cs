@@ -116,6 +116,7 @@ namespace HAgoesQuest
         void Update()
         {
             if (!head || ha == null) return;
+            RefreshRoomScope();
             UpdateExperience();
             RepairHandPointers();
             bool inputAllowed = Application.isFocused && (Application.isEditor || (OVRManager.hasInputFocus && OVRManager.hasVrFocus));
@@ -157,7 +158,7 @@ namespace HAgoesQuest
             foreach (var pair in markers)
             {
                 var card = pair.Value;
-                bool localized = Application.isEditor || (!scanBusy && bindings.CanShow(pair.Key));
+                bool localized = MarkerVisibleHere(pair.Key,card);
                 card.gameObject.SetActive(localized);
                 if (!localized) continue;
                 card.GetComponent<Collider>().enabled = !menu && !operationBusy && placing == null;
@@ -178,6 +179,7 @@ namespace HAgoesQuest
 
             if(!menu && placing==null){ TickGaze(inputAllowed&&!operationBusy&&!scanBusy,tracked,down); return; }
             if(gestureHint)gestureHint.gameObject.SetActive(false);
+            readinessGlow?.Hide();
             reticle.UnitScale=.001f;
             Ray ray = new Ray(head.position, head.forward);
             if (hand && ControlHand.IsPointerPoseValid && ControlHand.PointerPose)
@@ -256,6 +258,8 @@ namespace HAgoesQuest
             else if (beamGlow) beamGlow.enabled = false;
 
             bool consumed = UpdateAlternativeInput(inputAllowed, tracked, down, ray);
+            placementValid=placementValid&&PointInCurrentRoom(aim);
+            if(placing!=null&&!placementFrozen&&!placementValid){key=null;preview.Label.text=Words("Innerhalb deines aktuellen Raums platzieren","Place inside your current room");}
             bool placementPressed=placing!=null&&!placementFrozen&&gate.Step(consumed?null:key,down,tracked&&!operationBusy&&inputAllowed,Time.realtimeSinceStartup);
             bool selected=!consumed&&metaInput&&metaInput.RaySelected&&metaInput.RaySelected==focused&&key!=null;
             if (placementPressed || selected)
@@ -274,7 +278,9 @@ namespace HAgoesQuest
             keyboard = null;
             if (menu) { menu.SetActive(false); Destroy(menu); }
             gate.Reset();
-            menu = new GameObject("HA Menu");
+            menu = new GameObject("HA Menu",typeof(RectTransform),typeof(Canvas));
+            menu.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;
+            menu.GetComponent<RectTransform>().sizeDelta=new Vector2(.9f,1.04f);
             entityList = null;
             Vector3 forward = Vector3.ProjectOnPlane(head.forward, Vector3.up).normalized;
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
@@ -432,14 +438,15 @@ namespace HAgoesQuest
         {
             var entities = browser.Apply(ha.Entities.Values).ToArray();
             NewMenu(entities.Length + L10n.T(" Entitäten"));
-            WorldCard.Create(menu.transform, new Vector3(-0.2f, 0.29f, 0), new Vector2(390, 65), L10n.T("Suchen & Filtern"), Filters).SetIcon("search");
+            var filters=WorldCard.Create(menu.transform, new Vector3(-0.2f, 0.29f, 0), new Vector2(390, 65), L10n.T("Suchen & Filtern"), Filters);
+            filters.SetIcon("search");filters.SetSurface(WorldCard.Surface.Primary);
             WorldCard.Create(menu.transform, new Vector3(0.2f, 0.29f, 0), new Vector2(390, 65), L10n.T("Zurück"), Home);
             entityList = menu.AddComponent<EntityScrollList>();
             entityList.Initialize(entities, ha, entity => { placementReadOnly = !EntityPolicy.CanSwitch(entity.Id, entity.State) && !entity.CanVolume; Details(entity); });
             notice = entities.Length == 0 ? L10n.T("Keine Treffer. Suche oder Filter ändern.") : L10n.T("Zielen, pinchen und ziehen · oder mit dem Finger wischen\n") + FilterSummary();
         }
 
-        string FilterSummary() => L10n.T("Raum: ") + AreaLabel() + L10n.T(" · Suche: ") + (browser.Search.Length == 0 ? "–" : browser.Search);
+        string FilterSummary() => Words("Art: ","Type: ")+(browser.Domain.Length==0?L10n.T("Alle"):EntityBrowser.DomainName(browser.Domain))+" · "+L10n.T("Raum: ") + AreaLabel() + L10n.T(" · Suche: ") + (browser.Search.Length == 0 ? "–" : browser.Search);
         string AreaLabel() => browser.Area.Length == 0 ? L10n.T("Alle") : browser.Area == "__none" ? L10n.T("Ohne Raum") :
             ha.Entities.Values.FirstOrDefault(e => e.AreaId == browser.Area)?.AreaName ?? browser.Area;
         void Pager(int row, Action previous, Action next)
@@ -509,7 +516,7 @@ namespace HAgoesQuest
                     Details(entity);
                 });
                 Button(1, L10n.T("Zurück"), EntityMenu);
-                if (!bindings.DisplayOnly(entity.Id) && (entity.CanDim || entity.CanVolume)) Button(2, L10n.T("Helligkeit / Lautstärke ändern"), () => OpenLevelControls(entity), entity.CanDim ? "sun" : "speaker");
+                if (EntityAllowedHere(entity.Id)&&!bindings.DisplayOnly(entity.Id) && (entity.CanDim || entity.CanVolume)) Button(2, L10n.T("Helligkeit / Lautstärke ändern"), () => OpenLevelControls(entity), entity.CanDim ? "sun" : "speaker");
                 return;
             }
             Button(0, L10n.T("Zeigen & pinchen · ") + freeDistance.ToString("0.0") + L10n.T(" Meter"), () => BeginPlacement(entity.Id, freeDistance), IconFor(entity.Id));
@@ -584,6 +591,7 @@ namespace HAgoesQuest
         async void Place(Vector3 position)
         {
             if (operationBusy || string.IsNullOrEmpty(placing)) return;
+            if(!PointInCurrentRoom(position)){notice=Words("Die Position liegt nicht in deinem aktuellen Raum.","The position is outside your current room.");return;}
             string id = placing;
             bool displayOnly = placementReadOnly;
             CancelPlacement();
@@ -621,6 +629,7 @@ namespace HAgoesQuest
             bool media = EntityPolicy.Domain(id) == "camera" || EntityPolicy.Domain(id) == "image";
             var card = WorldCard.Create(anchor, Vector3.zero, media ? new Vector2(600, 400) : new Vector2(340, 115), id, () =>
             {
+                if(!EntityAllowedHere(id))return;
                 if (ha.Entities.TryGetValue(id, out var entity) && entity.CanVolume) OpenLevelControls(entity);
                 else ha.Switch(id);
             });
@@ -646,7 +655,7 @@ namespace HAgoesQuest
             // Run after SDK anchor updates and the tracking stability check, before rendering.
             if (Application.isEditor || !bindings) return;
             foreach (var pair in markers)
-                if (pair.Value) pair.Value.gameObject.SetActive(!scanBusy && bindings.CanShow(pair.Key));
+                if (pair.Value) pair.Value.gameObject.SetActive(MarkerVisibleHere(pair.Key,pair.Value));
         }
 
         void RemoveMarker(string id)
@@ -752,6 +761,7 @@ namespace HAgoesQuest
             if (beamTexture) Destroy(beamTexture);
             if (wristWatch) Destroy(wristWatch.gameObject);
             if (magicHint) Destroy(magicHint.gameObject);
+            if (readinessGlow) Destroy(readinessGlow.gameObject);
             if (gestureHint) Destroy(gestureHint.gameObject);
         }
         void OnApplicationFocus(bool focus)

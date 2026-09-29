@@ -3,12 +3,12 @@
 ## Installieren
 
 1. Entwicklermodus für die Quest aktivieren und die Brille per USB mit deinem PC verbinden. USB-Debugging in der Brille erlauben. [Metas Anleitung](https://developers.meta.com/horizon/documentation/unity/unity-env-device-setup/).
-2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.6.1.apk`.
+2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.6.2.apk`.
 3. **HA goes Quest** unter den Apps aus unbekannten Quellen starten. Handtracking in den Quest-Einstellungen einschalten.
 
 ## Update ohne erneute Token-Eingabe
 
-Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.6.1.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
+Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.6.2.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
 
 Das Verbindungsmenü zeigt „Gespeicherter Token wird verwendet“. Für dieselbe Serveradresse darf das Tokenfeld leer bleiben. Bei einer anderen Adresse ist ein neuer Token erforderlich. Ein fehlgeschlagener Verbindungsversuch ersetzt die zuletzt bestätigte Anmeldung nicht. Ein von Home Assistant widerrufener Token muss erneuert werden.
 
@@ -32,7 +32,7 @@ Im Verbindungsmenü **Token per QR-Code → Scan starten** wählen und Kamerazug
 
 ## Magie-Modus
 
-In den Einstellungen einschalten. Entität ansehen, Hand öffnen bis bereit, Faust schließen und wieder öffnen. Drehen regelt stattdessen Helligkeit/Lautstärke. Details, Uhr und Rechts-/Linkshändermodus: [Anleitung 0.6.1](VERSION-0.6.1.md).
+In den Einstellungen einschalten. Entität ansehen, Hand öffnen bis bereit, Faust schließen und wieder öffnen. Drehen regelt stattdessen Helligkeit/Lautstärke. Details, Uhr und Rechts-/Linkshändermodus: [Anleitung 0.6.2](VERSION-0.6.2.md).
 
 ## Entwicklungsstand
 
@@ -42,4 +42,5 @@ Die Version ist für einen ersten Test auf deiner Quest vorgesehen. Der Start au
 ## Neu in 0.5.0
 
 Helligkeit und Lautstärke mit seitlichem Pinch-und-Ziehen am eingeblendeten Regler einstellen. Die Liste zeigt acht Entitäten mit Wert und Raum; mit Pinch ziehen oder direkt wischen. Einstellungen bieten Deutsch/Englisch, Klickgeräusche und den Start mit HA-Uhr. Die Uhr öffnet ein ortsfestes Menü. Kamera- und Bildentitäten lassen sich als Rahmen platzieren; Kameras zeigen eine Folge aktueller Einzelbilder, keinen flüssigen Video-/Audiostream. Ausführliche Anleitung: [Version 0.5.0](VERSION-0.5.0.md).
+
 

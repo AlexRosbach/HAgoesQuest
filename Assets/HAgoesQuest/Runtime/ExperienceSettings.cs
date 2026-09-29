@@ -10,6 +10,8 @@ namespace HAgoesQuest
         public static bool Wrist { get => Get("wrist"); set => Set("wrist", value); }
         public static bool LeftHanded { get => Get("leftHanded"); set => Set("leftHanded", value); }
         public static bool Sound { get => Get("sound", true); set => Set("sound", value); }
+        public static bool GestureHints { get => Get("gestureHints", true); set => Set("gestureHints", value); }
+        public static bool HandGlow { get => Get("handGlow", true); set => Set("handGlow", value); }
         static bool english;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void LoadLanguage() { english = Get("english"); }

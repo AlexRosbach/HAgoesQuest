@@ -24,3 +24,9 @@ This APK is a development build. See `COMMERCIAL-READINESS.md` for licensing and
 Open Settings → Your HA watch → Adjust position & size. Keep the watch hand visible. Use − / + to move the dial in 5 mm steps, rotate it in 5° steps and resize it in 5% steps. Save position enables the watch and stores its pose relative to that wrist. Cancel or close the menu to discard changes. Left and right wrists are stored independently; Reset watch position restores the automatic placement for the current wrist.
 
 Menu surfaces are now brighter and opaque. Start tiles use original detailed meshes and generated ceramic/brushed-metal texture maps. No external model/texture license was introduced. Headset validation is still required.
+
+## 0.6.2: room scope and gesture feedback
+
+Search & filters remain at the top of the entity list. Menus now share one rendering hierarchy so backgrounds cannot cover buttons when viewed from the side. Placed entities are visible and controllable only within the same scanned Quest room as your headset; room height is included. Leaving the room cancels adjustments. The full HA catalogue remains available for initial placement, with separate HA area/type/search filters.
+
+Fist rotation and sliders produce quiet mechanical detents when values change. A translucent green glow follows your real tracked hand when the gesture is ready. Settings → Sound & gesture feedback offers independent switches for sounds, gesture captions and hand glow. No virtual hand model is added.

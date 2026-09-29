@@ -41,3 +41,9 @@ Ergänzende Quellen: [Button-Hierarchie und Trefferflächen](https://developers.
 [Meta Accessibility](https://developers.meta.com/horizon/design/accessibility/), abgerufen am 29. September 2026: mindestens 4,5:1 für normalen Text, ausreichend große Ziele und sichtbare Fokusrückmeldung. Die drei Menütext-Paletten werden automatisiert gegen 4,5:1 geprüft. Die dunklen fast schwarzen Flächen wurden durch deckendes Schieferblau ersetzt. Unity-Vorschauen zeigen Startmenü und Uhreneditor; eine reale Quest-Abnahme ersetzt das nicht.
 
 Die 3D-Modelle und 128×128-Materialtexturen entstehen vollständig aus eigenem Code in ButtonSculpture.cs. Die kamerabezogene Schattierung behält eine helle Grundbeleuchtung, sodass die Modelle unabhängig von realer oder virtueller Raumbeleuchtung lesbar bleiben. Pro Objekt werden Teile nach Material zusammengefasst. Der Uhreneditor verwendet große einzelne Tasten statt einer präzisen Ziehgeste; erst Speichern übernimmt die Anpassung.
+
+## 0.6.2: Room boundaries and UI ordering
+
+Meta MRUK 207 provides GetCurrentRoom and IsPositionInRoom with vertical-bounds checking: [MRUKRoom reference](https://developers.meta.com/horizon/reference/mruk/v207/class_meta_x_r_m_r_utility_kit_m_r_u_k_room/) and [scene data queries](https://developers.meta.com/horizon/documentation/unity/unity-mr-utility-kit-manage-scene-data/). The app validates headset containment instead of trusting a stale current-room result, then checks entity positions against the same room. Missing rooms fail closed outside editor/demo mode.
+
+The installed Unity uGUI source confirms RectMask2D clips descendants in their root canvas space. The fixed filter toolbar is outside that subtree. Menu surfaces now share a root canvas and the panel is the first sibling, removing independent per-card transparent distance sorting. Desktop renders at frontal and ±35° views supplement structural tests; Quest stereo testing remains necessary.
