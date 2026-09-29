@@ -18,3 +18,9 @@ Camera frames show repeatedly refreshed snapshots, up to two requests per second
 After startup, recentering or room setup, icons remain hidden until their anchors are tracked and stable. Look around the corresponding room if an anchor has not been found. The app retries without creating replacement positions. Existing incorrectly localized anchors still require on-device diagnosis; desktop tests cannot validate your actual room map.
 
 This APK is a development build. See `COMMERCIAL-READINESS.md` for licensing and production-release requirements.
+
+## 0.6.1: contrast and wrist placement
+
+Open Settings → Your HA watch → Adjust position & size. Keep the watch hand visible. Use − / + to move the dial in 5 mm steps, rotate it in 5° steps and resize it in 5% steps. Save position enables the watch and stores its pose relative to that wrist. Cancel or close the menu to discard changes. Left and right wrists are stored independently; Reset watch position restores the automatic placement for the current wrist.
+
+Menu surfaces are now brighter and opaque. Start tiles use original detailed meshes and generated ceramic/brushed-metal texture maps. No external model/texture license was introduced. Headset validation is still required.

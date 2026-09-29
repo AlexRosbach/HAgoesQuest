@@ -35,3 +35,9 @@ Die neu gewünschte Entitätsbedienung verwendet einen sichtbaren Punkt in Kopf-
 Die Hauptansicht ordnet Aktionen in große Kacheln mit einer primären Aktion. Selbst erstellte räumliche Symbole dienen als zusätzliche visuelle Hinweise; die beschriftete Kachel bleibt die unveränderte Trefferfläche. Die Uhr wird für Linkshänder gespiegelt und öffnet weiterhin ein ortsfestes Panel. Sensorbeschriftungen skalieren proportional zur Entfernung mit Unter-/Obergrenze.
 
 Ergänzende Quellen: [Button-Hierarchie und Trefferflächen](https://developers.meta.com/horizon/design/buttons_bp/), [Button-Zustände](https://developers.meta.com/horizon/design/buttons_specs/), [winkelabhängige Skalierung](https://developers.meta.com/horizon/design/mr-design-guideline/), [Wrist button](https://developers.meta.com/horizon/design/wrist-buttons/). Die Plattformwerte in dp lassen sich nicht pauschal mit den Weltmetern der eigenen Unity-Oberfläche gleichsetzen. Lesbarkeit und Trefferflächen müssen deshalb zusätzlich in der Brille geprüft werden.
+
+## 0.6.1: Lesbarkeit und Materialien
+
+[Meta Accessibility](https://developers.meta.com/horizon/design/accessibility/), abgerufen am 29. September 2026: mindestens 4,5:1 für normalen Text, ausreichend große Ziele und sichtbare Fokusrückmeldung. Die drei Menütext-Paletten werden automatisiert gegen 4,5:1 geprüft. Die dunklen fast schwarzen Flächen wurden durch deckendes Schieferblau ersetzt. Unity-Vorschauen zeigen Startmenü und Uhreneditor; eine reale Quest-Abnahme ersetzt das nicht.
+
+Die 3D-Modelle und 128×128-Materialtexturen entstehen vollständig aus eigenem Code in ButtonSculpture.cs. Die kamerabezogene Schattierung behält eine helle Grundbeleuchtung, sodass die Modelle unabhängig von realer oder virtueller Raumbeleuchtung lesbar bleiben. Pro Objekt werden Teile nach Material zusammengefasst. Der Uhreneditor verwendet große einzelne Tasten statt einer präzisen Ziehgeste; erst Speichern übernimmt die Anpassung.

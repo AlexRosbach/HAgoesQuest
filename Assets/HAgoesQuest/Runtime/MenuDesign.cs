@@ -13,29 +13,14 @@ namespace HAgoesQuest
         }
         public static void Tile(WorldCard card,string sculpture)
         {
-            card.Label.fontSize=23;card.Label.rectTransform.offsetMin=new Vector2(105,12);card.Label.rectTransform.offsetMax=new Vector2(-18,-12);card.Label.alignment=TextAnchor.MiddleLeft;
-            var display=new GameObject("Sculpted button icon");display.transform.SetParent(card.transform,false);display.transform.localPosition=new Vector3(-130,0,-18);display.transform.localScale=Vector3.one*.85f;
+            var lines=card.Label.text.Split('\n');card.Label.text=lines[0];
+            card.Label.fontSize=27;card.Label.fontStyle=FontStyle.Bold;card.Label.rectTransform.offsetMin=new Vector2(24,44);card.Label.rectTransform.offsetMax=new Vector2(-18,-125);card.Label.alignment=TextAnchor.LowerLeft;
+            var detail=new GameObject("Tile description",typeof(RectTransform),typeof(Text));detail.transform.SetParent(card.transform,false);
+            var text=detail.GetComponent<Text>();text.font=card.Label.font;text.fontSize=20;text.color=new Color(.9f,.94f,1);text.raycastTarget=false;text.text=lines.Length>1?lines[1]:"";text.alignment=TextAnchor.LowerLeft;
+            text.rectTransform.anchorMin=Vector2.zero;text.rectTransform.anchorMax=Vector2.one;text.rectTransform.offsetMin=new Vector2(24,18);text.rectTransform.offsetMax=new Vector2(-18,-185);
+            var display=new GameObject("Sculpted button icon");display.transform.SetParent(card.transform,false);display.transform.localPosition=new Vector3(-105,43,-35);display.transform.localScale=Vector3.one*1.15f;
             var sculpt=display.AddComponent<ButtonSculpture>();sculpt.Initialize(card,sculpture);
         }
-    }
-    public sealed class ButtonSculpture:MonoBehaviour
-    {
-        WorldCard card;Material material;
-        public void Initialize(WorldCard owner,string kind)
-        {
-            card=owner;material=new Material(Resources.Load<Shader>("SpatialButton"));material.color=new Color(.77f,.72f,1);material.enableInstancing=true;
-            if(kind=="lamp") {Part(PrimitiveType.Sphere,new Vector3(0,12,0),new Vector3(54,54,54));Part(PrimitiveType.Cylinder,new Vector3(0,-22,0),new Vector3(28,13,28));}
-            else if(kind=="map") {Part(PrimitiveType.Cube,new Vector3(-20,0,0),new Vector3(26,65,15));Part(PrimitiveType.Cube,new Vector3(10,8,8),new Vector3(26,65,15));Part(PrimitiveType.Cube,new Vector3(35,0,0),new Vector3(20,65,15));}
-            else if(kind=="settings") {Part(PrimitiveType.Cylinder,Vector3.zero,new Vector3(63,9,63),Quaternion.Euler(90,0,0));Part(PrimitiveType.Sphere,new Vector3(0,0,-12),new Vector3(27,27,15));}
-            else {Part(PrimitiveType.Cube,Vector3.zero,new Vector3(47,47,26),Quaternion.Euler(10,22,0));Part(PrimitiveType.Sphere,new Vector3(18,18,-18),Vector3.one*21);}
-        }
-        void Part(PrimitiveType type,Vector3 position,Vector3 scale,Quaternion? rotation=null)
-        {
-            var part=GameObject.CreatePrimitive(type);Destroy(part.GetComponent<Collider>());part.transform.SetParent(transform,false);
-            part.transform.localPosition=position;part.transform.localScale=scale;part.transform.localRotation=rotation??Quaternion.identity;part.GetComponent<Renderer>().sharedMaterial=material;
-        }
-        void Update(){if(card)transform.localRotation=Quaternion.Lerp(transform.localRotation,Quaternion.Euler(card.IsFocused?-16:-8,card.IsFocused?35:22,0),1-Mathf.Exp(-10*Time.unscaledDeltaTime));}
-        void OnDestroy(){if(material)Destroy(material);}
     }
     public sealed class WristDial:MonoBehaviour
     {
@@ -64,11 +49,14 @@ namespace HAgoesQuest
     {
         void WatchSettings()
         {
-            NewMenu(Words("Deine HA-Uhr","Your HA watch"));
+            watchEditing=false; NewMenu(Words("Deine HA-Uhr","Your HA watch"));
             Button(0,ExperienceSettings.Wrist?Words("Uhr: an","Watch: on"):Words("Uhr: aus","Watch: off"),()=>{ExperienceSettings.Wrist=!ExperienceSettings.Wrist;WatchSettings();},"settings");
             Button(1,ExperienceSettings.LeftHanded?Words("Linkshänder · Uhr rechts","Left handed · watch on right"):Words("Rechtshänder · Uhr links","Right handed · watch on left"),()=>{ExperienceSettings.LeftHanded=!ExperienceSettings.LeftHanded;ResetGaze();menuGate.Reset();WatchSettings();});
+            Button(2,Words("Position & Größe anpassen","Adjust position & size"),BeginWatchPosition);
+            Button(3,Words("Uhrenposition zurücksetzen","Reset watch position"),()=>{WatchPlacement.Reset(ExperienceSettings.LeftHanded);WatchSettings();});
             Button(4,L10n.T("Zurück"),ExperienceMenu);
             notice=Words("Mit der anderen Hand auf das Zifferblatt tippen. Die Bedienhand übernimmt Pinch, Faustdrehen und Magie; die Uhrenhand öffnet das Menü auch per Pinch.","Tap the dial with the opposite hand. The dominant hand controls pinch, fist rotation and magic; the watch hand can also pinch to open the menu.");
         }
     }
 }
+

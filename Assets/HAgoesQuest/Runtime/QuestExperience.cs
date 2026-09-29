@@ -60,14 +60,15 @@ namespace HAgoesQuest
             if(wristWatch)
             {
                 var wrist=MagicCasting.Bone(WatchSkeleton,OVRSkeleton.BoneId.Hand_WristRoot,OVRSkeleton.BoneId.XRHand_Wrist);
-                bool visible=ExperienceSettings.Wrist&&HandReady(MenuHand)&&wrist;
+                bool visible=(ExperienceSettings.Wrist||watchEditing)&&HandReady(MenuHand)&&wrist;
+                wristWatch.Interactable=!watchEditing;
                 wristWatch.gameObject.SetActive(visible);
                 if(visible)
                 {
-                    var palm=MagicCasting.Bone(WatchSkeleton,OVRSkeleton.BoneId.Hand_Middle1,OVRSkeleton.BoneId.XRHand_MiddleProximal);
-                    Vector3 towardArm=palm?(wrist.position-palm.position).normalized:Vector3.zero;
-                    wristWatch.transform.position=wrist.position+towardArm*.055f+(head.position-wrist.position).normalized*.035f;
-                    wristWatch.Face(head);wristWatch.Label.text=System.DateTime.Now.ToString("HH:mm");
+                    var saved=watchEditing?watchDraft:SavedWatch();
+                    if(saved!=null)saved.Apply(wrist,wristWatch);else DefaultWatchPose(wrist);
+                    wristWatch.Label.text=System.DateTime.Now.ToString("HH:mm");
+                    if(watchEditing&&watchSizeLabel)watchSizeLabel.Label.text=Words("Größe · ","Size · ")+Mathf.RoundToInt(watchDraft.scale*100)+" %";
                     wristWatch.GetComponent<WristDial>()?.SetConnection(ha.Fresh);
                 }
             }
@@ -166,7 +167,7 @@ namespace HAgoesQuest
         }
         void AboutMenu()
         {
-            NewMenu("HA goes Quest · 0.6.0");
+            NewMenu("HA goes Quest · 0.6.1");
             var info=WorldCard.Create(menu.transform,new Vector3(0,.12f,0),new Vector2(720,300),ExperienceSettings.English?
                 "Independent development app. Not affiliated with Meta or Home Assistant.\n\nCredentials are encrypted on this Quest. Device commands and media go to your configured HA server. QR camera frames are processed locally. Spatial tracking uses Meta platform services.\n\nThird-party licenses are included below.":
                 "Unabhängige Entwicklungs-App. Keine offizielle App von Meta oder Home Assistant.\n\nAnmeldung verschlüsselt auf dieser Quest. Befehle und Medien gehen an deinen HA-Server. QR-Kamerabilder werden lokal verarbeitet. Raumtracking nutzt Meta-Plattformdienste.\n\nDrittanbieter-Lizenzen sind unten enthalten.");
@@ -185,3 +186,4 @@ namespace HAgoesQuest
         }
     }
 }
+

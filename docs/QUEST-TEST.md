@@ -118,3 +118,11 @@ Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler 
 - [ ] Uhrzeit, Datum und Verbindungsanzeige ohne Überlappung; beim Armbewegen bleibt das geöffnete Menü ortsfest.
 - [ ] Hauptkacheln, 3D-Symbole und Beschriftung mit beiden Augen prüfen: keine Doppelbilder, fehlenden Objekte oder Tiefenkonflikte. Hover und Klickfeedback prüfen.
 - [ ] Zwei Räume, Kaltstart im anderen Raum und Systemkalibrierung wie oben erneut prüfen. Neue Gesten dürfen die räumliche Zuordnung nicht verändern.
+
+## Version 0.6.1
+
+- Menü bei hellem und dunklem Passthrough prüfen: alle Untermenüs, Fokus-/Druckzustände und Text auf beiden Augen lesbar; 3D-Symbole ohne fehlende Materialien.
+- Uhr an linkem und rechtem Arm anpassen; jede Richtung und Drehachse, Größenminimum und -maximum testen. Drehen des Arms bewegt die gespeicherte Uhr entsprechend.
+- Speichern, App-Neustart und Wechsel des Händermodus: passende Position bleibt erhalten. Abbrechen und Menü schließen ändern keinen gespeicherten Wert. Zurücksetzen betrifft nur das gewählte Handgelenk.
+- Tracking der Uhrenhand während Anpassung verlieren und wiederherstellen; Vorschau darf nicht an falscher Stelle erscheinen oder unabsichtlich gespeichert werden.
+- 0.6.0 → 0.6.1 ohne Deinstallation aktualisieren: Token und gespeicherte Entitäten bleiben erhalten.

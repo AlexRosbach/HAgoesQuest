@@ -38,13 +38,13 @@ namespace HAgoesQuest
         string lastState;
         static Sprite rounded;
         static readonly System.Collections.Generic.Dictionary<string, Sprite> icons = new System.Collections.Generic.Dictionary<string, Sprite>();
-        Color idle = new Color(.115f,.12f,.15f,1);
+        Color idle = new Color(.20f,.25f,.34f,1);
         public enum Surface { Secondary, Primary, Header, Caption, Panel }
         public void SetSurface(Surface style)
         {
-            idle=style==Surface.Primary?new Color(.30f,.24f,.67f,1):style==Surface.Panel?new Color(.038f,.043f,.06f,.98f):style==Surface.Header||style==Surface.Caption?new Color(.055f,.06f,.08f,.96f):new Color(.115f,.12f,.15f,1);
+            idle=style==Surface.Primary?new Color(.30f,.24f,.67f,1):style==Surface.Panel?new Color(.105f,.14f,.205f,1):style==Surface.Header||style==Surface.Caption?new Color(.145f,.185f,.26f,1):new Color(.20f,.25f,.34f,1);
             if(style==Surface.Header){Label.fontSize=30;Label.fontStyle=FontStyle.Bold;Label.alignment=TextAnchor.MiddleLeft;background.enabled=false;GetComponent<Outline>().enabled=false;}
-            if(style==Surface.Caption)Label.color=new Color(.76f,.79f,.85f);
+            if(style==Surface.Caption)Label.color=new Color(.94f,.96f,1);
             background.color=idle;
         }
         public void MakeCursor(){background.sprite=Circle(false);background.type=Image.Type.Simple;GetComponent<Outline>().enabled=false;idle=Color.white;}
@@ -68,7 +68,7 @@ namespace HAgoesQuest
             card.group = go.GetComponent<CanvasGroup>();
             card.shownAt = Time.unscaledTime;
             var outline = go.AddComponent<Outline>();
-            outline.effectColor = new Color(0.62f, 0.64f, 0.8f, 0.18f);
+            outline.effectColor = new Color(0.62f, 0.64f, 0.8f, 0.42f);
             outline.effectDistance = new Vector2(1, -1);
 
             var text = new GameObject("Text", typeof(RectTransform), typeof(Text));
@@ -279,3 +279,4 @@ namespace HAgoesQuest
         }
     }
 }
+
