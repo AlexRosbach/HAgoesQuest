@@ -30,6 +30,8 @@ namespace HAgoesQuest
             State + (string.IsNullOrEmpty(Unit) ? "" : " " + Unit);
     }
 
+    /// <summary>Maintains HA snapshots, area metadata and serialized explicit service calls.</summary>
+    /// <remarks>Reads may recover automatically; commands are never retried after an uncertain response.</remarks>
     public sealed class HomeAssistantConnection : MonoBehaviour
     {
         public event Action Changed;
@@ -43,6 +45,7 @@ namespace HAgoesQuest
         public string BaseUrl => settings?.baseUrl ?? "";
         public bool AllowsInsecureHttp => remembered?.allowInsecureHttp ?? false;
         ConnectionSettings remembered;
+        /// <summary>Allows remembered credentials only for the same validated base URI.</summary>
         public bool CanReuseToken(string url, bool allowHttp)
         {
             if (remembered == null || string.IsNullOrWhiteSpace(remembered.accessToken)) return false;
@@ -51,9 +54,11 @@ namespace HAgoesQuest
         }
         public string ServerIdentity { get; private set; }
         public float LastSnapshot { get; private set; } = -100;
+        /// <summary>Whether an online snapshot is younger than six seconds and may authorize commands.</summary>
         public bool Fresh => Online && Time.realtimeSinceStartup - LastSnapshot < 6;
         ConnectionSettings settings;
         Uri address;
+        // Commands invalidate older state reads; connectionRevision separately invalidates area requests.
         int generation;
         bool refresh;
         readonly Dictionary<string, string[]> areas = new Dictionary<string, string[]>();
@@ -270,6 +275,7 @@ namespace HAgoesQuest
             else { entity.AreaId="";entity.AreaName=""; }
         }
 
+        /// <summary>Starts a non-overlapping area refresh for the current real connection.</summary>
         public void RefreshAreas()
         {
             if (Demo || Connecting || AreasLoading || address == null) return;
@@ -289,6 +295,7 @@ namespace HAgoesQuest
                 {
                     if (request.result != UnityWebRequest.Result.Success) throw new InvalidOperationException();
                     var parsed = JArray.Parse(request.downloadHandler.text);
+                    // Build a complete replacement first so parsing failures preserve the previous catalog.
                     var next=new Dictionary<string,string[]>();var names=new Dictionary<string,string>();
                     foreach (JObject item in parsed)
                     {
@@ -308,6 +315,8 @@ namespace HAgoesQuest
             AreasLoading = false; AreaRevision++; Changed?.Invoke();
         }
 
+        /// <summary>Queues one permitted on/off command; returns false when it cannot be accepted.</summary>
+        /// <remarks>True means accepted locally, not confirmed by the device. Demo changes local state only.</remarks>
         public bool Switch(string id)
         {
             if (Busy || !Fresh || !Entities.TryGetValue(id, out var entity) || !EntityPolicy.CanSwitch(id, entity.State)) return false;
@@ -324,6 +333,8 @@ namespace HAgoesQuest
             return true;
         }
 
+        /// <summary>Queues brightness or volume from a normalized value, clamped to 0 through 1.</summary>
+        /// <returns>Whether the request was accepted locally; confirmation requires a later snapshot.</returns>
         public bool SetLevel(string id, float value)
         {
             if (Busy || !Fresh || float.IsNaN(value) || float.IsInfinity(value) || !Entities.TryGetValue(id, out var entity) ||
@@ -337,6 +348,8 @@ namespace HAgoesQuest
             return true;
         }
 
+        /// <summary>Creates an authenticated HA proxy request, or returns null for an ineligible entity.</summary>
+        /// <remarks>The caller owns sending, aborting and disposing the returned request.</remarks>
         public UnityWebRequest MediaRequest(string id)
         {
             string domain = EntityPolicy.Domain(id);

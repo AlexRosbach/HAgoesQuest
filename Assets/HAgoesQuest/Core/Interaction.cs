@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace HAgoesQuest.Core
 {
-    // Pure C#: the same policy is exercised by the standalone test runner.
+    /// <summary>Accepts a fresh pinch after target dwell and cooldown; a held pinch never repeats.</summary>
     public sealed class FocusPinchGate
     {
         readonly double dwell;
@@ -51,6 +51,7 @@ namespace HAgoesQuest.Core
         }
     }
 
+    /// <summary>Separates displayable HA IDs from the restricted light/switch command policy.</summary>
     public static class EntityPolicy
     {
         static readonly Regex IdPattern = new Regex(@"^[a-z0-9_]+\.[a-z0-9_]+$");
@@ -68,6 +69,8 @@ namespace HAgoesQuest.Core
             string d = Domain(id);
             return (d == "light" || d == "switch") && (state == "on" || state == "off");
         }
+        /// <summary>Returns the explicit service that reverses a known on/off state.</summary>
+        /// <exception cref="InvalidOperationException">The entity or state cannot be switched.</exception>
         public static string Service(string id, string state)
         {
             if (!CanSwitch(id, state)) throw new InvalidOperationException("Entity cannot be switched.");
@@ -76,8 +79,11 @@ namespace HAgoesQuest.Core
         }
     }
 
+    /// <summary>Validates a root HA origin before credentials are attached to requests.</summary>
     public static class HaAddress
     {
+        /// <summary>Returns an HTTP(S) base URI without paths, credentials, query or fragment.</summary>
+        /// <exception cref="ArgumentException">The URL is invalid or HTTP has not been explicitly allowed.</exception>
         public static Uri Parse(string value, bool allowInsecureHttp)
         {
             Uri uri;

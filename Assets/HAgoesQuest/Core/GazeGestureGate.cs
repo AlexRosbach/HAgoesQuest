@@ -2,7 +2,8 @@ using System;
 
 namespace HAgoesQuest.Core
 {
-    // One target, one grip, one result. Tracking loss never counts as opening a fist.
+    /// <summary>Recognizes an armed fist, rotation and release for one caller-supplied target.</summary>
+    /// <remarks>The caller holds the target and roll reference while closed. Tracking loss never commits.</remarks>
     public sealed class GazeGestureGate
     {
         string target;
@@ -14,13 +15,25 @@ namespace HAgoesQuest.Core
         public bool Closed { get { return closed; } }
         public bool Adjusting { get { return adjusting; } }
         public float Value { get; private set; }
+        /// <summary>One-step event indicating that the adjusted value should be applied.</summary>
         public bool Commit { get; private set; }
+        /// <summary>One-step event for an opened, unadjusted fist in magic mode.</summary>
         public bool Cast { get; private set; }
         public void Reset()
         {
             target=null;last=-1;openSince=closedSince=releaseSince=-1;
             adjusting=closed=ready=Commit=Cast=false;rotation=0;
         }
+        /// <summary>Consumes a pose sample; invalid samples reset the gesture without an action.</summary>
+        /// <param name="id">Stable entity ID; changing it resets readiness and any closed grip.</param>
+        /// <param name="tracked">Whether tracking and the caller's interaction policy allow the sample.</param>
+        /// <param name="fist">Whether the tracked fingers form a fist.</param>
+        /// <param name="open">Whether a deliberate open palm is recognized.</param>
+        /// <param name="magic">Whether an unadjusted release may cast.</param>
+        /// <param name="adjustable">Whether rotation may change a level.</param>
+        /// <param name="level">Initial level in the normalized range 0 to 1.</param>
+        /// <param name="roll">Hand roll in degrees relative to the captured orientation.</param>
+        /// <param name="time">Monotonic unscaled time in seconds.</param>
         public void Step(string id,bool tracked,bool fist,bool open,bool magic,bool adjustable,float level,double roll,double time)
         {
             Commit=Cast=false;
@@ -58,6 +71,7 @@ namespace HAgoesQuest.Core
             closed=ready=adjusting=false;openSince=closedSince=releaseSince=-1;cooldown=time+.3;
         }
     }
+    /// <summary>Emits one pinch after a short intent window, distinguishing it from a closing fist.</summary>
     public sealed class GazePinchGate
     {
         bool released,pending,spent;

@@ -1,38 +1,50 @@
-# HA goes Quest 0.6.0
+# HA goes Quest – user guide
 
-Install the APK over your existing installation to retain your token and placements. Do not uninstall or clear application data.
+Current behavior: **0.6.3**. [Documentation index](README.md) · [Troubleshooting in German](knowledgebase.md) · [Release history](../CHANGELOG.md).
 
-1. Connect to your Home Assistant server. Enter the base URL and a long-lived token, or scan its QR code. Text entry uses the Quest system keyboard. Plain HTTP requires explicit opt-in.
-2. Use Quest room setup to capture the rooms. Your Home Assistant areas organize the entity browser; they are separate from Meta's physical room records.
-3. Search or combine type and room filters. The scrolling list shows eight complete entries with their current values. Pinch and drag vertically, or swipe directly with your index finger.
-4. Select an entity, point to its position or move your hand there, pinch once to freeze the preview, and confirm. Sensors are display-only. Camera and image entities become fixed frames.
-5. Aim the center dot at an entity and pinch with your control hand to select. Keep the other fingers loosely extended. Menus retain ray and direct index-finger touch. Pinch the watch hand to toggle the menu.
-6. Look at an adjustable light or speaker, briefly open your hand until ready, close your fist and twist. Opening sends the displayed brightness or volume once. Looking away or losing tracking cancels. Sliders remain available as an alternative.
-7. Look directly at a sensor icon to reveal its reading from a distance. Quest 3 uses head direction, not eye tracking, for this behavior. Text scales with distance between 0.45 and 8 meters.
-8. Settings include English/German, sound, wrist-watch startup and handedness. Left-handed mode mirrors the watch and control hand. Touching the watch opens a stable panel in front of you; it does not follow the moving wrist.
+## Install and connect
 
-Optional magic has a practice target that never controls devices. Look at the target and briefly open the control hand until ready. Close your fist, then open to cast. Twisting takes priority: opening then confirms the value and does not cast. Follow the live prompts. This experimental gesture is separate from standard pinch/poke input.
+Install the APK over your existing installation to retain the token and placements. Do not uninstall or clear application data. Use Meta Quest Developer Hub or:
 
-Camera frames show repeatedly refreshed snapshots, up to two requests per second plus network latency. They are not full-rate video streams. Static HA image entities refresh about every ten seconds. Only the configured HA server receives the access token; frames stop fetching when hidden.
+```text
+adb install -r HAgoesQuest-0.6.3.apk
+```
 
-After startup, recentering or room setup, icons remain hidden until their anchors are tracked and stable. Look around the corresponding room if an anchor has not been found. The app retries without creating replacement positions. Existing incorrectly localized anchors still require on-device diagnosis; desktop tests cannot validate your actual room map.
+Connect to your Home Assistant base URL with a long-lived access token, or scan its QR code. Review the address before connecting. Text entry uses the Quest system keyboard. Plain HTTP requires explicit opt-in. An empty token field can reuse the saved login for the same validated server address.
 
-This APK is a development build. See `COMMERCIAL-READINESS.md` for licensing and production-release requirements.
+## Capture rooms and place entities
 
-## 0.6.1: contrast and wrist placement
+1. Use Quest room setup to capture the rooms or load existing room data. Home Assistant areas organize the entity browser; they are separate from Meta's physical rooms.
+2. Search by name or ID and combine type and area filters. The scrolling list shows eight complete entries with current values. Pinch and drag vertically, or swipe directly with your index finger.
+3. Select an entity, point to a position or move your hand there, pinch to freeze the preview, then confirm. Sensors are display-only. Camera and image entities become fixed frames.
+4. Close the menu and aim the center dot at an entity. Pinch to switch a supported light or switch. Keep the other fingers loosely extended. Quest 3 uses head direction, not eye tracking.
 
-Open Settings → Your HA watch → Adjust position & size. Keep the watch hand visible. Use − / + to move the dial in 5 mm steps, rotate it in 5° steps and resize it in 5% steps. Save position enables the watch and stores its pose relative to that wrist. Cancel or close the menu to discard changes. Left and right wrists are stored independently; Reset watch position restores the automatic placement for the current wrist.
+Placed entities are visible and controllable only in the same scanned Quest room as your headset. The full HA catalog remains available for initial placement. Returning to a room restores its visible markers once tracking is stable. Missing anchors are retried; use the saved-position recovery action in the relevant room if needed. Delete unwanted placements through the management menu.
 
-Menu surfaces are now brighter and opaque. Start tiles use original detailed meshes and generated ceramic/brushed-metal texture maps. No external model/texture license was introduced. Headset validation is still required.
+## Both hands and adjustment gestures
 
-## 0.6.2: room scope and gesture feedback
+Either hand can operate an entity. The first active hand owns the action; release both hands briefly before switching. The handedness preference breaks simultaneous ties and selects the watch side. Menus retain ray selection and direct index-finger touch.
 
-Search & filters remain at the top of the entity list. Menus now share one rendering hierarchy so backgrounds cannot cover buttons when viewed from the side. Placed entities are visible and controllable only within the same scanned Quest room as your headset; room height is included. Leaving the room cancels adjustments. The full HA catalogue remains available for initial placement, with separate HA area/type/search filters.
+For brightness or volume, look at a supported light or speaker, briefly open your hand until ready, close your fist and twist. The closed fist captures the target and rotation reference. **Looking away does not cancel the adjustment or change the value through head movement**, provided hand tracking continues. Opening the hand applies the displayed value once. Tracking loss, room changes or opening a menu still cancel. Sliders remain an alternative.
 
-Fist rotation and sliders produce quiet mechanical detents when values change. A translucent green glow follows your real tracked hand when the gesture is ready. Settings → Sound & gesture feedback offers independent switches for sounds, gesture captions and hand glow. No virtual hand model is added.
+Navigation requires a released pinch or withdrawn finger before the next page accepts input. This prevents Back from also selecting a row on the next page.
 
-## 0.6.3 interaction update
+## Watch, readings and feedback
 
-Either hand can operate an entity. The first active hand owns the action; release both hands before switching. The handedness setting breaks simultaneous ties and still selects the watch side. A closed fist captures the target: looking away does not cancel brightness/volume adjustment or change its rotation reference. Open the hand to apply. Tracking loss, room changes and opening a menu still cancel.
+Look at a sensor icon to reveal its reading from a distance. Text scales with distance between 0.45 and 8 meters. The app does not automatically identify which real lamp corresponds to an HA entity; assign it manually once.
 
-Navigation requires release before the next page accepts input. HA area filters include empty areas and refresh after loading. The green readiness effect uses open, hand-aligned light contours. Hardware validation is still pending.
+Settings include English/German, watch startup and handedness. Open the watch settings to adjust position, rotation and size relative to the wrist. Save stores the pose for that wrist; Cancel discards the preview. Left and right wrist placements are independent. Reset restores the automatic position.
+
+Tap the watch with the other hand to open a stable panel in front of you. The panel does not follow the moving wrist. The watch-hand pinch also toggles the menu when an entity or menu control is not being targeted.
+
+Fist rotation and sliders produce quiet detent sounds as values change. Open emerald light contours follow the real hand when a gesture is ready; no virtual hand model is added. Sounds, gesture captions and hand effects have independent switches.
+
+## Magic and media
+
+Optional magic has a practice target that never controls devices. Look at the target, open your hand until ready, close your fist, then open it to cast. Twisting takes priority: an adjusted grip applies the level instead of casting. The earlier push gesture belongs to release history.
+
+Camera frames show repeatedly refreshed snapshots, with at least half a second between completed requests plus network latency. They are not video/audio streams. Static HA image entities refresh about every ten seconds. Hidden frames stop fetching. Only the configured HA server receives the token.
+
+## Validation status
+
+Version 0.6.3 is a development APK. Build, signature and desktop tests are recorded in [BUILD-STATUS.md](BUILD-STATUS.md). Actual Quest startup, hand tracking, room localization, Android Keystore persistence and update behavior still require the [hardware checklist](QUEST-TEST.md). See [COMMERCIAL-READINESS.md](COMMERCIAL-READINESS.md) for the existing licensing and production-release assessment.

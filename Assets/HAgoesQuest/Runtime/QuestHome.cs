@@ -9,6 +9,8 @@ using UnityEngine;
 
 namespace HAgoesQuest
 {
+    /// <summary>Coordinates spatial UI, room-scoped entities and deliberate HA actions.</summary>
+    /// <remarks>Input routing and gaze gestures are implemented in companion partial-class files.</remarks>
     [DefaultExecutionOrder(11000)]
     public sealed partial class QuestHome : MonoBehaviour
     {
@@ -276,6 +278,7 @@ namespace HAgoesQuest
 
         void NewMenu(string title)
         {
+            // Cancel input before replacing colliders so one press cannot cross page boundaries.
             BlockNavigation();
             watchEditing=false;
             ResetGaze();
