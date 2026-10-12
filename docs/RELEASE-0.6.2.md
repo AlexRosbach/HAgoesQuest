@@ -1,13 +1,13 @@
 # HA goes Quest 0.6.2
 
-- Suchen & Filtern wieder deutlich erreichbar; Art, HA-Raum und Namens-/ID-Suche bleiben verfügbar.
-- Gemeinsame Menü-Zeichenreihenfolge verhindert, dass der Hintergrund bei schräger Ansicht Buttons überdeckt.
-- Platzierte Entitäten werden nur im aktuellen gescannten Quest-Raum angezeigt und bedient. Raumwechsel brechen laufende Gesten und Regler ab.
-- Mechanisches Rasterklicken beim Faustdrehen und Schieberegler; Halten und Endanschläge bleiben lautlos.
-- Dezentes grünes Bereitschaftsleuchten an der echten Bedienhand. Ton, Gestenuntertitel und Hand-Effekt separat schaltbar.
+- Search & filter is clearly accessible again; type, HA room, and name/ID search remain available.
+- Shared menu drawing order prevents the background from covering buttons at oblique angles.
+- Placed entities are visible and interactive only in the current scanned Quest room. Room changes cancel ongoing gestures and adjustments.
+- Mechanical adjustment ticks for fist rotation and sliders; holding and end stops remain silent.
+- Subtle green readiness glow on the real interaction hand. Sound, gesture subtitles, and hand effect can be toggled separately.
 
-112 Kernprüfungen und 119 Unity-Prüfungen bestanden. Gerätetest auf Quest steht aus.
+112 core checks and 119 Unity checks passed. Quest device testing remains outstanding.
 
-Version 0.6.2 / Android-Code 11. Ohne Deinstallation aktualisieren, damit Zugangsdaten und Zuordnungen erhalten bleiben. APK-Upload erfolgt manuell.
+Version 0.6.2 / Android code 11. Update without uninstalling to preserve credentials and mappings. APK upload is manual.
 
-Anleitung: docs/VERSION-0.6.2.md.
+Instructions: docs/VERSION-0.6.2.md.

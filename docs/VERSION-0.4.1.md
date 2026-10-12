@@ -1,21 +1,21 @@
-# 0.4.1 – Handzeiger nach Neukalibrierung
+# 0.4.1 – Hand pointers after recalibration
 
-## Rechte Hand
+## Right hand
 
-Metas Hand-Prefab hatte keinen PointerPose-Root. Das SDK schreibt die Zeigerpose in lokalen Tracking-Koordinaten; die App verwendete sie deshalb nach einem verschobenen/gedrehten Tracking-Bereich als falsche Weltkoordinaten. Beide Handzeiger sind jetzt explizit dem TrackingSpace des Kamerarigs zugeordnet, sowohl in der gespeicherten Szene als auch zur Laufzeit. Eine erneute Zuordnung erfolgt bei Bedarf automatisch.
+Meta's hand prefab lacked a PointerPose root. The SDK writes the pointer pose in local tracking coordinates; after moving/rotating the tracking space, the app therefore treated it as incorrect world coordinates. Both hand pointers are now explicitly assigned to the camera rig's TrackingSpace in the saved scene and at runtime. Assignment is refreshed automatically when needed.
 
-Nach Neukalibrierung, wiedererlangtem Eingabefokus und Rückkehr aus der Raumerfassung werden Eingabegesten zurückgesetzt und das Menü neu ausgerichtet. Die eigentliche Systemgeste bleibt während ihrer Ausführung ausgenommen; nach Loslassen kann eine neue Pinch-Geste wieder bedienen.
+Recalibration, restored input focus, and returning from room capture reset input gestures and realign the menu. The system gesture itself remains excluded while active; after release, a fresh pinch can interact again.
 
-## Linker Pinch
+## Left pinch
 
-Ein neuer linker Pinch öffnet das Hauptmenü, der nächste schließt das aktuell offene Menü oder Untermenü. Dazwischen die Finger lösen. Gedrückthalten und ein nach Fokuswechsel noch gehaltener Pinch lösen keinen zusätzlichen Wechsel aus.
+A fresh left pinch opens the main menu; the next closes the currently open menu or submenu. Release the fingers between pinches. Holding, or retaining a pinch after a focus change, does not trigger another toggle.
 
-## Feuerbälle hintereinander
+## Repeated fireballs
 
-Eine neue Stoßgeste ist nach Zurücknehmen oder Schließen der Hand möglich, auch wenn der vorherige Feuerball noch fliegt. Die Rücknahme wird auch bei vorübergehend beschäftigtem HA-Client beobachtet. Zielhaltezeit 0,15 s, Mindestpause 0,35 s; bis zu vier Effekte können gleichzeitig bestehen. Gedrückthalten/ausgestrecktes Halten erzeugt weiterhin keine automatische Wiederholung. Schaltbefehle setzen weiterhin einen aktuellen Zustand und einen verfügbaren HA-Client voraus; es werden keine Befehle aufgestaut.
+A new thrust gesture is possible after pulling back or closing the hand, even while the previous fireball is still flying. Retraction is observed even when the HA client is temporarily busy. Target hold time: 0.15 s; minimum cooldown: 0.35 s; up to four effects may coexist. Holding the hand extended still does not repeat automatically. Switching commands still require fresh state and an available HA client; commands are not queued.
 
-## Installation und Gerätetest
+## Installation and device test
 
-Version 0.4.1, Versionscode 7. Über die vorhandene APK installieren, nicht vorher deinstallieren; Anmeldung und Zuordnungen bleiben im bestehenden App-Speicher.
+Version 0.4.1, version code 7. Install over the existing APK without uninstalling first; credentials and mappings remain in existing app storage.
 
-Auf der Quest besonders testen: Räume neu erfassen, rechts lange Daumen/Zeigefinger zur Neukalibrierung halten, Finger lösen und anschließend mehrere Menüeinträge mit rechts bedienen. Links mehrfach öffnen/schließen. Mehrere getrennte Stoßgesten ausführen. Diese realen Systemdialoge und Handbewegungen sind noch nicht auf Hardware bestätigt.
+On Quest, specifically test: capture rooms again, hold the right thumb/index finger together for recalibration, release, then operate several menu entries with the right hand. Repeatedly open/close with the left hand. Perform multiple separate thrust gestures. These real system dialogs and hand movements have not yet been confirmed on hardware.

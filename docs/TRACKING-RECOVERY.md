@@ -1,14 +1,14 @@
-# Tracking beim Start und in mehreren Räumen (ab 0.5.0)
+# Tracking at startup and across rooms (from 0.5.0)
 
-Gespeicherte Icons wurden bisher bereits bei `OVRSpatialAnchor.Localized` eingeblendet. Im verwendeten SDK bedeutet das, dass die Locatable-Komponente aktiv ist. Es bestätigt nicht, dass Position und Orientierung gerade verfolgt werden. Außerdem wurden Anker unmittelbar nach Laden der HA-Anmeldung angefordert, auch vor einem gültigen Kopftracking.
+Saved icons previously appeared as soon as `OVRSpatialAnchor.Localized` was true. In the SDK used here, that means the Locatable component is active. It does not confirm that position and orientation are currently tracked. Anchors were also requested immediately after loading HA credentials, even before valid head tracking.
 
-- Laden wartet auf aktives Kopftracking, Fokus und Kamera. Nach spätestens 20 Sekunden wird der Versuch freigegeben; fehlende Anker werden bei verfügbarem Tracking alle 15 Sekunden erneut gesucht.
-- Anzeige verlangt zusätzlich `IsTracked` und eine stabile Position über 0,75 Sekunden. Bei einem Positionssprung über 3 cm bzw. einer Rotation über 3 Grad beginnt diese Wartezeit neu. Die Prüfung erfolgt nach den SDK-Updates; Sichtbarkeit wird vor dem Rendern aktualisiert.
-- Fehlende Anker ergeben keine sichtbare Ersatzposition. Neue Marker bleiben zunächst unsichtbar. Nicht sichtbare Marker können weder per Zeiger noch durch Magie angesprochen werden.
-- Raumscan, Fokuswechsel und Neukalibrierung verwerfen die Tracking-Freigabe sowie offene Platzierungsvorschauen. Neue Positionen werden nur bei stabilem Tracking gespeichert; wechselt das Tracking während des Speicherns, wird die Zuordnung zurückgerollt.
-- Bestehende UUID-Zuordnungen, Paketname, Signaturschlüssel und verschlüsselter Token bleiben erhalten. Die APK ist Version 0.5.0, Android-Versionscode 8.
-- Mehrere Anker werden parallel lokalisiert. Ein nicht sichtbarer Raum darf die Wiederherstellung anderer Räume nicht nacheinander um je zehn Sekunden verzögern. Die manuelle Wiederherstellung blockiert nicht mehr die gesamte Menübedienung.
+- Loading waits for active head tracking, focus, and a camera. The attempt releases its hold after at most 20 seconds; missing anchors are retried every 15 seconds when tracking is available.
+- Visibility additionally requires `IsTracked` and a stable position for 0.75 seconds. A position jump over 3 cm or rotation over 3 degrees restarts this wait. Checks run after SDK updates; visibility updates before rendering.
+- Missing anchors do not produce a visible fallback position. New markers start hidden. Invisible markers cannot be targeted by pointer or magic.
+- Room capture, focus changes, and recalibration invalidate tracking readiness and pending placement previews. New positions are saved only with stable tracking; if tracking changes while saving, the mapping is rolled back.
+- Existing UUID mappings, package name, signing key, and encrypted token are retained. This APK is version 0.5.0, Android version code 8.
+- Multiple anchors localize in parallel. An unseen room must not delay recovery of other rooms sequentially by ten seconds each. Manual recovery no longer blocks all menu interaction.
 
-Die SDK-Methode `UnboundAnchor.TryGetPose` liefert bereits Weltkoordinaten; diese werden bewusst nicht ein zweites Mal umgerechnet. MRUK und räumliche Anker bleiben für die Ortsbestimmung zuständig. Ein von der Quest stabil, aber falsch lokalisierter Anker lässt sich allein anhand dieser Tracking-Flags nicht erkennen oder automatisch korrigieren. Deshalb bleibt der Neustart in verschiedenen realen Räumen Teil der Geräteabnahme.
+The SDK method `UnboundAnchor.TryGetPose` already returns world coordinates; these are deliberately not converted a second time. MRUK and Spatial Anchors remain responsible for localization. An anchor that the Quest localizes stably but incorrectly cannot be detected or automatically corrected through these tracking flags alone. Startup in different real rooms therefore remains part of device acceptance.
 
-Referenz: [Meta Spatial Anchors](https://developers.meta.com/horizon/documentation/unity/unity-spatial-anchors-persist-content/); Verhalten von `Localized` und `IsTracked` zusätzlich im installierten Meta-SDK-Quellcode geprüft.
+Reference: [Meta Spatial Anchors](https://developers.meta.com/horizon/documentation/unity/unity-spatial-anchors-persist-content/); the behavior of `Localized` and `IsTracked` was also checked in the installed Meta SDK source.

@@ -1,27 +1,27 @@
-# 0.3.1 – Anmeldung bei Updates behalten
+# 0.3.1 – Retain credentials across updates
 
-Die App verwendet weiterhin denselben Paketnamen, denselben Android-Keystore-Alias und dieselbe verschlüsselte Anmeldedatei wie 0.2.0 und 0.3.0. Der Versionscode steigt auf 4. Die vorhandene Anmeldung wird beim Start automatisch geladen.
+The app continues using the same package name, Android Keystore alias, and encrypted credential file as 0.2.0 and 0.3.0. The version code increases to 4. Existing credentials load automatically at startup.
 
-Im Verbindungsmenü wird der hinterlegte Token angezeigt, ohne seinen Inhalt offenzulegen. Ein leeres Tokenfeld verwendet die zuletzt bestätigten Zugangsdaten ausschließlich für dieselbe normalisierte Serveradresse (einschließlich Protokoll und Port). Ein abgewiesener Ersatz-Token überschreibt die bestätigte Anmeldung nicht. Die HTTP-Freigabe wird beim Öffnen übernommen. „Anmeldung entfernen“ löscht auch die Wiederverwendung im Arbeitsspeicher.
+The connection menu indicates a stored token without exposing its contents. An empty token field uses the last confirmed credentials only for the same normalized server address, including protocol and port. A rejected replacement token does not overwrite confirmed credentials. HTTP permission is restored when opening the menu. Removing credentials also clears reuse in memory.
 
 ## Installation
 
 `adb install -r HAgoesQuest-0.3.1.apk`
 
-Vorherige App nicht deinstallieren und ihre Daten nicht löschen. Die APK wird als Update installiert. Ohne vorhandene Anmeldedaten oder mit widerrufenem Token ist eine neue Anmeldung erforderlich. Hardwaretest für das tatsächliche Update auf Quest steht noch aus.
+Do not uninstall the previous app or clear its data. The APK installs as an update. Missing credentials or a revoked token require a new login. Hardware testing of an actual Quest update remains outstanding.
 
-## Signatur beibehalten
+## Preserve the signature
 
-Build-Quest.ps1 prüft vor dem Build den bisherigen lokalen Signaturschlüssel und nach dem Build das APK-Zertifikat. Fingerabdruck SHA-256:
+Build-Quest.ps1 checks the existing local signing key before building and the APK certificate afterward. SHA-256 fingerprint:
 
 `345caca35c4a1ad2eb8f2243a0ccda712945c87b9b089714f2778c007c76e5b2`
 
-Bei einer Abweichung wird abgebrochen. Den bisherigen Entwicklungsschlüssel privat sichern und auf einem neuen Build-Rechner unter dem bisherigen Android-Debug-Keystore-Pfad wiederherstellen. Schlüssel niemals ins Repository oder ins Release hochladen. Ein neuer Schlüssel wäre nicht mit den vorhandenen Installationen kompatibel. [Android-App-Signaturen](https://developer.android.com/studio/publish/app-signing).
+A mismatch aborts the process. Back up the existing development key privately and restore it at the existing Android debug-keystore path on a new build machine. Never upload keys to the repository or release. A new key would be incompatible with existing installations. [Android app signing](https://developer.android.com/studio/publish/app-signing).
 
-## Gerätetest
+## Device test
 
-1. In 0.2.0 oder 0.3.0 verbinden und eine Zuordnung speichern.
-2. App beenden, 0.3.1 mit `adb install -r` darüber installieren.
-3. Starten: Entitäten ohne Token-Eingabe laden; gespeicherte Position wiederfinden.
-4. Verbindungsmenü öffnen und mit leerem Tokenfeld erneut prüfen.
-5. Quest neu starten und automatische Anmeldung erneut prüfen.
+1. Connect in 0.2.0 or 0.3.0 and save a mapping.
+2. Exit the app and install 0.3.1 over it with `adb install -r`.
+3. Start: load entities without entering a token and recover the saved position.
+4. Open the connection menu and test again with an empty token field.
+5. Restart the Quest and check automatic login again.

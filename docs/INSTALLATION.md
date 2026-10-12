@@ -1,52 +1,49 @@
-# HA goes Quest auf deiner Quest 3
+# HA goes Quest on your Quest 3
 
-## Installieren
+## Installation
 
-1. Entwicklermodus für die Quest aktivieren und die Brille per USB mit deinem PC verbinden. USB-Debugging in der Brille erlauben. [Metas Anleitung](https://developers.meta.com/horizon/documentation/unity/unity-env-device-setup/).
-2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.6.3.apk`.
-3. **HA goes Quest** unter den Apps aus unbekannten Quellen starten. Handtracking in den Quest-Einstellungen einschalten.
+1. Enable developer mode for the Quest and connect it to your PC over USB. Allow USB debugging in the headset. [Meta instructions](https://developers.meta.com/horizon/documentation/unity/unity-env-device-setup/).
+2. Install the supplied APK with Meta Quest Developer Hub. Alternatively: `adb install -r HAgoesQuest-0.6.3.apk`.
+3. Launch **HA goes Quest** from Unknown Sources. Enable hand tracking in Quest settings.
 
-## Update ohne erneute Token-Eingabe
+## Updating without re-entering the token
 
-Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.6.3.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
+Install the new APK over the existing app, for example with `adb install -r HAgoesQuest-0.6.3.apk`. **Do not uninstall first or clear app data.** The app automatically loads the protected token at startup; saved mappings also remain in app storage.
 
-Das Verbindungsmenü zeigt „Gespeicherter Token wird verwendet“. Für dieselbe Serveradresse darf das Tokenfeld leer bleiben. Bei einer anderen Adresse ist ein neuer Token erforderlich. Ein fehlgeschlagener Verbindungsversuch ersetzt die zuletzt bestätigte Anmeldung nicht. Ein von Home Assistant widerrufener Token muss erneuert werden.
+The connection menu indicates that the saved token is being used. For the same server address, the token field may remain empty. A different address requires a new token. A failed connection attempt does not replace the last confirmed credentials. A token revoked in Home Assistant must be replaced.
 
-## Dein Zuhause einrichten
+## Set up your home
 
-1. **Mit Home Assistant verbinden** öffnen. Basisadresse und einen in Home Assistant erzeugten langlebigen Zugriffstoken eingeben. Die Tastatur bietet **Einfügen** für die Zwischenablage der Quest. Dann **Verbindung prüfen & speichern** wählen.
-2. Unter **Wohnung erfassen & Karte ansehen** die Quest-Raumerfassung starten oder bestehende Räume laden. Den Raumzugriff erlauben.
-3. **Entität mit der Hand platzieren** öffnen, Gerät oder Sensor wählen. Lampen können als reine Anzeige oder zum Schalten platziert werden.
-4. **Zeigen & pinchen** wählen. Vorher bei Bedarf den Abstand zwischen 0,5 und 2 Metern einstellen. Auf die gewünschte Stelle zeigen und einmal mit der gewünschten Hand pinchen. Die Vorschau bleibt stehen: **Position speichern** oder **Weiter verschieben** wählen. Alternativ folgt **Direkt an der Hand platzieren** der Hand bis zum einmaligen Pinch.
-5. Menü schließen. Den Blickpunkt auf das Icon richten und mit der Bedienhand pinchen, um die Lampe zu schalten. Ein Pinch der Uhrenhand öffnet oder schließt das Menü, solange kein Entitätsziel bzw. Menübedienelement bedient wird. Alternativ die Uhr antippen. Zwischen Handwechseln beide Hände kurz lösen.
+1. Open **Connect to Home Assistant**. Enter the base URL and a Long-Lived Access Token generated in Home Assistant. The keyboard offers **Paste** from the Quest clipboard. Select **Test connection & save**.
+2. Under the room capture/map option, start Quest room capture or load existing rooms. Grant room access.
+3. Open entity placement and select a device or sensor. Lights can be placed for display only or for switching.
+4. Choose **Point & pinch**. If needed, first set the distance between 0.5 and 2 meters. Point at the desired position and pinch once with the hand you want to use. The preview freezes: save the position or continue moving it. Alternatively, direct hand placement follows the hand until a single pinch.
+5. Close the menu. Aim the gaze reticle at the icon and pinch with the interaction hand to toggle the light. A pinch of the watch hand opens or closes the menu when not interacting with an entity target or menu control. Alternatively, tap the watch. Briefly release both hands between hand switches.
 
-Im Hauptmenü unter **Platzierte Entitäten verwalten / löschen** lassen sich Zuordnungen auch ohne sichtbaren Raumanker entfernen.
+The main menu's placed-entity management/deletion option can remove mappings even without a visible room anchor.
 
-Zur Entitätsbedienung bleibt ein kleiner Punkt in der Blickmitte sichtbar; das ausgewählte Icon wird heller. Im Menü und beim Platzieren bleibt der Handstrahl verfügbar. Der runde Hintergrund und dezente violette Rand passen zum Menü. Von 1,2 m bis 30 cm vergrößert sich das Icon weich auf das 1,8-Fache. Innerhalb von 30 cm zum Headset erscheinen Name und Wert. Sensorwerte erscheinen zusätzlich oberhalb des ausgewählten Icons und wachsen mit der Entfernung (Kopf-Blickrichtung). Die Verbindung zwischen einer echten Lampe und ihrer Home-Assistant-Entität weist du einmal selbst zu. Die Karte verwendet Metas Raumscan; die blaue Linie zeigt deinen Laufweg während dieser Sitzung.
+A small central gaze reticle remains visible for entity interaction; the selected icon becomes brighter. The hand ray remains available in menus and during placement. The circular background and subtle purple border match the menu. From 1.2 m to 30 cm, the icon smoothly grows to 1.8 times its size. Within 30 cm of the headset, its name and value appear. Sensor values also appear above the selected icon and grow with distance, using head direction. You manually associate each physical light with its Home Assistant entity once. The map uses Meta room capture; the blue line shows your walking path during the current session.
 
-Die Suche unterstützt Namen und IDs, kombiniert mit Typ- und Raumfiltern. Alle Entitätsarten können angezeigt werden; Lampen und Schalter lassen sich zusätzlich schalten. Gespeicherte Positionen müssen von der Quest wiedererkannt werden. Falls eine Anzeige fehlt, im betreffenden Raum **Gespeicherte Positionen wiederfinden** wählen.
+Search supports names and IDs, combined with type and room filters. All entity types can be displayed; lights and switches can also be toggled. The Quest must recognize saved positions again. If a display is missing, use the saved-position recovery action in the relevant room.
 
-## Zugang per QR-Code
+## QR credentials
 
-Im Verbindungsmenü **Token per QR-Code → Scan starten** wählen und Kamerazugriff erlauben. Der QR-Code kann den Token als Text oder ein JSON mit **baseUrl** und **accessToken** enthalten. Nach dem Scan Adresse prüfen und verbinden. Mit dem beiliegenden QR-Helfer lässt sich der Code lokal auf dem Handy oder Computer erzeugen. Beide Dateien aus dem ZIP zusammen entpacken und index.html öffnen. Quest 3/3S mit Horizon OS 74 oder neuer erforderlich.
+In the connection menu, choose the token QR scan option and start scanning, then grant camera access. The QR code may contain the token as text or JSON with **baseUrl** and **accessToken**. Check the address after scanning and connect. The included QR helper creates the code locally on a phone or computer. Extract both files from the ZIP together and open index.html. Requires Quest 3/3S with Horizon OS 74 or later.
 
-## Magie-Modus
+## Magic mode
 
-In den Einstellungen einschalten. Entität ansehen, Hand öffnen bis bereit, Faust schließen und wieder öffnen. Drehen regelt stattdessen Helligkeit/Lautstärke. Details, Uhr und Rechts-/Linkshändermodus: [Anleitung 0.6.3](VERSION-0.6.3.md).
+Enable it in settings. Look at an entity, open your hand until ready, make a fist, then open it again. Rotating instead adjusts brightness/volume. For details, the watch, and right-/left-handed mode, see the [0.6.3 guide](VERSION-0.6.3.md).
 
-## Entwicklungsstand
+## Development status
 
-Die Version ist für einen ersten Test auf deiner Quest vorgesehen. Der Start auf echter Hardware, Handtracking, Raumanker und geschützte Anmeldung sind noch nicht praktisch auf einer Quest geprüft. Alle dafür vorgesehenen Schritte stehen in der [Quest-Abnahmeliste](QUEST-TEST.md).
+This version is intended for an initial test on your Quest. Startup on real hardware, hand tracking, room anchors, and protected credentials have not yet been practically verified on a Quest. The planned steps are in the [Quest acceptance checklist](QUEST-TEST.md).
 
+## Sliders, watch, and media frames
 
-## Regler, Uhr und Medienrahmen
+Brightness and volume can be adjusted using the displayed slider or fist rotation. For the fist gesture, look at the target, hold your hand open until ready, make a fist, and rotate. Once the fist is recognized, you may look away while the hand remains tracked; opening commits the value. Room changes, tracking loss, and opening the menu cancel the action.
 
-Helligkeit und Lautstärke lassen sich über den eingeblendeten Regler oder durch Faustdrehen ändern. Für die Faustgeste Ziel ansehen, Hand bis zur Bereitschaft öffnen, Faust schließen und drehen. Nach erkannter Faust darfst du wegschauen, solange die Hand getrackt wird; Öffnen übernimmt den Wert. Raumwechsel, Trackingverlust und Menüöffnung brechen ab.
+The list shows eight entities with values and rooms; pinch and drag or swipe directly. Settings include German/English, click sounds, and startup with the HA watch. The watch opens a stationary menu. Camera and image entities can be placed as frames; cameras show a sequence of current snapshots, not a smooth video/audio stream. See the [technical reference](documentation.md#areas-and-media).
 
-Die Liste zeigt acht Entitäten mit Wert und Raum; mit Pinch ziehen oder direkt wischen. Einstellungen bieten Deutsch/Englisch, Klickgeräusche und den Start mit HA-Uhr. Die Uhr öffnet ein ortsfestes Menü. Kamera- und Bildentitäten lassen sich als Rahmen platzieren; Kameras zeigen eine Folge aktueller Einzelbilder, keinen flüssigen Video-/Audiostream. Details: [Technische Referenz](documentation.md#bereiche-und-medien).
+## More help
 
-
-
-## Weitere Hilfe
-
-[Wissensdatenbank](knowledgebase.md) für Token-, Raum- und Gestenprobleme · [Technische Referenz](documentation.md) · [Änderungen](../CHANGELOG.md).
+[Knowledge base](knowledgebase.md) for token, room, and gesture problems · [Technical reference](documentation.md) · [Changelog](../CHANGELOG.md).

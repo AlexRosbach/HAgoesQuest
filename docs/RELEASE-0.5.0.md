@@ -1,23 +1,23 @@
 # HA goes Quest 0.5.0
 
-Mehr Orientierung, zuverlässigere Auswahl und eine umfangreichere Oberfläche für Home Assistant auf Quest 3.
+Better orientation, more reliable selection, and an expanded Home Assistant interface on Quest 3.
 
-- Meta Interaction SDK für Zeigen, Pinchen und Antippen. Leuchtender Fingerstrahl mit deutlichem Trefferfeedback; kein zusätzlicher Wartefilter vor der Auswahl.
-- Scrollbare Auswahl mit acht sichtbaren Entitäten, aktuellen Werten, Raum-/Typfiltern und Suche. Neue geometrische Icons, dunkle neutrale Panels, Startanimation und eigene Klickgeräusche.
-- Helligkeit und Lautstärke über unterstützte HA-Entitäten einstellen: Regler öffnen, mit Pinch seitlich ziehen und loslassen. Sensorwerte beim direkten Hinschauen auch aus der Ferne.
-- Optionale HA-Uhr am linken Arm zum Öffnen eines ortsfesten Menüs, Meta-Systemtastatur und Deutsch/Englisch.
-- Magie mit Übungsziel und Live-Anleitung; wiederholte Feuerbälle weiterhin möglich.
-- Gespeicherte Anker erst bei stabilem Tracking anzeigen, parallel wiederfinden und bei Raumwechsel erneut suchen. Fokusverlust und Neukalibrierung verwerfen alte Eingaben und eingefrorene Platzierungen.
-- Bild- und Kameraentitäten als räumliche Rahmen. Kameras zeigen eine aktuelle Einzelbildfolge (bis zu zwei Abrufe pro Sekunde zuzüglich Netzwerkzeit), keinen flüssigen Video-/Audiostream.
+- Meta Interaction SDK for pointing, pinching, and touch. Glowing finger ray with clear hit feedback; no extra waiting filter before selection.
+- Scrollable selection with eight visible entities, current values, room/type filters, and search. New geometric icons, dark neutral panels, startup animation, and original click sounds.
+- Adjust brightness and volume on supported HA entities: open the slider, pinch and drag sideways, then release. Sensor values also appear from a distance when viewed directly.
+- Optional left-arm HA watch opens a stationary menu; Meta system keyboard and German/English.
+- Magic with practice target and live guidance; repeated fireballs remain possible.
+- Show saved anchors only after stable tracking, recover them in parallel, and retry on room changes. Focus loss and recalibration discard old inputs and frozen placements.
+- Image and camera entities as spatial frames. Cameras show current snapshots, up to two requests per second plus network time, not a smooth video/audio stream.
 
-## Installieren
+## Installation
 
-`HAgoesQuest-0.5.0.apk` über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.5.0.apk`. Nicht vorher deinstallieren oder App-Daten löschen. Paketname, Signatur und Speicherformat bleiben für Token und Zuordnungen kompatibel. Android-Versionscode: 8.
+Install `HAgoesQuest-0.5.0.apk` over the existing app, for example with `adb install -r HAgoesQuest-0.5.0.apk`. Do not uninstall first or clear app data. Package name, signature, and storage formats remain compatible for tokens and mappings. Android version code: 8.
 
-## Geprüft und offen
+## Verified and outstanding
 
-77 Kernprüfungen und 82 Unity-Integrationsprüfungen erfolgreich, darunter SDK-Auswahl, Scrollen, Regler, vier HA-Raumzuordnungen, gespeicherte Anker-IDs und authentifizierte Bilder. Menü im Unity-Renderer geprüft. Diese Tests verwenden einen lokalen HA-Testserver.
+77 core checks and 82 Unity integration checks passed, including SDK selection, scrolling, sliders, four HA area assignments, saved anchor IDs, and authenticated images. Menu checked in the Unity renderer. These tests use a local HA test server.
 
-Installation, Systemtastatur, reale Mehrraum-Lokalisierung, Handgesten und Performance müssen auf Quest abgenommen werden. Diese Entwicklungsversion ist nicht als verkaufsfertig freigegeben. Die Dokumentation enthält eine Meta-Designrecherche, eine Abnahmeliste und eine kommerzielle Lizenzvorprüfung, insbesondere zur Unity-Einordnung als Nicht-Spiel-Anwendung.
+Installation, system keyboard, real multi-room localization, hand gestures, and performance require Quest acceptance. This development version is not approved as ready for sale. Documentation includes Meta design research, an acceptance checklist, and a preliminary commercial licensing review, particularly Unity classification as a non-game application.
 
-Die APK ist als manuell hochzuladendes Release-Asset vorgesehen. Die Quellcode-Tests in GitHub Actions bauen keine APK.
+The APK is intended as a manually uploaded release asset. GitHub Actions source-code tests do not build an APK.

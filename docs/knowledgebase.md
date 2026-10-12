@@ -1,79 +1,79 @@
-# Wissensdatenbank
+# Knowledge base
 
-Hilfe zum aktuellen Stand **0.6.3**. Zurück zur [Dokumentationsübersicht](README.md).
+Help for the current version, **0.6.3**. Return to the [documentation index](README.md).
 
-## Nach einem Update wird wieder ein Token verlangt
+## A token is requested again after an update
 
-**Symptom:** Das Verbindungsmenü bietet keine gespeicherte Anmeldung an.
+**Symptom:** The connection menu does not offer saved credentials.
 
-**Bedeutung:** App-Daten fehlen, der Keystore-Schlüssel ist nicht verfügbar oder die Serveradresse wurde geändert. Ein widerrufener HA-Token kann ebenfalls nicht weiterverwendet werden.
+**Meaning:** App data is missing, the Keystore key is unavailable, or the server address changed. A revoked HA token cannot be reused either.
 
-**Prüfen:** APK über die vorhandene Installation installieren, ohne Deinstallation oder Datenlöschung. Dieselbe Basisadresse einschließlich Schema und Port verwenden. Bei derselben bestätigten Adresse darf das Tokenfeld leer bleiben. Schlägt bereits die Installation wegen einer Signaturabweichung fehl, die passende APK verwenden; eine Deinstallation würde die gespeicherten Daten entfernen.
+**Check:** Install the APK over the existing installation without uninstalling or clearing data. Use the same base URL, including scheme and port. The token field may remain empty for the same confirmed address. If installation fails because of a signature mismatch, use the matching APK; uninstalling would remove the saved data.
 
-## Home Assistant ist nicht erreichbar oder meldet 401/403
+## Home Assistant is unreachable or returns 401/403
 
-**Symptom:** Verbindungsprüfung scheitert, Zustände werden als veraltet angezeigt.
+**Symptom:** The connection check fails and states appear stale.
 
-**Bedeutung:** 401/403 weist auf Zugangsdaten oder Berechtigungen hin. Timeout, DNS- oder Zertifikatsfehler betreffen die Erreichbarkeit aus dem Quest-Netzwerk.
+**Meaning:** 401/403 indicates credentials or permissions. Timeouts, DNS errors, and certificate errors concern connectivity from the Quest network.
 
-**Prüfen:** Basisadresse ohne `/api`, Pfad, eingebettete Zugangsdaten oder Query verwenden. Token im HA-Benutzerprofil prüfen. WLAN, DNS und HTTPS-Zertifikat kontrollieren. Lokales HTTP benötigt die ausdrückliche Freigabe in der App. Bei unbestätigtem Schaltbefehl erst den aktuellen Gerätezustand prüfen: Die App wiederholt Befehle nicht automatisch.
+**Check:** Use a base URL without `/api`, a path, embedded credentials, or a query. Check the token in the HA user profile. Check Wi-Fi, DNS, and the HTTPS certificate. Local HTTP requires explicit opt-in in the app. If a switching command is unconfirmed, check the current device state first: the app does not retry commands automatically.
 
-## Räume oder Bereiche fehlen im Filter
+## Rooms or areas are missing from the filter
 
-**Symptom:** Nur „Alle Räume“ und „Ohne Raumzuordnung“ sind sichtbar oder eine Zuordnung fehlt.
+**Symptom:** Only All rooms and Unassigned are visible, or an assignment is missing.
 
-**Bedeutung:** Der HA-Bereichskatalog ist noch nicht geladen, die Template-Anfrage ist fehlgeschlagen oder die Entität hat in HA keine Bereichszuordnung.
+**Meaning:** The HA area catalog has not loaded, the template request failed, or the entity has no HA area assignment.
 
-**Prüfen:** Unter **Suchen & Filtern → Raumzuordnungen neu laden** erneut abrufen und die Statusmeldung beachten. In HA die Bereichszuordnung der Entität bzw. ihres Geräts kontrollieren. Version 0.6.3 zeigt auch leere Bereiche und aktualisiert eine offene Auswahl nach dem Laden. Die Quest-Raumerfassung erzeugt keine HA-Bereiche.
+**Check:** Reload area assignments under **Search & filter** and read the status message. Check the entity's or device's area assignment in HA. Version 0.6.3 also shows empty areas and refreshes an open selector after loading. Quest room capture does not create HA areas.
 
-## Ein Icon fehlt oder erscheint im falschen Raum
+## An icon is missing or appears in the wrong room
 
-**Symptom:** Nach dem Start oder beim Raumwechsel wird eine gespeicherte Entität nicht richtig angezeigt.
+**Symptom:** A saved entity is displayed incorrectly after startup or a room change.
 
-**Bedeutung:** Die App wartet auf einen stabilen Anker oder der Quest-Raum wurde nicht korrekt lokalisiert. Nur Entitäten im aktuellen physischen Raum werden angezeigt.
+**Meaning:** The app is waiting for a stable anchor, or the Quest room was not localized correctly. Only entities in the current physical room are displayed.
 
-**Prüfen:** Im zugehörigen Raum umsehen und kurz warten. Bei Bedarf **Gespeicherte Positionen wiederfinden** verwenden. Raumzugriff und gespeicherte System-Raumdaten prüfen. Bleibt eine Position falsch, den Ablauf nach [QUEST-TEST.md](QUEST-TEST.md) nachvollziehen; eine dauerhaft falsche Betriebssystem-Lokalisierung wird durch Desktop-Tests nicht ausgeschlossen. Eine Zuordnung lässt sich über die Verwaltung entfernen und anschließend neu platzieren.
+**Check:** Look around in the corresponding room and wait briefly. Use saved-position recovery if needed. Check room permission and saved system room data. If the position remains incorrect, reproduce the flow in [QUEST-TEST.md](QUEST-TEST.md); desktop tests cannot rule out stable but incorrect operating-system localization. Remove the mapping through management and place it again if needed.
 
-## Nach „Zurück“ reagiert die nächste Seite zunächst nicht
+## The next page initially ignores input after Back
 
-**Symptom:** Direkt nach einem Seitenwechsel wird ein gehaltener Pinch oder anliegender Finger ignoriert.
+**Symptom:** A held pinch or touching finger is ignored immediately after navigation.
 
-**Bedeutung:** Die Loslass-Sperre verhindert einen unbeabsichtigten Klick auf die neue Seite.
+**Meaning:** The release barrier prevents an accidental click on the new page.
 
-**Lösung:** Pinch lösen bzw. den Finger von der Menüfläche zurückziehen, kurz warten und neu auswählen. Falls trotzdem eine darunterliegende Entität geöffnet wird, Version prüfen und für einen Fehlerbericht festhalten, ob Strahl/Pinch oder direktes Antippen benutzt wurde.
+**Solution:** Release the pinch or withdraw your finger from the menu surface, wait briefly, then select again. If an entity underneath is still opened, check the version and record whether ray/pinch or direct touch was used in the bug report.
 
-## Die andere Hand übernimmt nicht sofort
+## The other hand does not take over immediately
 
-**Symptom:** Während einer Aktion bleibt die zweite Hand ohne Wirkung.
+**Symptom:** The second hand has no effect during an action.
 
-**Bedeutung:** Es darf nur eine Hand gleichzeitig bedienen. Eine bereits gehaltene Geste der zweiten Hand übernimmt die erste nicht.
+**Meaning:** Only one hand can interact at a time. An already-held gesture on the second hand cannot take over.
 
-**Lösung:** Laufende Aktion beenden und beide Hände kurz lösen, dann mit der gewünschten Hand neu beginnen. Bei gleichzeitigem Beginn entscheidet die eingestellte Handpräferenz. Nach einem Quest-Systemdialog beide Hände wieder ins Tracking bringen und eine frische Geste beginnen. Weitere Hintergründe: [Tracking-Wiederherstellung](TRACKING-RECOVERY.md).
+**Solution:** Finish the current action and briefly release both hands, then start again with the desired hand. The configured hand preference decides simultaneous starts. After a Quest system dialog, bring both hands back into tracking and start a fresh gesture. See [tracking recovery](TRACKING-RECOVERY.md).
 
-## Dimmen oder Lautstärke bricht beim Wegschauen ab
+## Dimming or volume adjustment cancels when looking away
 
-**Symptom:** Der Vorschauwert verschwindet, ohne übernommen zu werden.
+**Symptom:** The preview value disappears without being committed.
 
-**Bedeutung:** Ab 0.6.3 bleibt das Ziel nach erkannter Faust festgehalten. Vorheriger Zielwechsel, Verlust des Handtrackings, Raumwechsel oder Menüöffnung brechen jedoch ab.
+**Meaning:** From 0.6.3, the target remains captured once the fist is recognized. A target change before that point, hand tracking loss, room change, or menu opening still cancels the action.
 
-**Lösung:** Ziel ansehen, offene Hand bis zur Bereitschaft halten, Faust schließen, dann drehen. Erst nach der erkannten Faust wegschauen und die Hand im Trackingbereich halten. Öffnen übernimmt. Die Entität muss Dimmen bzw. Lautstärke laut ihren HA-Fähigkeiten unterstützen.
+**Solution:** Look at the target, hold an open hand until ready, make a fist, then rotate. Look away only after fist recognition and keep the hand within tracking range. Opening commits the value. The entity must report brightness or volume support in HA.
 
-## Magie löst nicht aus oder regelt stattdessen einen Wert
+## Magic does not trigger or adjusts a value instead
 
-**Symptom:** Kein Feuerball beim Öffnen oder Helligkeits-/Lautstärkeregler statt Wurf.
+**Symptom:** No fireball appears when opening the hand, or a brightness/volume slider appears instead.
 
-**Bedeutung:** Die aktuelle Geste ist „offene Hand → Faust → öffnen“. Die frühere Stoßgeste gehört zur Versionshistorie. Faustdrehen hat Vorrang vor dem Wurf.
+**Meaning:** The current gesture is open hand → fist → open. The earlier thrust gesture belongs to the version history. Fist rotation takes precedence over throwing.
 
-**Lösung:** Magie aktivieren und zunächst das Übungsziel verwenden. Bereitschaft abwarten, Faust schließen und ohne Drehbewegung öffnen. Nach jedem Wurf neu beginnen. Gestenuntertitel können zur Diagnose eingeschaltet werden.
+**Solution:** Enable magic and use the practice target first. Wait until ready, make a fist, and open it without rotating. Start a fresh gesture after each throw. Gesture subtitles can be enabled for diagnosis.
 
-## Kamera zeigt Einzelbilder oder bleibt stehen
+## A camera shows snapshots or stops updating
 
-**Symptom:** Kein flüssiger Video-/Audiostream.
+**Symptom:** There is no smooth video/audio stream.
 
-**Bedeutung:** Medienrahmen verwenden HA-Proxy-Einzelbilder. Kameras warten mindestens 0,5 s zwischen abgeschlossenen Anfragen; verborgene oder entfernte Rahmen werden pausiert.
+**Meaning:** Media frames use HA proxy snapshots. Cameras wait at least 0.5 s between completed requests; hidden or distant frames are paused.
 
-**Prüfen:** Kamera bzw. Bild in HA öffnen, Berechtigung und Verbindung prüfen und den Rahmen ansehen. Große oder nicht dekodierbare Bilder werden abgewiesen. Externe Bild-URLs werden nicht mit dem HA-Token aufgerufen.
+**Check:** Open the camera or image in HA, check permissions and connectivity, and look at the frame. Large or undecodable images are rejected. External image URLs are not requested with the HA token.
 
-## Welche Angaben helfen bei einem Fehlerbericht?
+## What helps in a bug report?
 
-App-Version, Horizon-OS-Version, genaue Schritte, verwendete Hand, Eingabeart, Zeitpunkt eines Raum-/Systemdialogwechsels und die sichtbare Statusmeldung nennen. Bei Bedarf einen bereinigten Screenshot ergänzen. Token, QR-Zugangscodes, private Konfigurationsdateien und unbereinigte SDK-Zugangsdaten nicht veröffentlichen.
+Include app version, Horizon OS version, exact steps, hand used, input method, timing of room/system dialog changes, and the visible status message. Add a sanitized screenshot if useful. Do not publish tokens, credential QR codes, private configuration files, or unsanitized SDK credentials.

@@ -1,14 +1,14 @@
 # HA goes Quest 0.6.1
 
-- Hellere, deckende Menüflächen mit größerer und deutlicher gegliederter Beschriftung.
-- Detailliertere 3D-Symbole mit eigenen Keramik- und Metalltexturen sowie kamerabezogener Beleuchtung.
-- Uhr frei in drei Achsen verschieben und drehen, Größe einstellen; Live-Vorschau mit großen − / + Tasten.
-- Uhrenposition je Handgelenk speichern, abbrechen und zurücksetzen. Gespeicherte Uhr folgt dem Handgelenk.
+- Brighter opaque menu surfaces with larger, more clearly structured labels.
+- More detailed 3D symbols with original ceramic/metal textures and camera-relative lighting.
+- Move and rotate the watch along three axes and adjust its size; live preview with large − / + buttons.
+- Save, cancel, and reset watch position per wrist. Saved watch follows the wrist.
 
-99 Kernprüfungen und 104 Unity-Prüfungen bestanden. Textkontrast der Menüflächen geprüft. Reale Quest-Abnahme steht aus.
+99 core checks and 104 Unity checks passed. Menu text contrast checked. Real Quest acceptance remains outstanding.
 
-Version 0.6.1 / Android-Code 10. Über die vorhandene Installation installieren; nicht vorher deinstallieren oder App-Daten löschen. Signatur und gespeicherte Zugangsdaten bleiben kompatibel. APK-Upload erfolgt manuell.
+Version 0.6.1 / Android code 10. Install over the existing installation; do not uninstall first or clear app data. Signature and saved credentials remain compatible. APK upload is manual.
 
-Anleitung: docs/VERSION-0.6.1.md.
+Instructions: docs/VERSION-0.6.1.md.
 
-Zusätzlich: lokale Meta-SDK-Entwicklerverbindungsdaten werden aus der APK ausgeschlossen; der Build kontrolliert dazu seinen gepackten Asset-Bericht.
+Additionally, local Meta SDK developer connection data is excluded from the APK; the build verifies this using its packed asset report.

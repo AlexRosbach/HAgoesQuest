@@ -1,46 +1,46 @@
-# Interaktion und Gestaltung: recherchierte Entscheidungen
+# Interaction and design: researched decisions
 
-Aktueller Stand: 0.6.0. Der Abschnitt „Änderung in 0.6.0“ ersetzt die frühere Entitätsauswahl per Handstrahl und die Stoßgeste. Die folgenden ursprünglichen Entscheidungen dokumentieren die Grundlage aus 0.5.0; die aktuelle Bedienanleitung steht in [VERSION-0.6.0.md](VERSION-0.6.0.md).
+Version covered by the original decisions: 0.6.0. The “Changes in 0.6.0” section supersedes earlier entity selection using a hand ray and the thrust gesture. The original decisions below record the 0.5.0 baseline; the corresponding instructions are in [VERSION-0.6.0.md](VERSION-0.6.0.md). Later sections record subsequent revisions; use [INSTALLATION.md](INSTALLATION.md) for current operation.
 
-Recherche: 29. September 2026; Primärquellen von Meta und Home Assistant.
+Research: September 29, 2026; primary sources from Meta and Home Assistant.
 
-## Metas Empfehlungen und Umsetzung
+## Meta recommendations and implementation
 
-Die App verwendet eine dominante rechte Hand für Zeigen und Pinchen; im Nahbereich ist Antippen mit dem Zeigefinger vorgesehen. Die Auswahl benutzt die vom Meta-Runtime gelieferte Hand-Aim-Pose, ergänzt durch Glättung und eine kurze Stabilisierung beim Pinch-Beginn. Der frühere zusätzliche Fokus-Zeitfilter vor dem rechten Pinch entfällt. Das soll verpasste Auswahl reduzieren; die tatsächliche Zuverlässigkeit muss auf Quest geprüft werden.
+The app uses a dominant right hand for pointing and pinching; near interaction supports index-finger touch. Selection uses the hand aim pose supplied by the Meta runtime, supplemented by smoothing and brief stabilization at pinch onset. The earlier additional focus-time filter before a right pinch is removed. This aims to reduce missed selections; actual reliability requires Quest testing.
 
-Der sichtbare Strahl ist beim Zeigen auch ohne Treffer vorhanden. Ein Treffer auf ein Entity-Icon verstärkt Helligkeit und Leuchtrand. Schaltgeräusche folgen einer vom Server angenommenen Aktion, nicht einem bloßen Blickkontakt. Der resultierende Gerätezustand wird weiterhin separat aus HA gelesen.
+The visible ray remains present while pointing, even without a hit. Hitting an entity icon increases brightness and the glowing border. Switching sounds follow a server-accepted action, not mere gaze contact. The resulting device state is still read separately from HA.
 
-Listen zeigen acht vollständig bedienbare Einträge und angeschnittene Folgeeinträge. Pinch-and-drag und direktes Wischen dienen zum Scrollen; ein kleiner Scrollbalken ist kein nötiges Eingabeziel. Pinch-und-Ziehen auf einem beschrifteten Regler verändert Helligkeit oder Lautstärke. Beim Loslassen wird genau der gewählte absolute Wert angefragt. Normale Bedienung erfordert keine frei erfundenen Richtungszeichen oder unbestätigte automatische Blick-Schaltbefehle.
+Lists show eight fully interactive entries and partially visible following entries. Pinch-and-drag and direct swiping scroll the list; a small scrollbar is not a required input target. Pinch-and-drag on a labeled slider changes brightness or volume. Release requests exactly the chosen absolute value. Normal interaction does not require invented directional signals or unconfirmed automatic gaze commands.
 
-Große Menüs bleiben ortsfest und stehen in etwa 1,4 m Abstand. Die optionale Uhr am linken Handgelenk dient nur als Öffner; das Panel folgt dem Arm nicht. Das entspricht der späteren Nutzerentscheidung für Metas Empfehlungen. Keine erzeugten Hände verdecken die echten Passthrough-Hände.
+Large menus remain stationary at approximately 1.4 m. The optional left-wrist watch only opens the panel; the panel does not follow the arm. This follows the user's later decision to adhere to Meta recommendations. No generated hands obscure real passthrough hands.
 
-Quellen: [Hands UI best practices](https://developers.meta.com/horizon/design/hands-ui-best-practices/), [Input mappings](https://developers.meta.com/horizon/design/interactions-input-mappings/), [Ray casting](https://developers.meta.com/horizon/design/raycasting_usage/), [Input modalities](https://developers.meta.com/horizon/design/interactions-input-modalities/).
+Sources: [Hands UI best practices](https://developers.meta.com/horizon/design/hands-ui-best-practices/), [Input mappings](https://developers.meta.com/horizon/design/interactions-input-mappings/), [Ray casting](https://developers.meta.com/horizon/design/raycasting_usage/), [Input modalities](https://developers.meta.com/horizon/design/interactions-input-modalities/).
 
-## Tastatur, Blickrichtung und Magie
+## Keyboard, gaze direction, and magic
 
-Texteingaben auf Quest verwenden `TouchScreenKeyboard` mit Metas System-Overlay; der eigene Tastatur-Renderer bleibt nur für den Editor. Fokusverlust beim Öffnen des Overlays ist vorgesehen und darf die Handsteuerung anschließend nicht blockieren. [Meta: Enable Keyboard Overlay](https://developers.meta.com/horizon/documentation/unity/unity-keyboard-overlay/).
+Text input on Quest uses `TouchScreenKeyboard` with Meta's system overlay; the custom keyboard renderer remains only for the editor. Focus loss when opening the overlay is expected and must not leave hand controls blocked afterward. [Meta: Enable Keyboard Overlay](https://developers.meta.com/horizon/documentation/unity/unity-keyboard-overlay/).
 
-Quest 3 hat kein Eye-Tracking. „Anschauen“ bezeichnet hier die mittlere Kopf-Blickrichtung. Sensorwerte können dadurch aus der Entfernung eingeblendet werden. Bloßes Anschauen sendet keinen HA-Befehl.
+Quest 3 has no eye tracking. “Looking” here means central head direction. This allows sensor values to appear from a distance. Looking alone sends no HA command.
 
-Magie bleibt eine ausdrücklich optionale, experimentelle Zusatzgeste, kein von Meta standardisiertes Bedienmuster. Anleitung, Live-Hinweise und ein Übungsziel erklären Hand öffnen, Ziel finden, ruhig halten, vorwärts stoßen und erneut vorbereiten. Die Standardbedienung bleibt verfügbar. Die visuelle Fluganimation allein bestätigt keinen physischen Gerätezustand.
+Magic remains an explicitly optional, experimental gesture, not a Meta-standardized interaction pattern. Instructions, live hints, and a practice target explain opening the hand, finding the target, holding still, thrusting forward, and preparing again. Standard controls remain available. The flight animation alone does not confirm a physical device state.
 
-## Grenzen
+## Limitations
 
-Die eigene Welt-UI ist über `RayInteractable` und `PokeInteractable` an Metas Interaction SDK 207 angebunden. Ein Root-Treiber versorgt `RayInteractor` und `PokeInteractor` mit der Runtime-Aim-Pose, dem Pinchzustand und der Fingerspitze. Auswahl und Antippen verwenden die SDK-Zustandsübergänge; Scrollen und Regler interpretieren die anschließende Bewegung. Es ist kein unverändert übernommenes Meta-UI-Set. Dokumentierte Designentscheidungen und Rechnerprüfungen sind keine Meta-Zulassung.
+The custom world UI connects to Meta Interaction SDK 207 through `RayInteractable` and `PokeInteractable`. A root driver supplies `RayInteractor` and `PokeInteractor` with the runtime aim pose, pinch state, and fingertip. Selection and touch use SDK state transitions; scrolling and sliders interpret subsequent movement. This is not an unmodified Meta UI kit. Documented design choices and desktop checks do not constitute Meta approval.
 
-## Änderung in 0.6.0
+## Changes in 0.6.0
 
-Die neu gewünschte Entitätsbedienung verwendet einen sichtbaren Punkt in Kopf-Blickrichtung, bestätigt durch Pinch. Die Fingerzeiger bleiben ausschließlich für Menü und Platzierung, damit zwei Fernziel-Modi nicht gleichzeitig um dieselbe Entität konkurrieren. Eine kurze Klassifikationszeit und Fingerhaltung unterscheiden Pinch und Faust. Faustdrehen und Faustöffnen sind eigene App-Gesten, keine von Meta garantierten Standardgesten.
+The newly requested entity controls use a visible head-direction reticle, confirmed by a pinch. Finger pointers remain exclusive to menus and placement so two distant-targeting modes do not compete for the same entity. A brief classification interval and finger posture distinguish pinch from fist. Fist rotation and opening are custom app gestures, not Meta-guaranteed standard gestures.
 
-Die Hauptansicht ordnet Aktionen in große Kacheln mit einer primären Aktion. Selbst erstellte räumliche Symbole dienen als zusätzliche visuelle Hinweise; die beschriftete Kachel bleibt die unveränderte Trefferfläche. Die Uhr wird für Linkshänder gespiegelt und öffnet weiterhin ein ortsfestes Panel. Sensorbeschriftungen skalieren proportional zur Entfernung mit Unter-/Obergrenze.
+The main view arranges actions in large tiles with one primary action. Original spatial symbols provide additional visual cues; the labeled tile remains the same hit target. The watch is mirrored for left-handed users and still opens a stationary panel. Sensor labels scale proportionally with distance within lower and upper limits.
 
-Ergänzende Quellen: [Button-Hierarchie und Trefferflächen](https://developers.meta.com/horizon/design/buttons_bp/), [Button-Zustände](https://developers.meta.com/horizon/design/buttons_specs/), [winkelabhängige Skalierung](https://developers.meta.com/horizon/design/mr-design-guideline/), [Wrist button](https://developers.meta.com/horizon/design/wrist-buttons/). Die Plattformwerte in dp lassen sich nicht pauschal mit den Weltmetern der eigenen Unity-Oberfläche gleichsetzen. Lesbarkeit und Trefferflächen müssen deshalb zusätzlich in der Brille geprüft werden.
+Additional sources: [Button hierarchy and hit targets](https://developers.meta.com/horizon/design/buttons_bp/), [Button states](https://developers.meta.com/horizon/design/buttons_specs/), [Angular scaling](https://developers.meta.com/horizon/design/mr-design-guideline/), [Wrist button](https://developers.meta.com/horizon/design/wrist-buttons/). Platform values in dp cannot be universally equated with world meters in the custom Unity interface. Readability and hit targets therefore require additional headset testing.
 
-## 0.6.1: Lesbarkeit und Materialien
+## 0.6.1: Readability and materials
 
-[Meta Accessibility](https://developers.meta.com/horizon/design/accessibility/), abgerufen am 29. September 2026: mindestens 4,5:1 für normalen Text, ausreichend große Ziele und sichtbare Fokusrückmeldung. Die drei Menütext-Paletten werden automatisiert gegen 4,5:1 geprüft. Die dunklen fast schwarzen Flächen wurden durch deckendes Schieferblau ersetzt. Unity-Vorschauen zeigen Startmenü und Uhreneditor; eine reale Quest-Abnahme ersetzt das nicht.
+[Meta Accessibility](https://developers.meta.com/horizon/design/accessibility/), accessed September 29, 2026: at least 4.5:1 for normal text, sufficiently large targets, and visible focus feedback. The three menu text palettes are automatically tested against 4.5:1. Nearly black surfaces were replaced with opaque slate blue. Unity previews show the startup menu and watch editor; this does not replace real Quest acceptance.
 
-Die 3D-Modelle und 128×128-Materialtexturen entstehen vollständig aus eigenem Code in ButtonSculpture.cs. Die kamerabezogene Schattierung behält eine helle Grundbeleuchtung, sodass die Modelle unabhängig von realer oder virtueller Raumbeleuchtung lesbar bleiben. Pro Objekt werden Teile nach Material zusammengefasst. Der Uhreneditor verwendet große einzelne Tasten statt einer präzisen Ziehgeste; erst Speichern übernimmt die Anpassung.
+The 3D models and 128×128 material textures are generated entirely by original code in ButtonSculpture.cs. Camera-relative shading retains bright ambient lighting so models remain readable independently of real or virtual room lighting. Parts are combined by material per object. The watch editor uses large individual buttons instead of a precise dragging gesture; adjustments are committed only on Save.
 
 ## 0.6.2: Room boundaries and UI ordering
 

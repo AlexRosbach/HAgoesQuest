@@ -1,193 +1,193 @@
-# HA goes Quest – technische Referenz
+# HA goes Quest – technical reference
 
-Diese Referenz beschreibt den Quellcode von **0.6.3**. Die Einführung und Installation stehen in der [README](../README.md) und der [Bedienungsanleitung](INSTALLATION.md).
+This reference describes the **0.6.3** source code. Introduction and installation are covered in the [README](../README.md) and [user instructions](INSTALLATION.md).
 
-## Inhalt
+## Contents
 
-1. [Architektur](#architektur)
-2. [Eingabe und Gesten](#eingabe-und-gesten)
-3. [Räume und Anker](#räume-und-anker)
-4. [Home-Assistant-Anbindung](#home-assistant-anbindung)
-5. [Lokale Daten](#lokale-daten)
-6. [Entwicklung und Build](#entwicklung-und-build)
-7. [Prüfungen](#prüfungen)
+1. [Architecture](#architecture)
+2. [Input and gestures](#input-and-gestures)
+3. [Rooms and anchors](#rooms-and-anchors)
+4. [Home Assistant integration](#home-assistant-integration)
+5. [Local data](#local-data)
+6. [Development and build](#development-and-build)
+7. [Verification](#verification)
 
-## Architektur
+## Architecture
 
-Die App läuft als Unity-Android-Anwendung auf der Quest. Es gibt keinen eigenen HAgoesQuest-Backenddienst. Der lokale HA-Testserver gehört ausschließlich zur Testumgebung.
+The app runs as a Unity Android application on the Quest. There is no dedicated HAgoesQuest backend service. The local HA test server belongs exclusively to the test environment.
 
 ```mermaid
 flowchart LR
-    Input[Quest: Kopf und Hände] --> UI[QuestHome und MetaInputBridge]
-    UI --> Gates[Core: Eingabe-Zustandsautomaten]
+    Input[Quest: head and hands] --> UI[QuestHome and MetaInputBridge]
+    UI --> Gates[Core: input state machines]
     Gates --> HA[HomeAssistantConnection]
     HA --> Server[Home Assistant REST API]
     Server --> HA
-    HA --> Cards[WorldCard und MediaFrame]
-    MRUK[Meta MRUK: Raumgeometrie] --> Scope[RoomScope]
-    Anchors[SpatialBindings: lokale Anker] --> Scope
+    HA --> Cards[WorldCard and MediaFrame]
+    MRUK[Meta MRUK: room geometry] --> Scope[RoomScope]
+    Anchors[SpatialBindings: local anchors] --> Scope
     Scope --> UI
     Scope --> Cards
 ```
 
-### Verzeichnisse und Zuständigkeiten
+### Directories and responsibilities
 
-| Pfad | Aufgabe |
+| Path | Responsibility |
 | --- | --- |
-| `Assets/HAgoesQuest/Core/` | Unity-unabhängige Regeln für Fokus, Gesten, Tracking, URLs und Befehle |
-| `Assets/HAgoesQuest/Runtime/QuestHome.cs` | App-Ablauf, Menüs, Auswahl und Platzierung |
-| `Runtime/GazeControls.cs` | Blickauswahl, Faustzustand, Zielbindung und Rückmeldung |
-| `Runtime/InteractionRouting.cs` | Handübernahme, Navigation und Priorität der Menübedienung |
-| `Runtime/MetaInputBridge.cs` | Offizielle ISDK-Ray-/Poke-Interaktoren und Auswahlereignisse |
-| `Runtime/HomeAssistantConnection.cs` | Anmeldung, Zustandsabfragen, Bereiche und Befehle |
-| `Runtime/SpatialBindings.cs` | Anker laden, speichern, lokalisieren und Zuordnungen entfernen |
-| `Runtime/RoomScope.cs` | Prüfung des tatsächlichen aktuellen Raums |
-| `Runtime/ConnectionVault.cs` | Verschlüsselte Anmeldung über Android Keystore |
-| `Runtime/WorldCard.cs`, `EntityScrollList.cs`, `MediaFrame.cs` | Räumliche UI, wiederverwendete Listenzeilen und Einzelbilder |
-| `Assets/HAgoesQuest/Editor/` | Projektkonfiguration, Szene, Android-Manifest und Build-Schutz |
-| `Assets/HAgoesQuest/Testing/` | Unity-Integrationsprüfungen und UI-Vorschau |
-| `tests/`, `tools/` | Unabhängige Tests, HA-Mockserver sowie Build-/Installationsskripte |
+| `Assets/HAgoesQuest/Core/` | Unity-independent rules for focus, gestures, tracking, URLs, and commands |
+| `Assets/HAgoesQuest/Runtime/QuestHome.cs` | App flow, menus, selection, and placement |
+| `Runtime/GazeControls.cs` | Gaze selection, fist state, target capture, and feedback |
+| `Runtime/InteractionRouting.cs` | Hand ownership, navigation, and menu input priority |
+| `Runtime/MetaInputBridge.cs` | Official ISDK ray/poke interactors and selection events |
+| `Runtime/HomeAssistantConnection.cs` | Authentication, state queries, areas, and commands |
+| `Runtime/SpatialBindings.cs` | Load, save, and localize anchors; remove mappings |
+| `Runtime/RoomScope.cs` | Validate the actual current room |
+| `Runtime/ConnectionVault.cs` | Encrypted credentials through Android Keystore |
+| `Runtime/WorldCard.cs`, `EntityScrollList.cs`, `MediaFrame.cs` | Spatial UI, reused list rows, and snapshots |
+| `Assets/HAgoesQuest/Editor/` | Project setup, scene, Android manifest, and build safeguards |
+| `Assets/HAgoesQuest/Testing/` | Unity integration checks and UI previews |
+| `tests/`, `tools/` | Independent tests, HA mock server, and build/installation scripts |
 
-Die kurzen `Runtime/`-Pfade in dieser Tabelle beziehen sich auf `Assets/HAgoesQuest/Runtime/`.
+Short `Runtime/` paths in this table refer to `Assets/HAgoesQuest/Runtime/`.
 
-## Eingabe und Gesten
+## Input and gestures
 
-### Blickpunkt und Pinch
+### Gaze reticle and pinch
 
-Die Entitätsauswahl verwendet die Kopf-Blickrichtung. `GazeTarget()` berücksichtigt sichtbare Marker bis 8 m Entfernung innerhalb eines Winkels von 1,7°; ein vorgeschalteter Collider kann die Auswahl verhindern. Die Quest 3 liefert dafür kein Eye-Tracking.
+Entity selection uses head direction. `GazeTarget()` considers visible markers up to 8 m away within a 1.7° angle; an intervening collider may prevent selection. Quest 3 does not provide eye tracking for this.
 
-`GazePinchGate` verlangt eine gelöste Hand vor einem neuen Pinch. Eine kurze Verzögerung von 0,12 s und die Fingerhaltung unterscheiden Pinchen vom Schließen einer Faust. Ein gehaltener Pinch löst nicht wiederholt aus. Für Menü und Platzierung werden zusätzlich SDK-Zeiger und direktes Antippen verwendet.
+`GazePinchGate` requires a released hand before a new pinch. A short 0.12 s delay and finger posture distinguish pinching from closing a fist. A held pinch does not trigger repeatedly. SDK pointers and direct touch are also used for menus and placement.
 
-### Eine Hand pro Aktion
+### One hand per action
 
-`InteractionOwnership` hält `Owner` auf `-1` (keine Hand), `0` (links) oder `1` (rechts). Bei gleichzeitigem Beginn entscheidet die Handpräferenz. Während eines laufenden Vorgangs bleibt die Hand fest gewählt. Erst wenn beide Hände ohne aktive Eingabe sind und kein Vorgang mehr läuft, gibt eine Ruhephase von 0,18 s die Übernahme frei.
+`InteractionOwnership` keeps `Owner` at `-1` (no hand), `0` (left), or `1` (right). Hand preference decides simultaneous starts. The selected hand remains fixed during an action. Only after both hands have no active input and no action is running does a 0.18 s quiet period allow another hand to take over.
 
-Der Menü-Pinch der Uhrenhand steht außerhalb eines Entitätsziels bzw. Menübedienelements zur Verfügung. Eine Entitätsgeste darf nicht gleichzeitig das Menü öffnen. Das Antippen der Uhr bleibt eine alternative Menüaktion.
+The watch-hand menu pinch is available outside an entity target or menu control. An entity gesture must not open the menu simultaneously. Tapping the watch remains an alternative menu action.
 
-### Faustregler und Magie
+### Fist adjustment and magic
 
-1. Ziel ansehen und die offene Hand mindestens 0,18 s stabil erkennen lassen.
-2. Faust schließen: `QuestHome` hält Ziel und Kopfrotation als Drehreferenz fest.
-3. Faust drehen: nach mehr als 12° Drehung und mindestens 0,12 s Haltezeit beginnt eine unterstützte Helligkeits-/Lautstärkeregelung.
-4. Hand mindestens 0,08 s geöffnet erkennen: den Vorschauwert einmal übernehmen. Ohne Regelung kann bei aktivem Magiemodus stattdessen ein Feuerball ausgelöst werden.
+1. Look at the target and maintain a recognized open hand for at least 0.18 s.
+2. Close the fist: `QuestHome` captures the target and head rotation as a rotation reference.
+3. Rotate the fist: after more than 12° and at least 0.12 s of holding, supported brightness/volume adjustment begins.
+4. Maintain a recognized open hand for at least 0.08 s: commit the preview value once. If no adjustment occurred, opening can instead trigger a fireball when magic mode is enabled.
 
-`GazeGestureGate` berechnet den normierten Wert zwischen 0 und 1. Die Referenz bleibt beim Wegschauen konstant. Trackingverlust, ungültige Messwerte oder eine Messpause über 0,25 s setzen den Gestenzustand zurück; sie zählen nicht als Öffnen der Faust. Ein Raumwechsel oder Menüwechsel verwirft das festgehaltene Ziel. Rastergeräusche begleiten Wertänderungen, nicht das bloße Halten.
+`GazeGestureGate` calculates a normalized value between 0 and 1. The reference stays constant when looking away. Tracking loss, invalid samples, or a sampling gap over 0.25 s reset gesture state; they do not count as opening the fist. A room or menu change discards the captured target. Adjustment ticks accompany value changes, not merely holding.
 
-### Navigation und Listen
+### Navigation and lists
 
-`NavigationReleaseGate` sperrt Eingaben nach einem Seitenwechsel für mindestens 0,2 s und verlangt 0,12 s ohne aktive Berührung oder Pinch. `MetaInputBridge.Cancel()` verwirft noch offene Auswahlereignisse. Ein direkt angetippter Menübutton wird vor der Liste behandelt.
+`NavigationReleaseGate` blocks input for at least 0.2 s after navigation and requires 0.12 s without active touch or pinch. `MetaInputBridge.Cancel()` discards pending selection events. A directly touched menu button is handled before the list.
 
-Die Liste verwendet zehn wiederverwendete Zeilen, davon acht vollständig sichtbar. Nur vollständig sichtbare Zeilen erhalten aktive Collider. Beim Loslassen muss die ursprünglich gedrückte Entitäts-ID noch zur Zeile gehören; eine während des Scrollens neu belegte Zeile darf nicht versehentlich ausgewählt werden.
+The list uses ten recycled rows, eight fully visible. Only fully visible rows have active colliders. On release, the initially pressed entity ID must still belong to that row; recycling a row while scrolling must not cause accidental selection.
 
-## Räume und Anker
+## Rooms and anchors
 
-**HA-Bereiche** ordnen Entitäten in der Liste. **Quest-Räume** beschreiben physische Grenzen. Gleichlautende Namen erzeugen keine automatische Verbindung zwischen beiden Systemen.
+**HA areas** organize entities in the list. **Quest rooms** describe physical boundaries. Matching names do not create an automatic connection between the systems.
 
-`RoomScope` akzeptiert den von MRUK gemeldeten Raum nur, wenn der Kopf innerhalb seiner Grenzen liegt; andernfalls werden die geladenen Räume geprüft. Marker müssen im selben Raum liegen. Ohne gültigen Raum werden platzierte Entitäten ausgeblendet und Befehle gesperrt. Demo und Editor ohne Raumdaten haben eine ausdrücklich im Code definierte Ausnahme.
+`RoomScope` accepts the room reported by MRUK only if the head is inside its boundaries; otherwise it checks the loaded rooms. Markers must be in the same room. Without a valid room, placed entities are hidden and commands blocked. Demo mode and the editor without room data have an explicit exception in code.
 
-`SpatialBindings` lädt gespeicherte Anker nach stabilem Headset-Tracking. Ein Anker muss lokalisiert, getrackt und mindestens 0,75 s stabil sein. Positionsänderungen über 3 cm oder Rotationen über 3° beginnen die Stabilitätsprüfung erneut. Fehlende Anker werden nach 15 s erneut gesucht; die Lokalisierung verschiedener Räume läuft parallel.
+`SpatialBindings` loads saved anchors after headset tracking stabilizes. An anchor must be localized, tracked, and stable for at least 0.75 s. Position changes over 3 cm or rotations over 3° restart the stability check. Missing anchors are retried after 15 s; localization across different rooms runs in parallel.
 
-Beim Platzieren wird die Tracking-Epoche vor und nach asynchronen SDK-Aufrufen geprüft. Eine Neukalibrierung zwischen diesen Schritten verhindert die Übernahme einer veralteten Position. Die Zuordnungsdatei wird erst nach dem Speichern des Ankers aktualisiert. Beim Löschen wird die lokale Zuordnung zuerst entfernt, damit ein nicht auffindbarer Raumanker die Bedienung nicht blockiert.
+During placement, the tracking epoch is checked before and after asynchronous SDK calls. Recalibration between these steps prevents committing an outdated position. The mapping file is updated only after the anchor is saved. Deletion removes the local mapping first, so an unlocatable room anchor cannot block interaction.
 
-Stabilitätsprüfungen können einen vom Betriebssystem stabil, aber falsch lokalisierten Raum nicht zuverlässig erkennen. Die [Hardware-Abnahme](QUEST-TEST.md) bleibt notwendig.
+Stability checks cannot reliably detect a room that the operating system has localized stably but incorrectly. [Hardware acceptance](QUEST-TEST.md) remains necessary.
 
-## Home-Assistant-Anbindung
+## Home Assistant integration
 
-### Anfragen
+### Requests
 
-Alle Anfragen gehen an die konfigurierte Basisadresse, verwenden einen Bearer-Token, ein Timeout von 8 s und folgen keinen Weiterleitungen. HTTPS nutzt die reguläre Zertifikatsprüfung. HTTP verlangt ausdrückliche Freigabe; damit werden auch Zugangsdaten unverschlüsselt übertragen.
+All requests go to the configured base URL, use a bearer token and an 8 s timeout, and do not follow redirects. HTTPS uses normal certificate validation. HTTP requires explicit opt-in and also transmits credentials unencrypted.
 
-| Anfrage | Zweck |
+| Request | Purpose |
 | --- | --- |
-| `GET /api/states` | Verbindung prüfen und Entitätszustände laden |
-| `POST /api/template` | Bereichskatalog über `areas()`, `area_name()` und `area_entities()` |
-| `POST /api/services/light/turn_on` bzw. `turn_off` | Lampe schalten; `turn_on` mit `brightness_pct` auch zum Dimmen |
-| `POST /api/services/switch/turn_on` bzw. `turn_off` | Schalter bedienen |
-| `POST /api/services/media_player/volume_set` | Unterstützte Lautstärke mit `volume_level` zwischen 0 und 1 setzen |
-| `GET /api/camera_proxy/{entity_id}` | Kamerabild über den HA-Server |
-| `GET /api/image_proxy/{entity_id}` | Bildentität über den HA-Server |
+| `GET /api/states` | Test the connection and load entity states |
+| `POST /api/template` | Area catalog using `areas()`, `area_name()`, and `area_entities()` |
+| `POST /api/services/light/turn_on` or `turn_off` | Switch a light; `turn_on` with `brightness_pct` also dims |
+| `POST /api/services/switch/turn_on` or `turn_off` | Operate a switch |
+| `POST /api/services/media_player/volume_set` | Set supported volume with `volume_level` between 0 and 1 |
+| `GET /api/camera_proxy/{entity_id}` | Camera image through the HA server |
+| `GET /api/image_proxy/{entity_id}` | Image entity through the HA server |
 
-Dies ist die von der App verwendete Teilmenge, keine allgemeine HA-API-Referenz. Aktuelle API-Spezifikation: [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/).
+This is the subset used by the app, not a general HA API reference. Current API specification: [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/).
 
-### Frische Daten und Befehle
+### Fresh data and commands
 
-Online folgt auf eine Zustandsabfrage eine Pause von etwa 1,5 s, offline etwa 5 s; die Antwortzeit kommt hinzu. Ein Snapshot gilt nur bei `Online` und einem Alter unter 6 s als frisch. Während eines Befehls werden keine weiteren Befehle angenommen. Eine vor dem Befehl gestartete Zustandsabfrage darf dessen neueren Zustand nicht überschreiben.
+Online state queries are followed by a pause of approximately 1.5 s, or approximately 5 s offline; response time is additional. A snapshot is fresh only when `Online` and less than 6 s old. No other commands are accepted while a command is running. A state query started before a command must not overwrite its newer state.
 
-Schalten verwendet ausdrücklich `turn_on` oder `turn_off`, kein blindes `toggle`. Befehle werden bei Timeout nicht automatisch wiederholt, weil HA sie bereits ausgeführt haben könnte. Nach jedem Befehl fordert die App einen neuen Zustand an.
+Switching explicitly uses `turn_on` or `turn_off`, not a blind `toggle`. Commands are not automatically retried after timeout because HA may already have executed them. The app requests a new state after each command.
 
-Alle gültigen Domänen können angezeigt werden. Schalten ist auf `light` und `switch` in Zustand `on` oder `off` begrenzt. Dimmbarkeit wird aus `supported_color_modes`, Lautstärkeregelung aus der Bitmaske `4` von `supported_features` abgeleitet. Es gibt keinen allgemeinen Serviceaufruf für beliebige Domänen.
+All valid domains can be displayed. Switching is restricted to `light` and `switch` in state `on` or `off`. Dimmability is derived from `supported_color_modes`; volume support from bitmask `4` of `supported_features`. There is no general service call for arbitrary domains.
 
-### Bereiche und Medien
+### Areas and media
 
-Bereiche werden unabhängig von der gefilterten Entitätsliste geladen; leere Bereiche bleiben auswählbar. Der Client übernimmt erst den vollständig geparsten Katalog und erhöht danach `AreaRevision`, damit eine offene Auswahl aktualisiert wird. Eine fehlerhafte Antwort ersetzt keinen bereits gültigen Katalog derselben Verbindung.
+Areas load independently of the filtered entity list; empty areas remain selectable. The client commits only a fully parsed catalog, then increments `AreaRevision` to refresh an open selector. An invalid response does not replace a previously valid catalog for the same connection.
 
-`MediaFrame` begrenzt gleichzeitige Anfragen auf zwei. Kameras warten nach jeder Antwort mindestens 0,5 s, Bildentitäten 10 s. Verborgene, zu weit entfernte oder außerhalb der Blickrichtung liegende Rahmen laden nicht ständig weiter. Akzeptiert werden dekodierbare Bilder unter 8 MiB mit höchstens 4096 × 4096 Pixeln. Es wird keine beliebige `entity_picture`-URL mit dem Token aufgerufen.
+`MediaFrame` limits concurrent requests to two. Cameras wait at least 0.5 s after each response; image entities wait 10 s. Hidden, distant, or out-of-view frames do not continuously fetch. Decodable images below 8 MiB and no larger than 4096 × 4096 pixels are accepted. Arbitrary `entity_picture` URLs are not requested with the token.
 
-## Lokale Daten
+## Local data
 
-| Daten | Speicher und Bedeutung |
+| Data | Storage and meaning |
 | --- | --- |
-| Anmeldung | `connection.secure.json` in `Application.persistentDataPath`; AES-GCM mit Android-Keystore-Alias `HAgoesQuest.connection.v1` |
-| Optionaler Import | `connection.json`; wird nach erfolgreicher Prüfung und verschlüsselter Speicherung entfernt |
-| Platzierungen | `bindings-<Serverhash>.json`, Formatversion 1; SHA-256 der Serveridentität, auf 24 Hexzeichen gekürzt |
-| Eintrag einer Platzierung | `entityId`, `anchorUuid`, `displayOnly`; keine gespeicherten Weltkoordinaten als Ankerersatz |
-| Allgemeine Einstellungen | Unity `PlayerPrefs`, Präfix `HAgoesQuest.experience.` |
-| Uhr | Getrennte lokale Handgelenk-Einstellungen; siehe `WatchPlacement.cs` |
+| Credentials | `connection.secure.json` in `Application.persistentDataPath`; AES-GCM with Android Keystore alias `HAgoesQuest.connection.v1` |
+| Optional import | `connection.json`; removed after successful validation and encrypted storage |
+| Placements | `bindings-<Serverhash>.json`, format version 1; SHA-256 of server identity truncated to 24 hexadecimal characters |
+| Placement entry | `entityId`, `anchorUuid`, `displayOnly`; no saved world coordinates as an anchor substitute |
+| General settings | Unity `PlayerPrefs`, prefix `HAgoesQuest.experience.` |
+| Watch | Separate local wrist settings; see `WatchPlacement.cs` |
 
-Maximal 50 Platzierungen pro Server. Schreiben erfolgt zunächst in eine temporäre Datei; beim Ersetzen der Zuordnungen entsteht eine `.bak`-Datei. Ungültige Zuordnungsdateien werden nicht stillschweigend überschrieben.
+Maximum 50 placements per server. Writes first go to a temporary file; replacing mappings creates a `.bak` file. Invalid mapping files are not silently overwritten.
 
-Ein leeres Tokenfeld darf nur für dieselbe normalisierte Basisadresse die gespeicherte Anmeldung verwenden. Schema, Host und Port gehören zur Identität. Ein anderer Server erfordert eine eigene Anmeldung und erhält getrennte Zuordnungen.
+An empty token field may reuse stored credentials only for the same normalized base URL. Scheme, host, and port are part of the identity. Another server requires its own credentials and receives separate mappings.
 
-### Optionaler USB-Import
+### Optional USB import
 
-Die reguläre Einrichtung erfolgt in der App. Unter Windows kann alternativ das Hilfsskript die Konfiguration auf eine autorisierte Quest übertragen und den Token verdeckt abfragen:
+Normal setup takes place in the app. On Windows, the helper script can alternatively transfer configuration to an authorized Quest and prompt for the token without displaying it:
 
 ```powershell
-.\tools\Connect-Quest.ps1 -BaseUrl 'https://dein-home-assistant.example'
+.\tools\Connect-Quest.ps1 -BaseUrl 'https://your-home-assistant.example'
 ```
 
-Bei Bedarf `-Adb '<Pfad zur adb.exe>'` und bei mehreren Geräten `-Device '<Seriennummer>'` ergänzen. Für lokales HTTP ist zusätzlich `-AllowInsecureHttp` nötig. Die [Konfigurationsvorlage](connection.example.json) beschreibt die Felder für einen manuellen Import. `connection.json` liegt dabei normalerweise unter `/sdcard/Android/data/com.alexrosbach.hagoesquest/files/` und enthält bis zur erfolgreichen Migration Klartext. Nicht ins Repository aufnehmen.
+Add `-Adb '<path to adb.exe>'` if needed and `-Device '<serial number>'` for multiple devices. Local HTTP additionally requires `-AllowInsecureHttp`. The [configuration example](connection.example.json) describes manual-import fields. `connection.json` is normally located under `/sdcard/Android/data/com.alexrosbach.hagoesquest/files/` and contains plaintext until successful migration. Do not commit it.
 
-Updates benötigen denselben Paketnamen `com.alexrosbach.hagoesquest`, einen passenden Signaturschlüssel und einen höheren Android-Versionscode. Alias und Datenformate dürfen nur mit einer Migration geändert werden. Deinstallation oder Löschen der App-Daten entfernt die Grundlage für die Wiederverwendung. Der Editor speichert keine Zugangstoken über `ConnectionVault`.
+Updates require the same package name, `com.alexrosbach.hagoesquest`, a matching signing key, and a higher Android version code. Alias and data formats may change only with a migration. Uninstalling or clearing app data removes the basis for reuse. The editor does not persist access tokens through `ConnectionVault`.
 
-## Entwicklung und Build
+## Development and build
 
-### Werkzeugbasis
+### Tool baseline
 
-| Komponente | Festgelegter Projektstand |
+| Component | Pinned project version |
 | --- | --- |
 | Unity | 6000.0.66f2 |
 | Meta XR Core / Interaction SDK / MRUK | 207.0.0 |
-| Ziel | Android ARM64, IL2CPP, Entwicklungsbuild |
-| Mindest-Android-API | 32 |
+| Target | Android ARM64, IL2CPP, development build |
+| Minimum Android API | 32 |
 | Rendering | Built-in Render Pipeline |
 
-### Unity-Ablauf
+### Unity workflow
 
-1. Projektordner in Unity Hub öffnen. Android Build Support mit SDK, NDK und OpenJDK installieren; Lizenz aktivieren.
-2. Paketimport abschließen. Android als Build-Ziel auswählen.
-3. **HA goes Quest → 1 - Projekt konfigurieren**, danach **2 - Startszene erstellen** ausführen. Eine vorhandene Szene wird geöffnet.
-4. OpenXR-Loader, Meta-XR-Feature-Set und Oculus-Touch-Interaction-Profile prüfen; Unity Project Validation und Meta Project Setup Tool ausführen.
-5. **HA goes Quest → 3 - Entwicklungs-APK bauen**. Ergebnis: `Builds/HAgoesQuest.apk`.
+1. Open the project directory in Unity Hub. Install Android Build Support with SDK, NDK, and OpenJDK; activate a license.
+2. Complete package import. Select Android as the build target.
+3. Run **HA goes Quest → 1 - Projekt konfigurieren** (configure project), then **2 - Startszene erstellen** (create startup scene). An existing scene is opened. These menu labels are the current editor labels.
+4. Check the OpenXR loader, Meta XR feature set, and Oculus Touch interaction profiles; run Unity Project Validation and Meta Project Setup Tool.
+5. Run **HA goes Quest → 3 - Entwicklungs-APK bauen** (build development APK). Output: `Builds/HAgoesQuest.apk`.
 
-Alternativ unter Windows:
+Alternatively, on Windows:
 
 ```powershell
 .\tools\Build-Quest.ps1 -Unity 'U:\Unity\6000.0.66f2\Editor\Unity.exe' -CacheRoot 'U:\HAgoesQuestCache'
 ```
 
-Die Pfade an den eigenen Rechner anpassen. Das Skript prüft den Signaturschlüssel gegen die bisherigen Entwicklungs-APKs. Ein anderer Entwickler benötigt einen bewusst getrennten Signatur-/Paketprozess; einen fehlenden Originalschlüssel nicht stillschweigend ersetzen.
+Adjust paths to your machine. The script checks the signing key against previous development APKs. Another developer needs a deliberately separate signing/package process; do not silently replace a missing original key.
 
-`PrivateBuildSettings` verschiebt lokale SDK-Verbindungsdaten nach dem SDK-Buildcallback vorübergehend in einen Editor-only-Pfad. Der gepackte Asset-Bericht muss ihren Ausschluss bestätigen. Die Datei wird anschließend zurückverschoben. Diese Inhalte dürfen weder geloggt noch in Quellarchive oder Git übernommen werden.
+`PrivateBuildSettings` temporarily moves local SDK connection data to an editor-only path after the SDK build callback. The packed asset report must confirm its exclusion. The file is then moved back. These contents must not be logged or included in source archives or Git.
 
-## Prüfungen
+## Verification
 
-| Prüfung | Aufruf / Nachweis | Aussage |
+| Check | Command / evidence | What it establishes |
 | --- | --- | --- |
-| App-Kern | `tests/Run-Tests.ps1` oder `dotnet run --project tests/CoreTests.csproj` | Zustandsautomaten, Eingaberegeln, Service-/URL-Policy |
-| Unity-Integration | `tools/Test-Network.ps1 -Unity '<Pfad zur Unity.exe>'` | Echter Client gegen lokalen HA-Mockserver, SDK-Interaktion und UI-Fixtures |
-| UI-Vorschau | `HAgoesQuest.Testing.UiPreview.Run` mit `HA_QUEST_UI_PREVIEW` als absolutem PNG-Ausgabepfad | Menübilder frontal/seitlich und Handeffekt; kein Stereo-Gerätetest |
-| APK | [Buildbericht](BUILD-STATUS.md) und [Prüfbericht](APK-VERIFICATION.txt) | Signatur, Paket, ARM64-Bibliotheken und Manifest der gebauten Datei |
-| Quest | [QUEST-TEST.md](QUEST-TEST.md) | Physische Räume, Handtracking, Keystore, Update und Darstellung |
+| App core | `tests/Run-Tests.ps1` or `dotnet run --project tests/CoreTests.csproj` | State machines, input rules, service/URL policy |
+| Unity integration | `tools/Test-Network.ps1 -Unity '<path to Unity.exe>'` | Real client against a local HA mock server, SDK interaction, and UI fixtures |
+| UI preview | `HAgoesQuest.Testing.UiPreview.Run` with `HA_QUEST_UI_PREVIEW` set to an absolute PNG output path | Front/side menu images and hand effect; no stereo device test |
+| APK | [Build report](BUILD-STATUS.md) and [verification report](APK-VERIFICATION.txt) | Signature, package, ARM64 libraries, and manifest of the built file |
+| Quest | [QUEST-TEST.md](QUEST-TEST.md) | Physical rooms, hand tracking, Keystore, updates, and presentation |
 
-Der Unity-Testserver bindet an `127.0.0.1:18123`; Tests verwenden keine echten HA-Zugangsdaten. GitHub Actions führt Kernprüfungen aus, erstellt aber keine APK. Kommentare und Dokumentationsänderungen allein benötigen keinen erneuten APK-Build; ihre Prüfung wird getrennt vom historischen Buildbericht dokumentiert.
+The Unity test server binds to `127.0.0.1:18123`; tests do not use real HA credentials. GitHub Actions runs core checks but does not build an APK. Comments and documentation alone do not require another APK build; their verification is documented separately from the historical build report.
