@@ -1,41 +1,41 @@
-# 0.5.0 – Bedienung, Räume und Medien
+# 0.5.0 – Interaction, rooms, and media
 
-Diese Version bündelt die Trackingkorrektur und die anschließenden Erweiterungswünsche. Die unveröffentlichte Bezeichnung 0.4.2 entfällt. Android-Versionscode: 8; Paketname und Entwicklungssignatur bleiben unverändert.
+This version combines the tracking fix and subsequent feature requests. The unpublished 0.4.2 designation is dropped. Android version code: 8; package name and development signature remain unchanged.
 
-## Bedienung
+## Interaction
 
-- **Rechte Hand:** Zeigefinger ausstrecken. Der Strahl bleibt auch ohne Treffer sichtbar; bei einem Entity-Treffer leuchtet er heller. Pinchen wählt das Ziel. Im Nahbereich lässt es sich mit der Fingerspitze antippen. Ray- und Poke-Auswahl verwenden Meta Interaction SDK 207.
-- **Linke Hand:** Ein Pinch öffnet das Menü, nach Loslassen schließt ein weiterer Pinch es. Lange Systemgesten und die Meta-Systemoberfläche werden nicht umgangen.
-- **Listen:** acht vollständig sichtbare Einträge mit Name, Wert und Raum; weitere Einträge durch Pinch-und-Ziehen oder direktes Wischen. Suche, Art und Raum lassen sich kombinieren.
-- **Dimmen / Lautstärke:** Auf ein unterstütztes Icon zeigen; unter dem Icon erscheint das Sonnen-/Lautsprecher-Symbol. Damit den Regler öffnen. Pinchen und seitlich ziehen oder direkt am Regler ziehen; Loslassen sendet den Wert. Auch über die Details einer platzierten Entität erreichbar. HA muss Helligkeit bzw. `VOLUME_SET` anbieten. Sensoren werden dadurch nicht schaltbar.
-- **Sensoren:** Neben der bisherigen Nahansicht erscheinen Werte oberhalb des Icons beim direkten Hinschauen aus der Ferne. Auf Quest 3 wird hierfür die Kopf-Blickrichtung verwendet.
+- **Right hand:** Extend the index finger. The ray remains visible without a hit and brightens when it hits an entity. Pinching selects the target. At close range, tap it with a fingertip. Ray and poke selection use Meta Interaction SDK 207.
+- **Left hand:** A pinch opens the menu; after release, another pinch closes it. Long system gestures and the Meta system interface are not bypassed.
+- **Lists:** Eight fully visible entries with name, value, and room; reach further entries by pinch-and-drag or direct swiping. Search, type, and room filters can be combined.
+- **Dimming / volume:** Point at a supported icon; a sun/speaker symbol appears beneath it. Use this to open the slider. Pinch and drag sideways or drag directly on the slider; release sends the value. Also available through placed-entity details. HA must report brightness or `VOLUME_SET` support. This does not make sensors switchable.
+- **Sensors:** In addition to the existing close view, values appear above the icon when looking directly at it from a distance. Quest 3 uses head direction for this.
 
-## Oberfläche und Start
+## Interface and startup
 
-Dunkle neutrale Panels, helle Schrift, dezente violette Auswahl, einheitliche geometrische Icons und eine kurze Startanimation. In den Einstellungen zwischen Deutsch und Englisch wechseln sowie Schaltgeräusche ein-/ausschalten. Die bestätigte Annahme eines Lampenbefehls erzeugt einen leichten Klick; ein Schalter einen mechanischeren Klang. Der HA-Gerätezustand wird anschließend separat abgefragt.
+Dark neutral panels, bright text, subtle purple selection, consistent geometric icons, and a brief startup animation. Settings switch between German and English and enable/disable switching sounds. Confirmed acceptance of a light command produces a soft click; a switch produces a more mechanical sound. The HA device state is queried separately afterward.
 
-Optional startet die App mit einer HA-Uhr am linken Handgelenk. Antippen öffnet ein **ortsfestes** Panel vor dem Nutzer. Es folgt nicht dem Arm, entsprechend der nachträglichen Vorgabe, Metas Empfehlungen einzuhalten. Ein linker Pinch bleibt als Alternative verfügbar. Bei fehlender Anmeldung bleibt der Zugang zum Verbindungsmenü erhalten.
+Optionally, the app starts with an HA watch on the left wrist. Tapping opens a **stationary** panel in front of the user. It does not follow the arm, reflecting the later requirement to follow Meta guidance. A left pinch remains available as an alternative. Access to the connection menu remains available without saved credentials.
 
-Auf Quest erscheint bei Adresse, Token und Suche die Meta-Systemtastatur. Im Unity-Editor bleibt eine Ersatztastatur verfügbar. Das Öffnen der Systemtastatur kann kurz den Eingabefokus übernehmen.
+Address, token, and search fields use the Meta system keyboard on Quest. A fallback keyboard remains in the Unity editor. Opening the system keyboard may briefly take input focus.
 
-## Magie lernen
+## Learning magic
 
-Unter Einstellungen → Magie das Übungsziel starten. Es schaltet keine HA-Geräte. Hand öffnen, Handfläche zum Ziel richten, auf den grünen Bereitschaftshinweis warten und etwa zwölf Zentimeter vorwärts stoßen. Anschließend zurückziehen oder die Hand kurz schließen. Der zulässige Zielwinkel und die Bereitschaftszeit sind größer als zuvor; Live-Hinweise zeigen fehlende Schritte an. Mehrere Fluganimationen können überlappen. Magie bleibt experimentell und ist kein standardisiertes Meta-Eingabemuster.
+Start the practice target under Settings → Magic. It does not switch HA devices. Open the hand, face the palm toward the target, wait for the green readiness hint, then thrust approximately twelve centimeters forward. Pull back or briefly close the hand afterward. The allowed target angle and readiness interval are more forgiving than before; live hints show missing steps. Multiple flight animations may overlap. Magic remains experimental and is not a standardized Meta interaction pattern.
 
-## Bilder und Kameras
+## Images and cameras
 
-`image.*` und `camera.*` können als Rahmen platziert werden. Die beim Platzieren gewählte Orientierung wird im räumlichen Anker gespeichert, damit der Rahmen nicht ständig zum Kopf gedreht wird. Bild-Entitäten aktualisieren sich ungefähr alle zehn Sekunden; Kameras liefern eine Folge aktueller Einzelbilder mit bis zu zwei Abrufen pro Sekunde plus Netzwerklaufzeit. **Kein flüssiger Video-/Audiostream.** Zeitstempel und Fehlermeldungen unterscheiden aktuelle von veralteten Bildern. Maximal zwei parallele Abrufe; große oder nicht unterstützte Antworten werden verworfen. Verborgene Rahmen stellen ihre Abrufe ein und geben das Bild frei.
+`image.*` and `camera.*` can be placed as frames. Placement orientation is stored in the Spatial Anchor so the frame does not constantly turn toward the head. Image entities update approximately every ten seconds; cameras provide a sequence of current snapshots with up to two requests per second plus network time. **No smooth video/audio stream.** Timestamps and errors distinguish current from stale images. At most two requests run concurrently; large or unsupported responses are discarded. Hidden frames stop fetching and release their image.
 
-Abrufe verwenden ausschließlich den konfigurierten HA-Server und seine authentifizierten Proxy-Endpunkte. Fremde `entity_picture`-URLs und HTTP-Weiterleitungen erhalten keinen HA-Token. Die App speichert Kamerabilder nicht dauerhaft.
+Requests use only the configured HA server and its authenticated proxy endpoints. External `entity_picture` URLs and HTTP redirects do not receive the HA token. The app does not persist camera images.
 
-## Räume und Updates
+## Rooms and updates
 
-Jede Entität behält ihre eigene gespeicherte Anker-UUID. HA-Räume dienen der Auswahl und sind nicht automatisch dieselben Datensätze wie die von Meta erfassten physischen Räume. Ein Raumwechsel darf bestehende Zuordnungen nicht neu am Startpunkt anlegen. Icons erscheinen erst nach stabilem, aktuell verfolgtem Tracking; nicht gefundene Anker werden erneut gesucht. [Trackingdetails](TRACKING-RECOVERY.md).
+Each entity retains its own saved anchor UUID. HA rooms serve selection and are not automatically the same records as Meta's captured physical rooms. A room change must not recreate existing mappings at the startup position. Icons appear only after stable, currently tracked localization; missing anchors are retried. [Tracking details](TRACKING-RECOVERY.md).
 
-Die APK über die vorhandene Installation installieren. Nicht deinstallieren und keine App-Daten löschen: Token und Zuordnungen liegen im bisherigen App-Speicher.
+Install the APK over the existing installation. Do not uninstall or clear app data: the token and mappings reside in existing app storage.
 
-## Dokumentation und Abnahme
+## Documentation and acceptance
 
-[Recherche](DESIGN-RESEARCH.md) · [Mehrraum- und Quest-Abnahme](QUEST-TEST.md) · [Verkauf und Lizenzen](COMMERCIAL-READINESS.md) · [Buildstatus](BUILD-STATUS.md).
+[Research](DESIGN-RESEARCH.md) · [Multi-room and Quest acceptance](QUEST-TEST.md) · [Commercial readiness and licensing](COMMERCIAL-READINESS.md) · [Build status](BUILD-STATUS.md).
 
-Automatisierte Prüfungen können Zustandslogik, HA-Befehle, UI-Aufbau und gespeicherte Zuordnungen prüfen. Sie belegen nicht, dass die Quest im echten Gebäude korrekt relokalisiert, alle Gesten zuverlässig erkennt oder die erforderliche Bildrate hält. Diese Gerätetests bleiben vor einer Verkaufsfreigabe erforderlich.
+Automated checks can verify state logic, HA commands, UI structure, and stored mappings. They do not establish that Quest correctly relocalizes in a real building, recognizes all gestures reliably, or maintains the required frame rate. Device tests remain necessary before approval for sale.

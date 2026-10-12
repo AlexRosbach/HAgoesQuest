@@ -1,19 +1,19 @@
-# Entwicklung und Kommentarstil
+# Development and commenting style
 
-## Vorbild und Sprache
+## Reference and language
 
-Die Struktur orientiert sich an [LanLens](https://github.com/AlexRosbach/LanLens/tree/b8fa87166ed39ff6f35305fbca6dec6ead7eda20): ein schneller Einstieg in der README, eine technische Referenz, eine symptomorientierte Wissensdatenbank sowie kurze englische Modul-/Funktionsbeschreibungen. Beispiele dafür sind dort `docs/documentation.md`, `docs/knowledgebase.md`, `backend/services/scan_targets.py` und `backend/services/crypto.py`.
+The structure follows [LanLens](https://github.com/AlexRosbach/LanLens/tree/b8fa87166ed39ff6f35305fbca6dec6ead7eda20): a quick introduction in the README, a technical reference, a symptom-oriented knowledge base, and short English module/function descriptions. Examples there include `docs/documentation.md`, `docs/knowledgebase.md`, `backend/services/scan_targets.py`, and `backend/services/crypto.py`.
 
-HAgoesQuest behält deutsche Benutzer- und Projektdokumentation sowie die englische Bedienungsanleitung. Code-Bezeichner und technische Kommentare sind Englisch. Python-Docstrings werden sinngemäß als C#-XML-Kommentare umgesetzt; fremde Implementierungen und Lizenzangaben werden nicht kopiert.
+HAgoesQuest uses English for repository documentation, code identifiers, and technical comments. The app retains its German and English localization. Python docstrings are adapted conceptually as C# XML comments; third-party implementations and licensing statements are not copied.
 
-## Was kommentiert wird
+## What to comment
 
-- Klassenbeschreibung: Verantwortung und relevante Grenzen eines Moduls.
-- Öffentliche oder schwierige Schnittstelle: Eingaben, Rückgabebedeutung, Einheiten, Fehlerverhalten oder Seiteneffekte, soweit nicht aus der Signatur erkennbar.
-- Inline-Kommentar: Warum ein Schutz, eine Reihenfolge oder eine ungewöhnliche Entscheidung nötig ist.
-- Zustandsautomaten: Wer setzt zurück, wer hält das Ziel, wann entsteht ein einmaliges Ereignis?
+- Class descriptions: The module's responsibility and relevant limitations.
+- Public or complex interfaces: Inputs, return meaning, units, error behavior, or side effects where these are not apparent from the signature.
+- Inline comments: Why a safeguard, ordering, or unusual decision is necessary.
+- State machines: Who resets the state, who owns the target, and when does a one-time event occur?
 
-Einfache Zuweisungen und selbsterklärende Getter benötigen keine Nacherzählung. Kommentare beschreiben den tatsächlichen Code, keine geplante Funktion. Beispiel:
+Simple assignments and self-explanatory getters do not need narration. Comments describe actual code, not planned functionality. Example:
 
 ```csharp
 /// <summary>Returns true once navigation has settled and the previous input is released.</summary>
@@ -22,26 +22,26 @@ Einfache Zuweisungen und selbsterklärende Getter benötigen keine Nacherzählun
 public bool Step(bool active, double time)
 ```
 
-Ein sinnvoller Inline-Kommentar erklärt etwa, warum ein Timeout keinen zweiten HA-Befehl auslösen darf. „Set busy to false“ neben `Busy = false` bringt keinen zusätzlichen Nutzen.
+A useful inline comment might explain why a timeout must not trigger a second HA command. “Set busy to false” beside `Busy = false` adds no value.
 
-## Dokumentation pflegen
+## Maintaining documentation
 
-| Änderung | Zu aktualisieren |
+| Change | Update |
 | --- | --- |
-| Sichtbare Bedienung | `INSTALLATION.md`, `USER-GUIDE-EN.md`, bei Bedarf Wissensdatenbank |
-| Schnittstelle, Persistenz oder Zustandsablauf | `documentation.md` und betroffene Code-Kommentare |
-| Reproduzierbarer Fehlerfall | `knowledgebase.md` mit Symptom, Bedeutung und Prüfschritten |
-| Release | `CHANGELOG.md`, Versions-/Releasehinweise und Buildnachweise |
-| Nur Kommentare oder Texte | Eintrag unter „Unveröffentlicht“; keine neue APK behaupten |
+| Visible interaction | `INSTALLATION.md`, `USER-GUIDE-EN.md`, and the knowledge base if needed |
+| Interface, persistence, or state flow | `documentation.md` and affected code comments |
+| Reproducible failure | `knowledgebase.md` with symptoms, meaning, and checking steps |
+| Release | `CHANGELOG.md`, version/release notes, and build evidence |
+| Comments or text only | An Unreleased entry; do not claim a new APK |
 
-Historische Versionsdateien bleiben als Historie erhalten. Die README zeigt den aktuellen Einstieg und verweist für ältere Änderungen auf den Changelog. Einen früheren Buildbericht nicht so umschreiben, als sei ein neuer Hardwaretest durchgeführt worden.
+Historical version files remain as records. The README provides the current entry point and links to the changelog for older changes. Do not rewrite an earlier build report as though a new hardware test had been performed.
 
-## Geeignete Prüfungen
+## Appropriate checks
 
-Kernlogik mit `tests/Run-Tests.ps1` oder .NET 8 prüfen. Für geänderte Unity-Eingabe-/Netzwerkabläufe `tools/Test-Network.ps1` verwenden. Darstellungsänderungen im Editor rendern und auf der Quest prüfen. Die Befehle und Grenzen stehen in der [technischen Referenz](documentation.md#prüfungen).
+Check core logic with `tests/Run-Tests.ps1` or .NET 8. For changed Unity input/network flows, use `tools/Test-Network.ps1`. Render presentation changes in the editor and check them on the Quest. Commands and limitations are in the [technical reference](documentation.md#verification).
 
-Bei reinen Kommentaränderungen prüfen, dass die C#-Tokens außerhalb von Kommentaren und Formatierung gleich geblieben sind. Markdown-Verweise auf lokale Dateien müssen auflösbar sein. Ein vollständiger APK-Neubau ist dafür nicht nötig.
+For comment-only changes, verify that C# tokens outside comments and formatting remain unchanged. Markdown links to local files must resolve. A complete APK rebuild is unnecessary for these changes.
 
-## Daten und Veröffentlichung
+## Data and publication
 
-Token, Signaturschlüssel, private SDK-Einstellungen und persönliche Konfigurationsdateien gehören nicht ins Repository. Bei Änderungen an Paketname, Signatur, Keystore-Alias oder Ankerformaten die Update-Folgen und eine nötige Migration ausdrücklich beschreiben. `PrivateBuildSettings` muss die lokalen SDK-Einstellungen weiterhin aus dem Player ausschließen. Die bestehende [Einschätzung zu Verkauf und Lizenzen](COMMERCIAL-READINESS.md) bleibt maßgeblich; der Dokumentationsstil eines anderen Projekts überträgt keine Lizenz.
+Tokens, signing keys, private SDK settings, and personal configuration files do not belong in the repository. Changes to the package name, signature, Keystore alias, or anchor formats must explicitly document update consequences and any required migration. `PrivateBuildSettings` must continue excluding local SDK settings from the player. The existing [commercial readiness and licensing assessment](COMMERCIAL-READINESS.md) remains applicable; another project's documentation style does not transfer a license.

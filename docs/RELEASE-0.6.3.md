@@ -1,11 +1,11 @@
 # HA goes Quest 0.6.3
 
-- HA-Raumauswahl mit eigenem Bereichskatalog und Aktualisierung nach dem Laden.
-- Schutz vor versehentlicher Auswahl beim Zurückgehen; Pinch-Zielen hat Vorrang vor zufälliger Listenberührung.
-- Beide Hände können bedienen, eine Hand übernimmt die laufende Aktion.
-- Dimmen und Lautstärkeregelung bleiben beim Wegschauen am gewählten Ziel; konstante Drehreferenz.
-- Räumliche smaragdgrüne Lichtbögen statt flachem Hand-Leuchtfleck.
+- HA room selection with a separate area catalog and refresh after loading.
+- Protection against accidental selection when navigating Back; pinch targeting takes precedence over incidental list touch.
+- Either hand can interact; one hand owns the current action.
+- Brightness and volume adjustment retain the selected target when looking away, with a constant rotation reference.
+- Spatial emerald light arcs replace the flat hand glow.
 
-Version 0.6.3 / Android-Code 12. Ohne Deinstallation aktualisieren, damit Zugangsdaten und Zuordnungen erhalten bleiben. APK-Upload erfolgt manuell. Quest-Hardwaretest steht aus.
+Version 0.6.3 / Android code 12. Update without uninstalling to preserve credentials and mappings. APK upload remains manual. Quest hardware testing remains outstanding.
 
-Anleitung: docs/VERSION-0.6.3.md.
+Instructions: docs/VERSION-0.6.3.md.

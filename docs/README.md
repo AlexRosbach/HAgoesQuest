@@ -1,21 +1,21 @@
-# Dokumentation
+# Documentation
 
-Aktueller Funktionsstand: **0.6.3**. Versionsdateien beschreiben den damaligen Stand; für die heutige Bedienung mit der Installationsanleitung beginnen.
+Current feature version: **0.6.3**. Version files describe their historical state; start with the installation guide for current instructions.
 
-| Du möchtest … | Hier weiterlesen |
+| To… | Read… |
 | --- | --- |
-| die APK installieren und Home Assistant verbinden | [Installation und Bedienung](INSTALLATION.md) |
-| die englische Anleitung lesen | [English guide](USER-GUIDE-EN.md) |
-| ein Problem mit Token, Räumen oder Gesten lösen | [Wissensdatenbank](knowledgebase.md) |
-| Architektur, Anfragen und Datenformate verstehen | [Technische Referenz](documentation.md) |
-| Code ändern oder Kommentare ergänzen | [Entwicklungsrichtlinien](CONTRIBUTING.md) |
-| Änderungen zwischen Versionen nachlesen | [Changelog](../CHANGELOG.md) |
-| sehen, was tatsächlich geprüft wurde | [Buildstatus](BUILD-STATUS.md) und [APK-Prüfbericht](APK-VERIFICATION.txt) |
-| einen echten Quest-Test durchführen | [Hardware-Abnahmeliste](QUEST-TEST.md) |
-| Tracking nach Systemdialogen nachvollziehen | [Tracking-Wiederherstellung](TRACKING-RECOVERY.md) |
-| Designentscheidungen und Herkunft verstehen | [Design-Recherche](DESIGN-RESEARCH.md), [Grafiken](ART-PROMPTS.md), [Magie](ART-MAGIC.md) |
-| eine kommerzielle Veröffentlichung vorbereiten | [Verkauf und Lizenzen](COMMERCIAL-READINESS.md) |
+| Install the APK and connect Home Assistant | [Installation and operation](INSTALLATION.md) |
+| Read the concise user guide | [User guide](USER-GUIDE-EN.md) |
+| Resolve a token, room, or gesture problem | [Knowledge base](knowledgebase.md) |
+| Understand architecture, requests, and data formats | [Technical reference](documentation.md) |
+| Change code or add comments | [Contribution guidelines](CONTRIBUTING.md) |
+| Review changes between versions | [Changelog](../CHANGELOG.md) |
+| See what was actually verified | [Build status](BUILD-STATUS.md) and [APK verification report](APK-VERIFICATION.txt) |
+| Perform a real Quest test | [Hardware acceptance checklist](QUEST-TEST.md) |
+| Understand tracking after system dialogs | [Tracking recovery](TRACKING-RECOVERY.md) |
+| Understand design decisions and asset provenance | [Design research](DESIGN-RESEARCH.md), [artwork](ART-PROMPTS.md), [magic](ART-MAGIC.md) |
+| Prepare a commercial release | [Commercial readiness and licensing](COMMERCIAL-READINESS.md) |
 
-## Welche Angabe ist maßgeblich?
+## Which record applies?
 
-Die technische Referenz beschreibt den Quellcode von 0.6.3. Der Buildbericht dokumentiert die konkrete gebaute APK; Kommentare und Dokumentation können danach verbessert werden, ohne eine neue APK zu erstellen. Erfolgreiche Desktop-Prüfungen ersetzen keinen Test von Handtracking, Raumlokalisierung oder Android-Keystore auf der Quest.
+The technical reference describes the 0.6.3 source code. The build report documents the specific APK that was built; comments and documentation may subsequently improve without a new APK. Successful desktop checks do not replace testing hand tracking, room localization, or Android Keystore on the Quest.

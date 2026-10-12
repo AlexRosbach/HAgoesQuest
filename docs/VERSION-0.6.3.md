@@ -1,27 +1,27 @@
-# Version 0.6.3 – sichere Navigation und beide Hände
+# Version 0.6.3 – Safe navigation and both hands
 
-## Räume und Entitätenliste
+## Rooms and entity list
 
-Die Raumauswahl lädt einen eigenen Home-Assistant-Bereichskatalog. Auch Bereiche ohne unterstützte Entitäten sind auswählbar. Ein bereits geöffnetes Raummenü aktualisiert sich, sobald der Abruf fertig ist. Bei einem Fehler bleiben zuvor geladene Zuordnungen erhalten; unter „Suchen & Filtern“ lassen sie sich erneut laden. HA-Bereiche und gescannte Quest-Räume bleiben unterschiedliche Dinge.
+Room selection loads a separate Home Assistant area catalog. Areas without supported entities are selectable too. An already-open room menu refreshes when loading completes. On error, previously loaded assignments remain available; reload them under Search & filter. HA areas and scanned Quest rooms remain distinct.
 
-Nach einem Seitenwechsel müssen Pinch oder Berührung erst gelöst werden. Eine kurze Ruhephase verhindert, dass derselbe Klick eine Entität auf der neuen Seite auslöst. Beim Zielen auf die Werkzeugleiste hat der Pinch-Strahl Vorrang vor einem zufällig nahen Finger an der Liste. Abgebrochene Listenbewegungen wählen keine Zeile aus.
+After changing pages, release any pinch or touch first. A short quiet period prevents the same click from selecting an entity on the new page. When targeting the toolbar, the pinch ray takes precedence over incidental finger proximity to the list. Canceled list movements do not select a row.
 
-## Beide Hände, eine laufende Aktion
+## Both hands, one active action
 
-Die erste aktive Hand übernimmt die Bedienung. Die zweite Hand kann eine laufende Geste nicht übernehmen; beide Hände müssen zwischen einem Wechsel kurz loslassen. Bei gleichzeitigem Beginn entscheidet die bevorzugte Bedienhand aus den Einstellungen. Die Position der Uhr bleibt davon unabhängig.
+The first active hand owns interaction. The second cannot take over an ongoing gesture; briefly release both hands between switches. The preferred interaction hand in settings decides simultaneous starts. Watch position is independent of this.
 
-Eine Entität ansehen und mit links oder rechts pinchen schaltet sie. Für Helligkeit oder Lautstärke zunächst die Hand kurz öffnen, dann eine Faust machen und drehen. Sobald die Faust erkannt ist, bleibt die Entität fest gewählt. Wegschauen beendet die Regelung nicht, und Kopfbewegungen verändern nicht deren Drehreferenz. Hand öffnen übernimmt den Wert. Trackingverlust, Raumwechsel oder Menüöffnung brechen weiterhin ab. Im Magiemodus bleibt auch das Wurfziel bis zum Öffnen festgehalten.
+Look at an entity and pinch with either hand to toggle it. For brightness or volume, briefly open the hand, then make a fist and rotate. Once the fist is recognized, the entity remains captured. Looking away does not stop adjustment, and head movement does not change its rotation reference. Open the hand to commit the value. Tracking loss, room changes, and menu opening still cancel. Magic mode likewise retains the throw target until opening.
 
-Der Menü-Pinch der Uhrenhand ist außerhalb eines Entitätsziels bzw. Menübedienelements verfügbar. Beim Bedienen einer Entität hat deren Geste Vorrang. Alternativ die Uhr mit der anderen Hand antippen.
+The watch-hand menu pinch is available outside an entity target or menu control. While controlling an entity, its gesture takes precedence. Alternatively, tap the watch with the other hand.
 
-## Bereitschaftseffekt
+## Readiness effect
 
-Drei offene smaragdgrüne Lichtbögen mit weichen Rändern folgen der Handfläche in drei Dimensionen. Sie lassen die echte Hand frei sichtbar und werden bei einer geschlossenen Faust deutlicher. Keine künstliche Hand und keine Interaktionsfläche. Der Effekt bleibt separat abschaltbar.
+Three open emerald light arcs with soft edges follow the palm in three dimensions. They leave the real hand visible and become more pronounced with a closed fist. No artificial hand or interaction surface. The effect can still be disabled separately.
 
-## Update und Abnahme
+## Update and acceptance
 
-Version 0.6.3 / Android-Code 12. Paketname, Signatur, Token-Speicher und Ankerformate bleiben unverändert. Über die vorhandene Installation installieren; nicht deinstallieren oder Daten löschen. APK-Upload bleibt manuell.
+Version 0.6.3 / Android code 12. Package name, signature, token storage, and anchor formats remain unchanged. Install over the existing installation; do not uninstall or clear data. APK upload remains manual.
 
-Automatisierte Nachweise stehen in [BUILD-STATUS.md](BUILD-STATUS.md). Auf der Quest noch zu prüfen: beide Hände und schneller Wechsel, Zurück per Pinch und Antippen, asynchron geladene HA-Bereiche, Wegschauen während der Regelung, Bewegung durch Türen sowie Stärke und räumliche Lage des neuen Effekts.
+Automated evidence is in [BUILD-STATUS.md](BUILD-STATUS.md). Still to check on Quest: both hands and rapid switching, Back through pinch and touch, asynchronously loaded HA areas, looking away during adjustment, moving through doorways, and the new effect's strength and spatial position.
 
-Bereichsabfrage nach der offiziellen [Home-Assistant-Dokumentation](https://www.home-assistant.io/template-functions/area_entities/).
+Area queries follow the official [Home Assistant documentation](https://www.home-assistant.io/template-functions/area_entities/).

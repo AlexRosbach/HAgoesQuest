@@ -1,149 +1,151 @@
-# Abnahme auf der Quest 3
+# Quest 3 acceptance testing
 
-Desktop-Prüfungen sind unten markiert. **Alle Gerätetests sind noch offen.** Die automatischen Tests ersetzen die Abnahme in der Brille nicht.
+Desktop checks are marked below. **All device tests remain outstanding.** Automated tests do not replace headset acceptance.
 
-## Build und erster Start
+The version-specific sections preserve historical test procedures. Later sections supersede earlier gesture behavior; use the 0.6.3 rules for current hand ownership and looking away during adjustment.
 
-- [x] Unity importiert alle festgelegten Pakete ohne Compile-Fehler.
-- [x] OpenXR-Buildvalidierung und Android-ARM64/IL2CPP-Build sind erfolgreich.
-- [x] Signatur und erforderliche Einträge im fertigen APK-Manifest wurden geprüft; siehe BUILD-STATUS.md.
-- [ ] APK wird auf der Quest installiert und als immersive App gestartet.
-- [ ] Reale Umgebung ist im Passthrough sichtbar; UI ist mit beiden Augen gut lesbar.
-- [ ] Ohne gespeicherte Verbindung erscheinen klar markierte Demo-Daten; echte Geräte werden nicht angesprochen.
-- [ ] Linker Pinch/X öffnet ein im Raum stehendes Menü; Rechts-Pinch/Trigger wählt dessen Buttons.
+## Build and first launch
 
-## Raum und Persistenz
+- [x] Unity imports all pinned packages without compilation errors.
+- [x] OpenXR build validation and Android ARM64/IL2CPP build succeed.
+- [x] Signature and required entries in the finished APK manifest checked; see BUILD-STATUS.md.
+- [ ] APK installs on Quest and launches as an immersive app.
+- [ ] Real surroundings are visible in passthrough; UI is readable with both eyes.
+- [ ] Without a saved connection, clearly marked demo data appears; real devices are not contacted.
+- [ ] Left pinch/X opens a stationary menu; right pinch/trigger selects its buttons.
 
-- [ ] Ablehnen der Raumberechtigung ergibt verständlichen Hinweis, keinen Absturz.
-- [ ] „Raum laden / erstmals scannen“ lädt vorhandenen Raum oder startet die Erfassung.
-- [ ] „Raum neu scannen“ öffnet die Erfassung auch bei vorhandenem Raum; Abbrechen ist möglich.
-- [ ] Scanfläche-Platzierung zeigt bei fehlendem Treffer keine speicherbare Position.
-- [ ] Freie Platzierung funktioniert einen Meter vor dem Headset.
-- [ ] Handplatzierung: Greifen, Bewegen, Loslassen und Bestätigen funktionieren. Trackingverlust speichert keine Position.
-- [ ] Wohnungskarte zeigt Raumgrenzen, aktuelle Position, Laufweg und lokalisierte Geräte.
-- [ ] Generierte Symbole, Fokusanimation und Zustandsrückmeldung sind gut lesbar und flüssig.
-- [ ] Lampen- und Sensorzuordnung bleiben nach App-Neustart sowie Headset-Neustart am physischen Ort.
-- [ ] Bei nicht wiedergefundenem Anker erscheint kein geratenes Ersatzobjekt; erneutes Laden im richtigen Raum funktioniert.
-- [ ] Löschen einer Zuordnung entfernt Anzeige und gespeicherten Anker; nach Neustart bleibt sie gelöscht.
-- [ ] Erneuter Raumscan, Rezentrierung und Wechsel in einen anderen Raum verursachen keine falsche Gerätezuordnung.
+## Rooms and persistence
+
+- [ ] Denying room permission produces an understandable message, not a crash.
+- [ ] Load/first scan loads an existing room or starts capture.
+- [ ] Rescan opens capture even when a room exists; cancellation works.
+- [ ] Scan-surface placement offers no savable position without a hit.
+- [ ] Free placement works one meter in front of the headset.
+- [ ] Hand placement: grab, move, release, and confirm work. Tracking loss does not save a position.
+- [ ] Apartment map shows room boundaries, current position, walking path, and localized devices.
+- [ ] Generated symbols, focus animation, and state feedback are readable and smooth.
+- [ ] Light and sensor mappings remain at their physical locations after app and headset restarts.
+- [ ] A missing anchor produces no guessed replacement object; reloading in the correct room works.
+- [ ] Deleting a mapping removes its display and saved anchor; it stays deleted after restart.
+- [ ] Rescanning, recentering, and moving to another room do not cause incorrect device mappings.
 
 ## Home Assistant
 
-- [ ] Verbindung über HTTPS mit gültigem Zertifikat funktioniert.
-- [ ] URL und Token lassen sich in der Brille eingeben/einfügen; der Token bleibt verdeckt.
-- [ ] Verbindung bleibt nach Neustart erhalten; nur verschlüsselte Zugangsdaten liegen im App-Verzeichnis.
-- [ ] Verbindung vergessen löscht Zugangsdaten und schaltet zurück zur Demo.
-- [ ] Serverwechsel zeigt nur die zu diesem Server gehörenden räumlichen Zuordnungen.
-- [ ] Als reine Anzeige platzierte Lampe schaltet bei einer Geste nicht.
-- [ ] Lokales HTTP funktioniert nur mit ausdrücklicher Freigabe in der Konfiguration.
-- [ ] Ungültiger Token zeigt Zugriffsfehler. Keine Secrets stehen im Unity-/Gerätelog.
-- [ ] Authentische Geräteliste erscheint; lange Namen und größere Listen bleiben bedienbar.
-- [ ] Licht/Schalter anvisieren und danach pinchen führt zu genau einem korrekten Service-Aufruf.
-- [ ] Früher/gehältener Pinch, Blickwechsel bei gehaltenem Pinch und Rückkehr nach Trackingverlust schalten nicht versehentlich.
-- [ ] Sensoren zeigen Einheit und aktualisierte Werte. Sensoren und nicht verfügbare Geräte sind nicht schaltbar.
-- [ ] Extern in HA geschaltete Lampe aktualisiert ihre Anzeige nach der nächsten Abfrage.
-- [ ] WLAN/HA-Ausfall: Werte werden als veraltet angezeigt, Befehle gesperrt. Verbindung erholt sich ohne nachträgliche Schaltbefehle.
-- [ ] Verlorene Antwort auf Schaltbefehl: Befehl wird nicht automatisch wiederholt; Status wird erneut gelesen.
-- [ ] App pausieren/fortsetzen und Systemmenü öffnen erzeugt keine unbeabsichtigte Aktion.
+- [ ] HTTPS connection with a valid certificate works.
+- [ ] URL and token can be entered/pasted in the headset; the token stays hidden.
+- [ ] Connection survives restart; only encrypted credentials reside in the app directory.
+- [ ] Forgetting the connection deletes credentials and returns to demo mode.
+- [ ] Changing servers shows only spatial mappings for that server.
+- [ ] A light placed as display-only does not switch on a gesture.
+- [ ] Local HTTP works only with explicit opt-in in configuration.
+- [ ] Invalid tokens show an access error. No secrets appear in Unity/device logs.
+- [ ] The actual device list appears; long names and large lists remain usable.
+- [ ] Targeting a light/switch and then pinching causes exactly one correct service call.
+- [ ] An early/held pinch, gaze changes while pinching, and recovery after tracking loss do not switch accidentally.
+- [ ] Sensors show units and refreshed values. Sensors and unavailable devices cannot be switched.
+- [ ] A light switched externally in HA updates after the next poll.
+- [ ] Wi-Fi/HA outage: values are marked stale and commands blocked. Connection recovers without delayed switching commands.
+- [ ] Lost command response: the command is not retried automatically; state is read again.
+- [ ] Pausing/resuming the app and opening the system menu produce no unintended action.
 
-Beim Test Ergebnisse, Unity-Version, Quest-OS-Version, Datum und etwaige Fehler ergänzen. Vor Nutzung als tägliche Haussteuerung diese Liste abschließen.
+Record results, Unity version, Quest OS version, date, and any errors during testing. Complete this checklist before using the app for daily home control.
 
-## Ergänzungen für 0.3.0
+## Additions for 0.3.0
 
-- [ ] Echte Hände im Passthrough sichtbar; keine virtuellen Handmodelle darüber.
-- [ ] Frei durch mehrere erfasste Räume gehen; Boundaryless-Verhalten auf dem verwendeten Horizon OS prüfen. Anker bleiben am physischen Ort.
-- [ ] Typ, HA-Raum und Suchtext kombinieren; leere Trefferliste und „Ohne Raumzuordnung“ prüfen. Danach Filter zurücksetzen.
-- [ ] Lampe, Schalter und reine Anzeige platzieren. Schalter hat eigenes Icon. Andere Domänen (z. B. climate/lock) bleiben reine Anzeigen.
-- [ ] Außerhalb von 30 cm nur Icon; innerhalb von 30 cm Name/Wert; beim Entfernen Text wieder weg.
-- [ ] Fingerstrahl endet am tatsächlich anvisierten Icon, auch bei Sensoren. Pinch schaltet nur Lampen/Schalter, ohne Zielsprung oder Mehrfachauslösung.
-- [ ] QR-Scan: Freigabe erlauben/ablehnen, Scan abbrechen, App pausieren, erneut starten. Kamera nur im aktiven Scan.
-- [ ] Token-QR und JSON-QR vom Handy lesen; Adresse vor Verbinden prüfen. QR darf keine automatische Verbindung oder HTTP-Freigabe auslösen.
-- [ ] Beschädigten QR, normalen Weblink und ungültigen Token prüfen; keine Zugangsdaten in Fehlermeldungen.
+- [ ] Real hands are visible in passthrough, with no virtual hand models over them.
+- [ ] Walk freely through multiple captured rooms; check Boundaryless behavior on the installed Horizon OS. Anchors remain at physical locations.
+- [ ] Combine type, HA room, and search text; check empty results and Unassigned. Then reset filters.
+- [ ] Place a light, switch, and display-only entity. The switch has its own icon. Other domains, such as climate/lock, remain display-only.
+- [ ] Beyond 30 cm, only the icon appears; within 30 cm, name/value appear; moving away hides text.
+- [ ] Finger ray ends at the actual target icon, including sensors. Pinch switches only lights/switches without target jumps or repeated activation.
+- [ ] QR scan: allow/deny permission, cancel scan, pause app, restart scan. Camera active only during scanning.
+- [ ] Read token and JSON QR codes from a phone; check address before connecting. QR must not automatically connect or allow HTTP.
+- [ ] Test damaged QR codes, ordinary web links, and invalid tokens; no credentials in errors.
 
-## Regressionen ab 0.3.2
+## Regressions from 0.3.2
 
-- Quest-Systemdialog zum Bearbeiten der Räume öffnen und abschließen/abbrechen. Danach rechte Hand und linken Menü-Pinch prüfen; Menü muss wieder vor dem Kopf stehen.
-- Annäherung an ein Icon: Kreis/Rand sichtbar, Größenanstieg zwischen 1,2 m und 30 cm; Text erst innerhalb von 30 cm.
-- Platzierung per Zeiger und direkter Handposition jeweils mit einmaligem Pinch einfrieren, verschieben und bestätigen.
-- Platzierung im Hauptmenü löschen, auch wenn Raumanker nicht gefunden oder HA-Entität nicht verfügbar ist; nach App-Neustart darf sie nicht zurückkehren.
+- Open the Quest room-editing system dialog and complete/cancel it. Then check the right hand and left menu pinch; the menu must return in front of the head.
+- Approach an icon: circle/border visible, size increases between 1.2 m and 30 cm; text only within 30 cm.
+- Freeze pointer and direct-hand placement with a single pinch, move again, and confirm.
+- Delete a placement from the main menu even when its room anchor is missing or HA entity unavailable; it must not return after restart.
 
-## Magie ab 0.4.0
+## Magic from 0.4.0
 
-- Modus einschalten, App neu starten und gespeicherte Einstellung prüfen.
-- Rechte offene Hand zum Icon richten, kurz halten und vorwärts stoßen. Zielrand, einmaligen Schaltbefehl, Feuerball vom Handteller, Schweif und Aufprall prüfen.
-- Keine Auslösung durch Gehen, Zurückziehen des Kopfes, seitliches Winken, langsames Hinreichen, geschlossene Hand, Trackingverlust oder gehaltene Hand nach einem Stoß.
-- Sensoren, reine Anzeigen, veraltete Zustände, Menüs, Platzierung und Raumscan dürfen keine Magie-Schaltbefehle auslösen.
-- Nach Rücknahme/Schließen der Hand und Ablauf der Pause muss ein neuer Stoß möglich sein.
+- Enable the mode, restart the app, and check the saved setting.
+- Aim an open right hand at the icon, briefly hold, then thrust forward. Check target border, single switching command, fireball from the palm, trail, and impact.
+- No activation from walking, moving the head backward, sideways waving, slow reaching, closed hand, tracking loss, or holding after a thrust.
+- Sensors, display-only entities, stale states, menus, placement, and room capture must not trigger magic switching commands.
+- After retracting/closing the hand and waiting for cooldown, another thrust must be possible.
 
-## Regressionen ab 0.4.1
+## Regressions from 0.4.1
 
-- Räume im Quest-Systemdialog neu erstellen; anschließend mehrere Menüeinträge mit der rechten Hand auswählen.
-- Mit rechtem Daumen/Zeigefinger lange die Quest-Neukalibrierung ausführen. Finger lösen; der rechte Zeiger muss weiter auf Icons und Menü zeigen und neue Pinches erkennen.
-- Linker Pinch öffnet, nach Loslassen schließt ein weiterer Pinch auch Untermenüs. Gedrückthalten darf das Menü nicht wiederholt umschalten.
-- Drei getrennte Vorwärtsstöße mit jeweiligem Zurücknehmen ausführen, ohne auf das Ende der Fluganimation zu warten. Pro Geste maximal ein Befehl, kein automatisch wiederholtes Schalten.
+- Recreate rooms in the Quest system dialog; afterward select several menu entries with the right hand.
+- Perform a long Quest recalibration hold with the right thumb/index finger. Release; the right pointer must still target icons and menus and recognize new pinches.
+- Left pinch opens; after release, another pinch closes submenus too. Holding must not repeatedly toggle the menu.
+- Perform three separate forward thrusts, retracting each time, without waiting for the flight animation to end. At most one command per gesture, no automatic repeated switching.
 
-## Tracking und mehrere Räume ab 0.5.0
+## Tracking and multiple rooms from 0.5.0
 
-- Zwei Entitäten in unterschiedlichen Räumen platzieren. App vollständig schließen, in einem anderen Raum mit anderer Blickrichtung neu starten. Icons müssen erst nach verlässlichem Tracking an ihren ursprünglichen realen Orten erscheinen.
-- Während des Starts Kameras kurz verdecken; keine Entität darf am Ursprung oder an einer veralteten Position sichtbar oder schaltbar sein. Nach Freigabe umsehen; fehlende Anker werden automatisch erneut gesucht.
-- Nach Trackingverlust, langem rechten Kalibrierungs-Pinch sowie Abschluss/Abbruch der Raumerfassung müssen Icons kurz verborgen bleiben und anschließend wieder am realen Ort erscheinen.
-- Platzierung einfrieren, dann kalibrieren oder den Systemdialog öffnen. Die alte Vorschau darf anschließend nicht gespeichert werden können; erneut platzieren.
-- Durch die Wohnung laufen: räumlich gefundene Icons sollen stehen bleiben. Kopfbewegung darf keine Entitäten in einen anderen Raum verschieben.
-- APK als Update installieren: vorhandener Token und Zuordnungen bleiben erhalten. Verlorene Anker dürfen keine neuen Zuordnungen erzeugen oder bestehende UUIDs überschreiben.
+- Place two entities in different rooms. Fully close the app, then restart in another room facing a different direction. Icons must appear at their original physical locations only after reliable tracking.
+- Briefly cover cameras during startup; no entity may be visible or switchable at the origin or a stale position. Uncover and look around; missing anchors are retried automatically.
+- After tracking loss, a long right calibration pinch, or completing/canceling room capture, icons must briefly stay hidden, then reappear at their real locations.
+- Freeze a placement, then recalibrate or open the system dialog. The old preview must no longer be savable; place it again.
+- Walk through the apartment: spatially localized icons should stay fixed. Head movement must not move entities into another room.
+- Install the APK as an update: existing token and mappings remain. Missing anchors must not create new mappings or overwrite existing UUIDs.
 
-## Bedienung und Oberfläche ab 0.5.0
+## Interaction and interface from 0.5.0
 
-- Rechter ausgestreckter Zeigefinger: Strahl auch ohne Treffer sichtbar, bei Entity-Treffer stärker. Pinchen nach schnellem Zielen, Gedrückthalten, Zielwechsel und verlorenes Tracking prüfen; keine doppelten Befehle.
-- ISDK-Antippen von vorne und schräg mit der rechten Fingerspitze; andere Finger und Annäherung von der Rückseite dürfen keine unbeabsichtigten Aktionen auslösen.
-- Mindestens 30 Entitäten aus vier HA-Räumen: acht vollständige Zeilen, letzte Zeile erreichbar, laufende Werte aktuell. Pinch-and-drag und direktes Wischen dürfen nicht versehentlich eine Zeile öffnen. Kombinierte Filter prüfen.
-- Uhrmodus speichern, App neu starten, Uhr antippen. Panel muss ruhig vor dem Kopf stehen und nicht dem bewegten Arm folgen. Linker Pinch bleibt verwendbar.
-- DE/EN umschalten und neu starten; Menüs, Statusmeldungen, Suche, Magie-Hinweise und Sensorzustände prüfen. Individuelle HA-Namen unverändert lassen.
-- Adresse, Token und Suche in der Meta-Systemtastatur bearbeiten, bestätigen und abbrechen. Nach jedem Fokuswechsel rechte Hand weiter verwendbar; Token bleibt verdeckt.
-- Sensor aus mehreren Metern mittig anschauen: Wert über Icon sichtbar, Wegschauen blendet ihn aus. Reiner Blick darf keine Geräte steuern.
-- Dimmbare Lampe und Lautsprecher separat testen: richtigen Regler greifen, seitlich ziehen, loslassen. HA-Wert muss folgen. Ein/Aus-Lampe ohne Dimmfähigkeit darf keinen Helligkeitsregler erhalten.
-- Übungsziel für Magie nutzen: keine HA-Befehle; grüne Bereitschaft sichtbar; mehrere Stöße nacheinander. Danach echte Lampe und Schalter prüfen.
-- Kamera- und Bildrahmen platzieren, App aus anderem Raum neu starten: Position und Wandorientierung erhalten. HA offline schalten, Berechtigung entziehen und zurückkehren: keine stillschweigend als aktuell ausgegebenen alten Bilder.
-- Sounds unterscheiden Lampe/Schalter, lassen sich abschalten und dürfen nach einem fehlgeschlagenen HA-Befehl keine bestätigte Aktion vortäuschen.
-- Bildrate und Speicherverbrauch mit vielen Icons und zwei sichtbaren Kamerarahmen über mindestens 30 Minuten auf der echten Quest messen.
+- Extend the right index finger: ray visible without a hit, stronger on entity hit. Test pinching after rapid targeting, holding, target changes, and tracking loss; no duplicate commands.
+- ISDK touch from the front and at an angle with the right fingertip; other fingers and rear approaches must not trigger unintended actions.
+- At least 30 entities across four HA rooms: eight complete rows, final row reachable, live values current. Pinch-and-drag and direct swiping must not accidentally open a row. Check combined filters.
+- Save watch mode, restart, and tap the watch. Panel must remain steady in front of the head and not follow the moving arm. Left pinch remains usable.
+- Switch DE/EN and restart; check menus, status messages, search, magic hints, and sensor states. Preserve custom HA names.
+- Edit, confirm, and cancel address, token, and search in the Meta system keyboard. Right hand remains usable after every focus change; token stays hidden.
+- Look directly at a sensor from several meters: value visible above icon; looking away hides it. Gaze alone must not control devices.
+- Test a dimmable light and speaker separately: grab the correct slider, drag sideways, release. HA value must follow. An on/off light without dimming must not receive a brightness slider.
+- Use the magic practice target: no HA commands, visible green readiness, repeated thrusts. Then test a real light and switch.
+- Place camera/image frames, then restart from another room: position and wall orientation retained. Take HA offline, revoke permission, and return: stale images must not silently appear current.
+- Sounds distinguish lights/switches, can be disabled, and must not imply a confirmed action after a failed HA command.
+- Measure frame rate and memory use on a real Quest for at least 30 minutes with many icons and two visible camera frames.
 
-## Bedienung ab 0.6.0 (ersetzt die älteren Gestenabläufe)
+## Interaction from 0.6.0 (supersedes older gesture flows)
 
-- [ ] Entität mit dem Punkt in der Kopfmitte auswählen. Handrichtung verändern: Das Ziel darf sich dadurch nicht ändern. Beim Wegschauen muss die Aufhellung verschwinden.
-- [ ] Bewusster Pinch schaltet einmal. Eine Faust langsam und schnell schließen: kein unbeabsichtigter Pinch-Befehl. Gehaltene Finger und Fokusverlust erzeugen keine Wiederholung.
-- [ ] Lampe und Lautsprecher ansehen, Hand kurz öffnen, Faust schließen und in beide Richtungen drehen. Prozentvorschau prüfen. Erst Öffnen übernimmt den Wert.
-- [ ] Während der Drehung wegschauen, Systemmenü öffnen oder Hand verdecken: kein Wert darf durch verlorenes Tracking bestätigt werden.
-- [ ] Magie: Bereitschaftsring ansehen, Faust schließen und öffnen. Drei Würfe hintereinander; pro Geste nur ein Befehl. Bei vorheriger Drehung nur Wertübernahme, kein Feuerball.
-- [ ] Sensoren aus 0,5 / 1 / 3 / 6 Metern ansehen. Schrift soll ungefähr dieselbe Winkelgröße behalten, lesbar sein und benachbarte Icons nicht dauerhaft verdecken.
-- [ ] Uhr links mit rechter Fingerspitze öffnen/schließen, dann Linkshändermodus wählen: Uhr rechts, Tippen/Pinch/Faustbedienung links. Präferenz nach Neustart erhalten.
-- [ ] Uhrzeit, Datum und Verbindungsanzeige ohne Überlappung; beim Armbewegen bleibt das geöffnete Menü ortsfest.
-- [ ] Hauptkacheln, 3D-Symbole und Beschriftung mit beiden Augen prüfen: keine Doppelbilder, fehlenden Objekte oder Tiefenkonflikte. Hover und Klickfeedback prüfen.
-- [ ] Zwei Räume, Kaltstart im anderen Raum und Systemkalibrierung wie oben erneut prüfen. Neue Gesten dürfen die räumliche Zuordnung nicht verändern.
+- [ ] Select an entity with the head-center dot. Changing hand direction must not change the target. Looking away removes the highlight.
+- [ ] Intentional pinch switches once. Close a fist slowly and quickly: no accidental pinch command. Held fingers and focus loss do not repeat.
+- [ ] Look at a light and speaker, briefly open the hand, make a fist, and rotate both ways. Check percentage preview. Only opening commits.
+- [ ] Look away, open the system menu, or cover the hand during rotation: no value may be confirmed through tracking loss.
+- [ ] Magic: observe readiness ring, close and open fist. Three consecutive throws; one command per gesture. After rotation, only commit the value, with no fireball.
+- [ ] View sensors from 0.5 / 1 / 3 / 6 meters. Text should retain approximately the same angular size, remain readable, and not permanently obscure neighboring icons.
+- [ ] Open/close the left watch with the right fingertip, then select left-handed mode: watch right, touch/pinch/fist interaction left. Preference survives restart.
+- [ ] Time, date, and connection status do not overlap; moving the arm leaves the opened menu stationary.
+- [ ] Check main tiles, 3D symbols, and labels with both eyes: no double images, missing objects, or depth conflicts. Check hover and click feedback.
+- [ ] Repeat two-room, cold-start-in-another-room, and system calibration tests above. New gestures must not change spatial mappings.
 
 ## Version 0.6.1
 
-- Menü bei hellem und dunklem Passthrough prüfen: alle Untermenüs, Fokus-/Druckzustände und Text auf beiden Augen lesbar; 3D-Symbole ohne fehlende Materialien.
-- Uhr an linkem und rechtem Arm anpassen; jede Richtung und Drehachse, Größenminimum und -maximum testen. Drehen des Arms bewegt die gespeicherte Uhr entsprechend.
-- Speichern, App-Neustart und Wechsel des Händermodus: passende Position bleibt erhalten. Abbrechen und Menü schließen ändern keinen gespeicherten Wert. Zurücksetzen betrifft nur das gewählte Handgelenk.
-- Tracking der Uhrenhand während Anpassung verlieren und wiederherstellen; Vorschau darf nicht an falscher Stelle erscheinen oder unabsichtlich gespeichert werden.
-- 0.6.0 → 0.6.1 ohne Deinstallation aktualisieren: Token und gespeicherte Entitäten bleiben erhalten.
+- Check the menu under bright and dark passthrough: all submenus, focus/pressed states, and text readable in both eyes; no missing materials on 3D symbols.
+- Adjust the watch on both arms; test every movement direction and rotation axis, minimum and maximum size. Rotating the arm moves the saved watch accordingly.
+- Save, restart, and switch handedness: correct position retained. Canceling and closing the menu do not change saved values. Reset affects only the selected wrist.
+- Lose and restore watch-hand tracking during adjustment; preview must not appear in the wrong location or save unintentionally.
+- Update 0.6.0 → 0.6.1 without uninstalling: token and saved entities retained.
 
 ## Version 0.6.2
 
-- Entitätenliste und Filter bei direkter und stark seitlicher Ansicht mit beiden Augen prüfen. Hintergrund darf keine Buttons überdecken; Suchen & Filtern und Zurück bleiben sichtbar und bedienbar, während nur die Liste scrollt.
-- Suche sowie Typ- und HA-Raumfilter kombinieren, zurücksetzen und erneut öffnen.
-- Von Raum A nach B gehen: A-Marker einschließlich Kamerarahmen verschwinden, B-Marker erscheinen nach stabiler Lokalisierung. Wieder zurückgehen; Zuordnungen bleiben erhalten. Räume auf verschiedenen Etagen prüfen.
-- Beim laufenden Faustregler und beim geöffneten Slider durch eine Tür gehen: keine Übernahme an das alte Ziel. Außerhalb der gescannten Wohnung dürfen keine platzierten Entitäten sichtbar/bedienbar sein.
-- Faustdrehen für Helligkeit und Lautstärke: Rasterklicken bei Wertänderung, keine Wiederholung beim Halten oder an 0/100 %. Sound aus: alle Klicks stumm.
-- Bereitschaftsleuchten für beide Bedienhände prüfen; verliert die Hand Tracking oder das Ziel wechselt, muss der Effekt verschwinden. Keine künstlichen Hände.
-- Untertitel und Hand-Effekt getrennt aus-/einschalten; Einstellungen nach Neustart erhalten.
+- Check entity list and filters head-on and from strong side angles with both eyes. Background must not cover buttons; Search & filter and Back stay visible and usable while only the list scrolls.
+- Combine search, type, and HA room filters, reset them, and reopen.
+- Walk from room A to B: A markers, including camera frames, disappear; B markers appear after stable localization. Return; mappings remain. Check rooms on different floors.
+- Walk through a doorway during fist adjustment and with an open slider: no commit to the old target. Outside the scanned home, no placed entities may be visible or interactive.
+- Fist rotation for brightness/volume: adjustment ticks on value changes, no repeats while holding or at 0/100%. With sound off, all clicks are silent.
+- Check readiness glow for both interaction hands; tracking loss or target change removes it. No artificial hands.
+- Toggle subtitles and hand effect independently; settings survive restart.
 
 ## Version 0.6.3
 
-- Räume öffnen, während HA die Bereiche noch lädt; danach auswählbare Bereiche einschließlich leerer Räume prüfen. Bereich wechseln, Filter kombinieren und zurücksetzen.
-- Zurück per Pinch und Antippen: darunterliegende Entitäten dürfen keine Details öffnen. Finger nach dem Wechsel zurückziehen und neu antippen.
-- Links und rechts nacheinander schalten, platzieren, scrollen und regeln. Gleichzeitig begonnene Gesten dürfen höchstens einen Befehl senden. Bereits gehaltene zweite Hand darf die laufende Aktion nicht übernehmen.
-- Faust bei einer dimmbaren Lampe schließen, Kopf seitlich drehen und weiterregeln. Öffnen übernimmt genau am ursprünglichen Ziel. Dasselbe für Lautstärke; reine Kopfbewegung darf den Wert nicht ändern.
-- Trackingverlust und Raumwechsel während der Faustregelung: keine Bestätigung, neu beginnen.
-- Beide Handflächen und Faust aus verschiedenen Blickwinkeln: offene Lichtbögen folgen den Knochen, lassen die echte Hand sichtbar und erzeugen kein Flackern.
-- Menü-Pinch abseits der Entitäten sowie Uhr antippen mit beiden Uhrseiten testen.
-- Update 0.6.2 → 0.6.3 ohne Deinstallation: Token, Anker und Einstellungen bleiben bestehen.
+- Open rooms while HA areas are still loading; afterward check selectable areas, including empty ones. Change area, combine filters, and reset.
+- Back by pinch and touch: underlying entities must not open details. Withdraw the finger after navigation and tap again.
+- Switch, place, scroll, and adjust sequentially with left and right hands. Simultaneous gestures send at most one command. An already-held second hand cannot take over the action.
+- Close a fist on a dimmable light, turn the head sideways, and continue adjusting. Opening commits to exactly the original target. Repeat for volume; head movement alone must not change the value.
+- Tracking loss and room change during fist adjustment: no confirmation; start again.
+- View both palms and fists from different angles: open light arcs follow the bones, leave the real hand visible, and do not flicker.
+- Test menu pinch away from entities and watch tapping with the watch on either side.
+- Update 0.6.2 → 0.6.3 without uninstalling: token, anchors, and settings retained.
