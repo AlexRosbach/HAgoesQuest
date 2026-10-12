@@ -4,6 +4,11 @@ The user guides describe the current version. The version notes linked below are
 
 ## Unreleased
 
+### Publication review
+
+- Added an October 12 assessment of the actual public 0.6.3 APK for GitHub beta and paid Meta Store distribution, with reproducible artifact findings and a prioritized completion plan.
+- Recorded confirmed packaging failures, bundled operator tooling, licensing/privacy gaps, and outstanding device acceptance. No runtime changes or new APK.
+
 ### Documentation
 
 - Separated the introduction, technical reference, and knowledge base following the LanLens example.

@@ -1,0 +1,58 @@
+{
+  "reviewedAt": "2026-10-12",
+  "sourceCommit": "aa660a7dabbc9d29092223df72ac04f6d82bf2a2",
+  "apk": {
+    "name": "HAgoesQuest-0.6.3.apk",
+    "bytes": 68173682,
+    "sha256": "ef95a28c3247c9a2aa51ac80d612fb3927ffd1f03e865d1e6499679ebd5732aa",
+    "package": "com.alexrosbach.hagoesquest",
+    "version": "0.6.3",
+    "versionCode": 12,
+    "signatureV2": true,
+    "certificateSubject": "C=US, O=Android, CN=Android Debug",
+    "certificateSha256": "345caca35c4a1ad2eb8f2243a0ccda712945c87b9b089714f2778c007c76e5b2",
+    "minSdk": 32,
+    "targetSdk": 36,
+    "compileSdk": 36,
+    "debuggable": true,
+    "allowBackup": false,
+    "usesCleartextTraffic": true,
+    "installLocation": 2,
+    "launchActivityExcludeFromRecents": null,
+    "supportedDevices": "quest2|questpro|quest3|quest3s|stanley",
+    "abi": [
+      "arm64-v8a"
+    ],
+    "operatorLayerPresent": true,
+    "operatorProjectionComponentsExported": false
+  },
+  "release": {
+    "url": "https://github.com/AlexRosbach/HAgoesQuest/releases/tag/0.6.3",
+    "prerelease": false,
+    "assets": [
+      {
+        "name": "HAgoesQuest-0.6.3.apk",
+        "size": 68173682,
+        "digest": "sha256:ef95a28c3247c9a2aa51ac80d612fb3927ffd1f03e865d1e6499679ebd5732aa",
+        "url": "https://github.com/AlexRosbach/HAgoesQuest/releases/download/0.6.3/HAgoesQuest-0.6.3.apk"
+      }
+    ]
+  },
+  "verification": {
+    "coreAssertionsPassed": 121,
+    "sourceFilesMatched": 55,
+    "sourceMismatches": 0,
+    "unityIntegrationAssertionsHistorical": 130,
+    "questHardwarePerformed": false,
+    "networkCapturePerformed": false,
+    "fullDependencyAuditPerformed": false,
+    "olderApkCredentialsInspected": false,
+    "devAgentSettingsContentsRead": false
+  },
+  "notes": [
+    "DevAgentSettings exclusion is recorded in the existing build log; operator binaries still ship.",
+    "Null launchActivityExcludeFromRecents means absent, not a verified true value.",
+    "Public GitHub asset digest matches the local APK; the APK was not rebuilt during this review.",
+    "No license acceptance, release deletion, credential rotation or runtime changes were performed."
+  ]
+}

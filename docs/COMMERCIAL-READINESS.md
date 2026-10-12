@@ -2,6 +2,10 @@
 
 As of September 29, 2026. Preliminary technical and licensing assessment, not binding legal advice. This English translation preserves the historical assessment; it is not a new review of current terms.
 
+## Updated review
+
+The [October 12, 2026 publication review](PUBLICATION-REVIEW-2026-10-12.md) supersedes this preliminary assessment for release decisions. It checks the actual public 0.6.3 APK and covers free GitHub distribution and paid Meta Horizon Store publication, with confirmed packaging failures and unresolved licensing, privacy, and hardware acceptance items.
+
 ## Assessment
 
 Commercial distribution of an independent Quest app for controlling Home Assistant is possible in principle. **This development version is not yet a product ready for sale.** In particular, real multi-room localization, repeatedly reported hand-tracking issues, performance, the system keyboard, and camera presentation on Quest have not passed acceptance testing. Automated checks do not replace that acceptance.
