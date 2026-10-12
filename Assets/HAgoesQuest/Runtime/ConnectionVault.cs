@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace HAgoesQuest
 {
-    // Only the ciphertext is written to storage. Android owns the non-exportable key.
+    /// <summary>Stores connection settings as AES-GCM ciphertext using a non-exportable Android key.</summary>
+    /// <remarks>The alias and envelope format are an update compatibility contract.</remarks>
     public static class ConnectionVault
     {
         const string Alias = "HAgoesQuest.connection.v1";
@@ -13,6 +14,9 @@ namespace HAgoesQuest
         static string PathName => Path.Combine(Application.persistentDataPath, "connection.secure.json");
         public static bool Exists => File.Exists(PathName);
 
+        /// <summary>Decrypts the saved envelope using the existing key; never creates a replacement key.</summary>
+        /// <exception cref="PlatformNotSupportedException">Called outside an Android player.</exception>
+        /// <remarks>Missing keys, corrupt files and authentication failures propagate to the caller.</remarks>
         public static ConnectionSettings Read()
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -31,6 +35,8 @@ namespace HAgoesQuest
 #endif
         }
 
+        /// <summary>Encrypts and replaces the saved settings after the caller has validated the connection.</summary>
+        /// <returns>True after storage succeeds on Android; false in the editor or on other platforms.</returns>
         public static bool Save(ConnectionSettings settings)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -53,6 +59,7 @@ namespace HAgoesQuest
 #endif
         }
 
+        /// <summary>Deletes both connection files and the Android key when the user removes the login.</summary>
         public static void Forget()
         {
             if (File.Exists(PathName)) File.Delete(PathName);

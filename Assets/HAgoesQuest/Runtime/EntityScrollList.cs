@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 namespace HAgoesQuest
 {
+    /// <summary>Recycles entity rows while separating scroll gestures from intentional selection.</summary>
     public sealed class EntityScrollList : MonoBehaviour
     {
         HaEntity[] entities;
@@ -57,6 +58,8 @@ namespace HAgoesQuest
             }
         }
         static string Trim(string text,int length) => text == null ? "" : text.Length>length?text.Substring(0,length-1)+"…":text;
+        /// <summary>Updates scrolling and returns whether the list consumes the current input.</summary>
+        /// <remarks>Toolbar poke handling must run first. A ray pinch takes priority over nearby touch.</remarks>
         public bool Handle(Ray ray,bool down,bool fingerValid,Vector3 finger)
         {
             var plane=new Plane(transform.forward,transform.position);
@@ -78,6 +81,7 @@ namespace HAgoesQuest
             if(dragging&&active&&(hit||near)) {scroll=startScroll;ScrollBy(local.y-startY);}
             if(dragging&&!active)
             {
+                // Recycling may have replaced the pressed row's entity while the finger was held.
                 dragging=false;if(Mathf.Abs(scroll-startScroll)<.012f&&pressed&&pressed.EntityId==pressedId)pressed.Activate();pressed=null;touching=false;
             }
             wasDown=active;

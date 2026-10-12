@@ -23,6 +23,7 @@ namespace HAgoesQuest
         OVRInput.Controller ControlController => ExperienceSettings.LeftHanded?OVRInput.Controller.LTouch:OVRInput.Controller.RTouch;
         Transform ControllerAnchor => ExperienceSettings.LeftHanded?Rig.leftControllerAnchor:Rig.rightControllerAnchor;
         string Words(string de,string en)=>ExperienceSettings.English?en:de;
+        // Looking away changes acquisition only; an existing grip owns its original target.
         WorldCard GestureTarget()=>capturedTarget&&grip.Closed?capturedTarget:GazeTarget();
 
         WorldCard GazeTarget()
@@ -75,6 +76,7 @@ namespace HAgoesQuest
             bool wasClosed=grip.Closed;
             grip.Step(usable?focused.EntityId:null,allowed&&poseValid,fist,open,canCast,adjustable,entity?.Level??0,
                 poseValid?HandPose.Roll(ControlSkeleton,wasClosed?capturedBasis:head.rotation):0,Time.unscaledTime);
+            // Freeze the basis as well as the target: turning the head must not turn the virtual dial.
             if(!wasClosed&&grip.Closed){capturedTarget=focused;capturedBasis=head.rotation;}
             if(!grip.Closed)capturedTarget=null;
             if(ownership.Owner<0)
@@ -112,6 +114,7 @@ namespace HAgoesQuest
         }
     }
 
+    /// <summary>Derives intent and roll from tracked bones without creating a virtual hand model.</summary>
     public static class HandPose
     {
         static bool Straight(Transform root,Transform joint,Transform tip)=>root&&joint&&tip&&Vector3.Dot((joint.position-root.position).normalized,(tip.position-joint.position).normalized)>.4f;

@@ -27,6 +27,7 @@ namespace HAgoesQuest
             var tip=MagicCasting.Bone(skeleton,OVRSkeleton.BoneId.Hand_IndexTip,OVRSkeleton.BoneId.XRHand_IndexTip);
             return wristWatch&&tip&&Vector3.Distance(tip.position,wristWatch.transform.position)<.065f;
         }
+        /// <summary>Selects an exclusive input owner while retaining that hand's armed gesture.</summary>
         void RouteHands()
         {
             int before=ownership.Owner;
@@ -38,6 +39,7 @@ namespace HAgoesQuest
                 if(ownership.Owner==0)rightGrip.Reset();else if(ownership.Owner==1)leftGrip.Reset();
             }
         }
+        /// <summary>Invalidates pending selections before menu colliders change.</summary>
         void BlockNavigation()
         {
             navigation.Block(Time.unscaledTime);metaInput?.Cancel();entityList?.CancelDrag();areaMenuPage=-1;

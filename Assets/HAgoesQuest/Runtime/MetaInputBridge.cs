@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace HAgoesQuest
 {
-    // Root driver for the official ISDK ray and poke interactors. The Meta runtime
-    // supplies aim/pinch tracking; the app only routes the resulting selection.
+    /// <summary>Drives official ISDK ray and poke interactors from tracked aim and pinch samples.</summary>
+    /// <remarks>Selection events are routed to WorldCard; this component does not execute HA commands.</remarks>
     public sealed class MetaInputBridge : MonoBehaviour, ISelector, IUpdateDriver
     {
         public event Action WhenSelected = delegate {};
@@ -28,6 +28,8 @@ namespace HAgoesQuest
             ray=gameObject.AddComponent<RayInteractor>();ray.InjectAllRayInteractor(this,rayOrigin);ray.MaxRayLength=8;ray.IsRootDriver=false;
             poke=gameObject.AddComponent<PokeInteractor>();poke.InjectAllPokeInteractor(tip);poke.IsRootDriver=false;
         }
+        /// <summary>Clears pending selection and disables both interactors until the next allowed sample.</summary>
+        /// <param name="ready">Allow the next pinch after a fresh hand acquisition; navigation leaves this false.</param>
         public void Cancel(bool ready=false)
         {
             Hovered=RaySelected=PokeSelected=null;released=delivered=rayAllowed=pokeAllowed=false;

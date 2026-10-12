@@ -3,12 +3,12 @@
 ## Installieren
 
 1. Entwicklermodus für die Quest aktivieren und die Brille per USB mit deinem PC verbinden. USB-Debugging in der Brille erlauben. [Metas Anleitung](https://developers.meta.com/horizon/documentation/unity/unity-env-device-setup/).
-2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.6.2.apk`.
+2. Die bereitgestellte APK mit Meta Quest Developer Hub installieren. Alternativ: `adb install -r HAgoesQuest-0.6.3.apk`.
 3. **HA goes Quest** unter den Apps aus unbekannten Quellen starten. Handtracking in den Quest-Einstellungen einschalten.
 
 ## Update ohne erneute Token-Eingabe
 
-Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.6.2.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
+Die neue APK über die vorhandene App installieren, beispielsweise mit `adb install -r HAgoesQuest-0.6.3.apk`. **Nicht vorher deinstallieren und keine App-Daten löschen.** Die App lädt den geschützten Token beim Start automatisch; auch die gespeicherten Zuordnungen bleiben im App-Speicher.
 
 Das Verbindungsmenü zeigt „Gespeicherter Token wird verwendet“. Für dieselbe Serveradresse darf das Tokenfeld leer bleiben. Bei einer anderen Adresse ist ein neuer Token erforderlich. Ein fehlgeschlagener Verbindungsversuch ersetzt die zuletzt bestätigte Anmeldung nicht. Ein von Home Assistant widerrufener Token muss erneuert werden.
 
@@ -17,8 +17,8 @@ Das Verbindungsmenü zeigt „Gespeicherter Token wird verwendet“. Für diesel
 1. **Mit Home Assistant verbinden** öffnen. Basisadresse und einen in Home Assistant erzeugten langlebigen Zugriffstoken eingeben. Die Tastatur bietet **Einfügen** für die Zwischenablage der Quest. Dann **Verbindung prüfen & speichern** wählen.
 2. Unter **Wohnung erfassen & Karte ansehen** die Quest-Raumerfassung starten oder bestehende Räume laden. Den Raumzugriff erlauben.
 3. **Entität mit der Hand platzieren** öffnen, Gerät oder Sensor wählen. Lampen können als reine Anzeige oder zum Schalten platziert werden.
-4. **Zeigen & pinchen** wählen. Vorher bei Bedarf den Abstand zwischen 0,5 und 2 Metern einstellen. Auf die gewünschte Stelle zeigen und einmal rechts pinchen. Die Vorschau bleibt stehen: **Position speichern** oder **Weiter verschieben** wählen. Alternativ folgt **Direkt an der Hand platzieren** der Hand bis zum einmaligen Pinch.
-5. Menü schließen. Den Blickpunkt auf das Icon richten und mit der Bedienhand pinchen, um die Lampe zu schalten. Ein linker Pinch öffnet das Menü, der nächste schließt es wieder. Dazwischen die Finger lösen.
+4. **Zeigen & pinchen** wählen. Vorher bei Bedarf den Abstand zwischen 0,5 und 2 Metern einstellen. Auf die gewünschte Stelle zeigen und einmal mit der gewünschten Hand pinchen. Die Vorschau bleibt stehen: **Position speichern** oder **Weiter verschieben** wählen. Alternativ folgt **Direkt an der Hand platzieren** der Hand bis zum einmaligen Pinch.
+5. Menü schließen. Den Blickpunkt auf das Icon richten und mit der Bedienhand pinchen, um die Lampe zu schalten. Ein Pinch der Uhrenhand öffnet oder schließt das Menü, solange kein Entitätsziel bzw. Menübedienelement bedient wird. Alternativ die Uhr antippen. Zwischen Handwechseln beide Hände kurz lösen.
 
 Im Hauptmenü unter **Platzierte Entitäten verwalten / löschen** lassen sich Zuordnungen auch ohne sichtbaren Raumanker entfernen.
 
@@ -32,15 +32,21 @@ Im Verbindungsmenü **Token per QR-Code → Scan starten** wählen und Kamerazug
 
 ## Magie-Modus
 
-In den Einstellungen einschalten. Entität ansehen, Hand öffnen bis bereit, Faust schließen und wieder öffnen. Drehen regelt stattdessen Helligkeit/Lautstärke. Details, Uhr und Rechts-/Linkshändermodus: [Anleitung 0.6.2](VERSION-0.6.2.md).
+In den Einstellungen einschalten. Entität ansehen, Hand öffnen bis bereit, Faust schließen und wieder öffnen. Drehen regelt stattdessen Helligkeit/Lautstärke. Details, Uhr und Rechts-/Linkshändermodus: [Anleitung 0.6.3](VERSION-0.6.3.md).
 
 ## Entwicklungsstand
 
-Die Version ist für einen ersten Test auf deiner Quest vorgesehen. Der Start auf echter Hardware, Handtracking, Raumanker und geschützte Anmeldung sind noch nicht praktisch auf einer Quest geprüft. Alle dafür vorgesehenen Schritte stehen in `HAgoesQuest/docs/QUEST-TEST.md` im Quellcodearchiv.
+Die Version ist für einen ersten Test auf deiner Quest vorgesehen. Der Start auf echter Hardware, Handtracking, Raumanker und geschützte Anmeldung sind noch nicht praktisch auf einer Quest geprüft. Alle dafür vorgesehenen Schritte stehen in der [Quest-Abnahmeliste](QUEST-TEST.md).
 
 
-## Neu in 0.5.0
+## Regler, Uhr und Medienrahmen
 
-Helligkeit und Lautstärke mit seitlichem Pinch-und-Ziehen am eingeblendeten Regler einstellen. Die Liste zeigt acht Entitäten mit Wert und Raum; mit Pinch ziehen oder direkt wischen. Einstellungen bieten Deutsch/Englisch, Klickgeräusche und den Start mit HA-Uhr. Die Uhr öffnet ein ortsfestes Menü. Kamera- und Bildentitäten lassen sich als Rahmen platzieren; Kameras zeigen eine Folge aktueller Einzelbilder, keinen flüssigen Video-/Audiostream. Ausführliche Anleitung: [Version 0.5.0](VERSION-0.5.0.md).
+Helligkeit und Lautstärke lassen sich über den eingeblendeten Regler oder durch Faustdrehen ändern. Für die Faustgeste Ziel ansehen, Hand bis zur Bereitschaft öffnen, Faust schließen und drehen. Nach erkannter Faust darfst du wegschauen, solange die Hand getrackt wird; Öffnen übernimmt den Wert. Raumwechsel, Trackingverlust und Menüöffnung brechen ab.
+
+Die Liste zeigt acht Entitäten mit Wert und Raum; mit Pinch ziehen oder direkt wischen. Einstellungen bieten Deutsch/Englisch, Klickgeräusche und den Start mit HA-Uhr. Die Uhr öffnet ein ortsfestes Menü. Kamera- und Bildentitäten lassen sich als Rahmen platzieren; Kameras zeigen eine Folge aktueller Einzelbilder, keinen flüssigen Video-/Audiostream. Details: [Technische Referenz](documentation.md#bereiche-und-medien).
 
 
+
+## Weitere Hilfe
+
+[Wissensdatenbank](knowledgebase.md) für Token-, Raum- und Gestenprobleme · [Technische Referenz](documentation.md) · [Änderungen](../CHANGELOG.md).

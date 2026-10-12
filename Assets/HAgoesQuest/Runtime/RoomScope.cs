@@ -4,11 +4,14 @@ using UnityEngine;
 
 namespace HAgoesQuest
 {
+    /// <summary>Admits positions only inside a validated current physical room.</summary>
+    /// <remarks>HA area IDs are not physical room IDs and are never used as geometry.</remarks>
     public sealed class RoomScope
     {
         Func<Vector3,bool> contains;
         public string Id { get; private set; }
         public bool HasRoom=>!string.IsNullOrEmpty(Id);
+        /// <summary>Validates containment of the head and returns whether the accepted room changed.</summary>
         public bool Update(string id,Vector3 head,Func<Vector3,bool> test)
         {
             string next=!string.IsNullOrEmpty(id)&&test!=null&&test(head)?id:null;

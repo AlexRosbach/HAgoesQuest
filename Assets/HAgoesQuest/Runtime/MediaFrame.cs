@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 namespace HAgoesQuest
 {
+    /// <summary>Displays bounded HA proxy snapshots with shared request limits and visibility checks.</summary>
+    /// <remarks>This is a still-image refresh loop, not a video or audio stream.</remarks>
     public sealed class MediaFrame : MonoBehaviour
     {
         HomeAssistantConnection connection;
@@ -55,6 +57,7 @@ namespace HAgoesQuest
                 yield return new WaitForSecondsRealtime(entityId.StartsWith("camera.")?.5f:10);
             }
         }
+        // Disable and destroy may both run; release the shared slot at most once.
         void Release(){if(request!=null){request.Abort();request.Dispose();request=null;}if(slot){slot=false;requests--;}}
         void OnDisable(){StopAllCoroutines();Release();if(picture)picture.texture=null;if(texture)Destroy(texture);}
         void OnDestroy(){Release();if(texture)Destroy(texture);}

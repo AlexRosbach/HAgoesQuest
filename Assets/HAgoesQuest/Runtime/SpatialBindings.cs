@@ -12,6 +12,8 @@ namespace HAgoesQuest
     [Serializable] public sealed class BindingRecord { public string entityId; public string anchorUuid; public bool displayOnly; }
     [Serializable] public sealed class BindingFile { public int version = 1; public List<BindingRecord> bindings = new List<BindingRecord>(); }
 
+    /// <summary>Persists server-scoped entity/anchor links and exposes only stable tracked anchors.</summary>
+    /// <remarks>Stored UUIDs are resolved by the SDK; saved world coordinates are not used as a fallback.</remarks>
     [DefaultExecutionOrder(10000)]
     public sealed class SpatialBindings : MonoBehaviour
     {
@@ -32,6 +34,7 @@ namespace HAgoesQuest
         float retryAt;
         public bool CanShow(string id) => trackedIds.Contains(id) && Loaded.TryGetValue(id, out var anchor) && anchor && anchor.IsTracked && TrackingReady;
 
+        /// <summary>Hides loaded anchors and invalidates in-flight placement after tracking changes.</summary>
         public void InvalidateTracking()
         {
             trackingEpoch++;
@@ -95,6 +98,8 @@ namespace HAgoesQuest
             return Ready;
         }
 
+        /// <summary>Loads up to 50 validated records from the file for this server identity.</summary>
+        /// <remarks>A corrupt file leaves Ready false rather than being replaced with an empty map.</remarks>
         public void Initialize(string server)
         {
             if (Ready || string.IsNullOrEmpty(server)) return;
@@ -127,6 +132,7 @@ namespace HAgoesQuest
             else File.Move(temp, path);
         }
 
+        /// <summary>Finds saved anchors after tracking settles; missing rooms remain eligible for retry.</summary>
         public async Task Load()
         {
             if (Busy || !Ready) return;
@@ -164,6 +170,8 @@ namespace HAgoesQuest
             Added?.Invoke(record.entityId, anchor.transform);
         }
 
+        /// <summary>Saves an SDK anchor and its entity link only while the tracking epoch remains valid.</summary>
+        /// <remarks>Failures update Status and attempt to roll back an anchor already saved by the SDK.</remarks>
         public async Task Place(string entityId, Vector3 position, bool displayOnly = false, Quaternion? rotation = null)
         {
             if (Busy || !Ready || !Core.EntityPolicy.Visible(entityId) || Contains(entityId)) return;
@@ -211,6 +219,7 @@ namespace HAgoesQuest
             finally { Busy = false; }
         }
 
+        /// <summary>Removes the local link before attempting SDK anchor cleanup, even if its room is absent.</summary>
         public async Task Remove(string id)
         {
             if (Busy || !Ready) return;
