@@ -12,9 +12,9 @@ Place lights, switches, sensor readings, and picture frames in your scanned room
 
 [Installation](docs/INSTALLATION.md) · [Documentation](docs/README.md) · [Troubleshooting](docs/knowledgebase.md) · [Changelog](CHANGELOG.md) · [User guide](docs/USER-GUIDE-EN.md)
 
-![HA goes Quest demo: viewing camera snapshots and controlling Home Assistant entities with hand gestures on Meta Quest 3](docs/media/hagoesquest-demo.gif)
+![HA goes Quest demo: viewing camera snapshots, switching a light, and adjusting brightness and volume with hand gestures on Meta Quest 3](docs/media/hagoesquest-demo.gif)
 
-*View Home Assistant camera snapshots in your room, turn on a light, and adjust brightness with hand gestures on Meta Quest 3.*
+*Watch the full gestures: view camera snapshots, select and switch on a light, adjust its brightness, and raise or lower TV volume. The 23-second demo runs at the original speed.*
 
 </div>
 
