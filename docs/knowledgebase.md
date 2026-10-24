@@ -32,7 +32,7 @@ Help for the current version, **0.6.3**. Return to the [documentation index](REA
 
 **Meaning:** The app is waiting for a stable anchor, or the Quest room was not localized correctly. Only entities in the current physical room are displayed.
 
-**Check:** Look around in the corresponding room and wait briefly. Use saved-position recovery if needed. Check room permission and saved system room data. If the position remains incorrect, reproduce the flow in [QUEST-TEST.md](QUEST-TEST.md); desktop tests cannot rule out stable but incorrect operating-system localization. Remove the mapping through management and place it again if needed.
+**Check:** Look around in the corresponding room and wait briefly. Use saved-position recovery if needed. Check room permission and saved system room data. The operating system can sometimes localize an anchor stably but incorrectly. Remove the mapping through management and place it again if needed.
 
 ## The next page initially ignores input after Back
 
@@ -48,7 +48,7 @@ Help for the current version, **0.6.3**. Return to the [documentation index](REA
 
 **Meaning:** Only one hand can interact at a time. An already-held gesture on the second hand cannot take over.
 
-**Solution:** Finish the current action and briefly release both hands, then start again with the desired hand. The configured hand preference decides simultaneous starts. After a Quest system dialog, bring both hands back into tracking and start a fresh gesture. See [tracking recovery](TRACKING-RECOVERY.md).
+**Solution:** Finish the current action and briefly release both hands, then start again with the desired hand. The configured hand preference decides simultaneous starts. After a Quest system dialog, bring both hands back into tracking and start a fresh gesture. See [rooms and anchors](documentation.md#rooms-and-anchors).
 
 ## Dimming or volume adjustment cancels when looking away
 

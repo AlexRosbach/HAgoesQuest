@@ -6,7 +6,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.6.3-6366f1)](CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0.66f2-334155)](docs/documentation.md#development-and-build)
-[![Status](https://img.shields.io/badge/status-development_build-f59e0b)](docs/BUILD-STATUS.md)
+[![Status](https://img.shields.io/badge/status-personal_case_study-f59e0b)](#about-this-case-study)
 
 Place lights, switches, sensor readings, and picture frames in your scanned room. Select an entity with the gaze reticle and control it with a hand gesture.
 
@@ -33,8 +33,6 @@ I have tested the app successfully on my own Quest. I do not currently plan acti
 - **Personal controls:** German/English, adjustable HA watch, sounds, and gesture hints. Optional magic mode with a fireball and practice target.
 - **Retain your connection:** After successful setup, the token is stored encrypted on the Quest; compatible updates preserve credentials and placements.
 
-**Development status:** APK 0.6.3 was built and its signature and manifest checked. The corresponding build passed 121 core checks and 130 Unity integration checks. The maintainer reports successful testing on Meta Quest. See the [build report](docs/BUILD-STATUS.md).
-
 ## Quick start
 
 ### Prerequisites
@@ -51,7 +49,7 @@ Install using Meta Quest Developer Hub or:
 adb install -r HAgoesQuest-0.6.3.apk
 ```
 
-Install over the existing app. **Do not uninstall or clear app data** if you want to retain the token and placements. APK uploads are currently manual; GitHub checks do not build an APK.
+Install over the existing app. **Do not uninstall or clear app data** if you want to retain the token and placements. APK uploads are manual.
 
 ### 2. Connect and capture rooms
 
@@ -84,10 +82,10 @@ If you enjoyed this project, you can [buy me a coffee](https://www.buymeacoffee.
 ## Documentation and licensing
 
 - [Documentation index](docs/README.md): Find instructions by task.
-- [Technical reference](docs/documentation.md): Architecture, HA requests, persistence, builds, and tests.
+- [Technical reference](docs/documentation.md): Architecture, HA requests, persistence, and build instructions.
 - [Knowledge base](docs/knowledgebase.md): Symptoms, causes, and practical troubleshooting.
-- [Changelog](CHANGELOG.md): Current and historical release notes.
-- [Artwork provenance](docs/ART-PROMPTS.md) and [magic artwork](docs/ART-MAGIC.md): Assets and prompts.
+- [Changelog](CHANGELOG.md): Concise feature history.
+- [Asset provenance](docs/documentation.md#asset-provenance): Origins of the icons, effects, and sounds.
 
 No explicit project-wide license for the original code has been selected yet. The invitation to fork and continue development does not relicense third-party components.
 

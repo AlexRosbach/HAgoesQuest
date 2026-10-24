@@ -9,7 +9,6 @@ EditorBuildSettings:
     path: Assets/HAgoesQuest/Scenes/Home.unity
     guid: 3f5e744c85efa324ca9a85ee3414539d
   m_configObjects:
-    com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 273d2c69fa817c541b6e62ed176e8915, type: 2}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: bce4014d564434e4c8f6b9d64f81f9f8, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 899b6e358f547814bac1da36a5c19f4a, type: 2}
   m_UseUCBPForAssetBundles: 0

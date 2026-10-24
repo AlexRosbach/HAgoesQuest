@@ -1,6 +1,6 @@
 # HA goes Quest – user guide
 
-Current behavior: **0.6.3**. [Documentation index](README.md) · [Troubleshooting in German](knowledgebase.md) · [Release history](../CHANGELOG.md).
+Current behavior: **0.6.3**. [Documentation index](README.md) · [Troubleshooting](knowledgebase.md) · [Release history](../CHANGELOG.md).
 
 ## Install and connect
 
@@ -41,10 +41,10 @@ Fist rotation and sliders produce quiet detent sounds as values change. Open eme
 
 ## Magic and media
 
-Optional magic has a practice target that never controls devices. Look at the target, open your hand until ready, close your fist, then open it to cast. Twisting takes priority: an adjusted grip applies the level instead of casting. The earlier push gesture belongs to release history.
+Optional magic has a practice target that never controls devices. Look at the target, open your hand until ready, close your fist, then open it to cast. Twisting takes priority: an adjusted grip applies the level instead of casting.
 
 Camera frames show repeatedly refreshed snapshots, with at least half a second between completed requests plus network latency. They are not video/audio streams. Static HA image entities refresh about every ten seconds. Hidden frames stop fetching. Only the configured HA server receives the token.
 
-## Validation status
+## Project status
 
-Version 0.6.3 is a development APK. Build, signature and desktop tests are recorded in [BUILD-STATUS.md](BUILD-STATUS.md). The maintainer reports successful testing on Meta Quest. The [hardware checklist](QUEST-TEST.md) remains available for recording future device checks.
+The maintainer reports successful testing on Meta Quest. Active development is currently paused; see the [case study](../README.md#about-this-case-study).

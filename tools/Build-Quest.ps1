@@ -19,7 +19,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Signaturschlüssel kann nicht geprüft werden.
 $encoded=($certificate -join '') -replace '-----BEGIN CERTIFICATE-----|-----END CERTIFICATE-----|\s',''
 $digest=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Convert]::FromBase64String($encoded))).Replace('-','').ToLowerInvariant()
 if ($digest -ne $expectedCertificate) { throw 'Signatur passt nicht zu 0.2.0/0.3.0. Build abgebrochen, damit Updates kompatibel bleiben.' }
-$results=Join-Path $project 'TestResults'
+$results=Join-Path $project 'Logs'
 New-Item -ItemType Directory -Force $results | Out-Null
 foreach($step in @(@('Prepare','HAgoesQuest.Editor.ProjectSetup.PrepareBatch'),@('Build','HAgoesQuest.Editor.ProjectSetup.Build'))){
     $log=Join-Path $results ('Unity-'+$step[0]+'.log')
