@@ -12,9 +12,9 @@ Place lights, switches, sensor readings, and picture frames in your scanned room
 
 [Installation](docs/INSTALLATION.md) · [Documentation](docs/README.md) · [Troubleshooting](docs/knowledgebase.md) · [Changelog](CHANGELOG.md) · [User guide](docs/USER-GUIDE-EN.md)
 
-![HA goes Quest demo: controlling Home Assistant entities with hand gestures on Meta Quest 3](docs/media/hagoesquest-demo.gif)
+![HA goes Quest demo: viewing camera snapshots and controlling Home Assistant entities with hand gestures on Meta Quest 3](docs/media/hagoesquest-demo.gif)
 
-*Turn on a light and adjust brightness with hand gestures on Meta Quest 3.*
+*View Home Assistant camera snapshots in your room, turn on a light, and adjust brightness with hand gestures on Meta Quest 3.*
 
 </div>
 
@@ -76,6 +76,10 @@ Once the fist has captured the target, you can look away while the hand remains 
 | Positions | Up to 50 mappings per HA server; local Spatial Anchors |
 | States | REST polling; no WebSocket live stream |
 | HA watch | Adjustable wrist position; opens a stationary menu |
+
+## Buy me a coffee
+
+If you enjoyed this project, you can [buy me a coffee](https://www.buymeacoffee.com/alexrosbaci). It is entirely optional, and I appreciate it.
 
 ## Documentation and licensing
 
