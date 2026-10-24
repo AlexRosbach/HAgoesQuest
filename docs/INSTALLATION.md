@@ -28,15 +28,11 @@ Search supports names and IDs, combined with type and room filters. All entity t
 
 ## QR credentials
 
-In the connection menu, choose the token QR scan option and start scanning, then grant camera access. The QR code may contain the token as text or JSON with **baseUrl** and **accessToken**. Check the address after scanning and connect. The included QR helper creates the code locally on a phone or computer. Extract both files from the ZIP together and open index.html. Requires Quest 3/3S with Horizon OS 74 or later.
+In the connection menu, choose the token QR scan option and start scanning, then grant camera access. The QR code may contain the token as text or JSON with **baseUrl** and **accessToken**. Check the address after scanning and connect. The included QR helper creates the code locally on a phone or computer. Open [tools/qr/index.html](../tools/qr/index.html) with its neighboring qrcode.min.js file. Requires Quest 3/3S with Horizon OS 74 or later.
 
 ## Magic mode
 
-Enable it in settings. Look at an entity, open your hand until ready, make a fist, then open it again. Rotating instead adjusts brightness/volume. For details, the watch, and right-/left-handed mode, see the [0.6.3 guide](VERSION-0.6.3.md).
-
-## Development status
-
-This version is intended for an initial test on your Quest. Startup on real hardware, hand tracking, room anchors, and protected credentials have not yet been practically verified on a Quest. The planned steps are in the [Quest acceptance checklist](QUEST-TEST.md).
+Enable it in settings. Look at an entity, open your hand until ready, make a fist, then open it again. Rotating instead adjusts brightness/volume. For details, the watch, and right-/left-handed mode, see the [user guide](USER-GUIDE-EN.md).
 
 ## Sliders, watch, and media frames
 

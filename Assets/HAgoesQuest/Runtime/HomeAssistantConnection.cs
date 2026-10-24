@@ -70,9 +70,6 @@ namespace HAgoesQuest
 
         void Start()
         {
-#if UNITY_EDITOR
-            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("HA_QUEST_TEST_RESULT"))) { EnterDemo(); return; }
-#endif
             string path = Path.Combine(Application.persistentDataPath, "connection.json");
             if (!File.Exists(path) && !ConnectionVault.Exists)
             {
