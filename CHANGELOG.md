@@ -4,13 +4,12 @@ The user guides describe the current version. The version notes linked below are
 
 ## Unreleased
 
-### Publication review
-
-- Added an October 12 assessment of the actual public 0.6.3 APK for GitHub beta and paid Meta Store distribution, with reproducible artifact findings and a prioritized completion plan.
-- Recorded confirmed packaging failures, bundled operator tooling, licensing/privacy gaps, and outstanding device acceptance. No runtime changes or new APK.
-
 ### Documentation
 
+- Reframed the README as a personal case study, with current maintenance plans and an invitation to fork and continue the experiment.
+- Added a short in-headset demo GIF to the README and removed its Development section.
+- Removed publication and commercial licensing assessments and their references; retained third-party licenses and notices.
+- Recorded Unity Personal as the maintainer’s working assumption and successful Quest testing as maintainer-reported.
 - Separated the introduction, technical reference, and knowledge base following the LanLens example.
 - Aligned current gesture and update instructions with 0.6.3.
 - Added English XML comments for important C# interfaces and explanations at state transitions.

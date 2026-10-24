@@ -14,8 +14,6 @@ Current feature version: **0.6.3**. Version files describe their historical stat
 | Perform a real Quest test | [Hardware acceptance checklist](QUEST-TEST.md) |
 | Understand tracking after system dialogs | [Tracking recovery](TRACKING-RECOVERY.md) |
 | Understand design decisions and asset provenance | [Design research](DESIGN-RESEARCH.md), [artwork](ART-PROMPTS.md), [magic](ART-MAGIC.md) |
-| Review free beta and paid-store readiness | [October 12 publication review](PUBLICATION-REVIEW-2026-10-12.md) and [artifact evidence](PUBLICATION-EVIDENCE-2026-10-12.json) |
-| Prepare a commercial release | [Commercial readiness and licensing](COMMERCIAL-READINESS.md) |
 
 ## Which record applies?
 

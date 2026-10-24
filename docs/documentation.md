@@ -164,6 +164,8 @@ Updates require the same package name, `com.alexrosbach.hagoesquest`, a matching
 
 ### Unity workflow
 
+Development uses **Unity Personal** as the maintainer’s working assumption for this playful Home Assistant experience on Meta Quest. This records the project setup assumption; it is not an independently verified legal clearance.
+
 1. Open the project directory in Unity Hub. Install Android Build Support with SDK, NDK, and OpenJDK; activate a license.
 2. Complete package import. Select Android as the build target.
 3. Run **HA goes Quest → 1 - Projekt konfigurieren** (configure project), then **2 - Startszene erstellen** (create startup scene). An existing scene is opened. These menu labels are the current editor labels.

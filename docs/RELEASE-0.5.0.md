@@ -18,6 +18,6 @@ Install `HAgoesQuest-0.5.0.apk` over the existing app, for example with `adb ins
 
 77 core checks and 82 Unity integration checks passed, including SDK selection, scrolling, sliders, four HA area assignments, saved anchor IDs, and authenticated images. Menu checked in the Unity renderer. These tests use a local HA test server.
 
-Installation, system keyboard, real multi-room localization, hand gestures, and performance require Quest acceptance. This development version is not approved as ready for sale. Documentation includes Meta design research, an acceptance checklist, and a preliminary commercial licensing review, particularly Unity classification as a non-game application.
+Installation, system keyboard, real multi-room localization, hand gestures, and performance require Quest acceptance. Documentation includes Meta design research and a Quest acceptance checklist.
 
 The APK is intended as a manually uploaded release asset. GitHub Actions source-code tests do not build an APK.

@@ -44,4 +44,4 @@ For comment-only changes, verify that C# tokens outside comments and formatting 
 
 ## Data and publication
 
-Tokens, signing keys, private SDK settings, and personal configuration files do not belong in the repository. Changes to the package name, signature, Keystore alias, or anchor formats must explicitly document update consequences and any required migration. `PrivateBuildSettings` must continue excluding local SDK settings from the player. The existing [commercial readiness and licensing assessment](COMMERCIAL-READINESS.md) remains applicable; another project's documentation style does not transfer a license.
+Tokens, signing keys, private SDK settings, and personal configuration files do not belong in the repository. Changes to the package name, signature, Keystore alias, or anchor formats must explicitly document update consequences and any required migration. `PrivateBuildSettings` must continue excluding local SDK settings from the player. Preserve third-party license texts, copyright statements, and notices; another project's documentation style does not transfer a license.

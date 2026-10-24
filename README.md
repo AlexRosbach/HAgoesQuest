@@ -2,7 +2,7 @@
 
 # HA goes Quest
 
-**Home Assistant throughout your home – mixed reality for Meta Quest 3**
+**A personal case study in playful mixed reality on Meta Quest 3**
 
 [![Version](https://img.shields.io/badge/version-0.6.3-6366f1)](CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0.66f2-334155)](docs/documentation.md#development-and-build)
@@ -12,7 +12,17 @@ Place lights, switches, sensor readings, and picture frames in your scanned room
 
 [Installation](docs/INSTALLATION.md) · [Documentation](docs/README.md) · [Troubleshooting](docs/knowledgebase.md) · [Changelog](CHANGELOG.md) · [User guide](docs/USER-GUIDE-EN.md)
 
+![HA goes Quest demo: controlling Home Assistant entities with hand gestures on Meta Quest 3](docs/media/hagoesquest-demo.gif)
+
+*Turn on a light and adjust brightness with hand gestures on Meta Quest 3.*
+
 </div>
+
+## About this case study
+
+I wanted to explore a simple idea: could I place virtual objects around a real room and use them to control devices through an API? I chose Home Assistant because I already use it at home. HA goes Quest is the result: a personal experiment in playful spatial interaction, from switching a light with a pinch to adjusting its brightness by turning a fist.
+
+I have tested the app successfully on my own Quest. I do not currently plan active development, though strong interest could bring me back to it. You are welcome to fork the project and continue the experiment in your own direction.
 
 ## Your home at a glance
 
@@ -23,7 +33,7 @@ Place lights, switches, sensor readings, and picture frames in your scanned room
 - **Personal controls:** German/English, adjustable HA watch, sounds, and gesture hints. Optional magic mode with a fireball and practice target.
 - **Retain your connection:** After successful setup, the token is stored encrypted on the Quest; compatible updates preserve credentials and placements.
 
-**Development status:** APK 0.6.3 was built and its signature and manifest checked. The corresponding build passed 121 core checks and 130 Unity integration checks. Documented Quest hardware acceptance testing remains outstanding. See the [build report](docs/BUILD-STATUS.md).
+**Development status:** APK 0.6.3 was built and its signature and manifest checked. The corresponding build passed 121 core checks and 130 Unity integration checks. The maintainer reports successful testing on Meta Quest. See the [build report](docs/BUILD-STATUS.md).
 
 ## Quick start
 
@@ -67,31 +77,14 @@ Once the fist has captured the target, you can look away while the hand remains 
 | States | REST polling; no WebSocket live stream |
 | HA watch | Adjustable wrist position; opens a stationary menu |
 
-## Development
-
-Project baseline: **Unity 6000.0.66f2**, **Meta XR Core / Interaction SDK / MRUK 207.0.0**, Android ARM64 / IL2CPP. Unity loads SDK packages from the configured registries. Build instructions, data formats, and input flows are in the [technical reference](docs/documentation.md).
-
-Core checks on Windows:
-
-```powershell
-.\tests\Run-Tests.ps1
-```
-
-Alternatively, with .NET 8:
-
-```text
-dotnet run --project tests/CoreTests.csproj
-```
-
-The [contribution guidelines](docs/CONTRIBUTING.md) describe commenting style, appropriate checks, and the distinction between editor checks and hardware acceptance.
-
 ## Documentation and licensing
 
 - [Documentation index](docs/README.md): Find instructions by task.
 - [Technical reference](docs/documentation.md): Architecture, HA requests, persistence, builds, and tests.
 - [Knowledge base](docs/knowledgebase.md): Symptoms, causes, and practical troubleshooting.
 - [Changelog](CHANGELOG.md): Current and historical release notes.
-- [Commercial readiness and licensing](docs/COMMERCIAL-READINESS.md): Existing assessment and outstanding publication requirements.
 - [Artwork provenance](docs/ART-PROMPTS.md) and [magic artwork](docs/ART-MAGIC.md): Assets and prompts.
 
-Meta, Unity, and other dependencies retain their respective license terms. The documentation structure follows [LanLens](https://github.com/AlexRosbach/LanLens); this does not transfer its license or product commitments to HAgoesQuest.
+No explicit project-wide license for the original code has been selected yet. The invitation to fork and continue development does not relicense third-party components.
+
+Meta, Unity, and other dependencies retain their respective license terms. See the bundled [third-party notices](Assets/HAgoesQuest/Resources/Legal/ThirdPartyNotices.txt), [ZXing license](Assets/Plugins/ZXing/LICENSE.txt) and [notice](Assets/Plugins/ZXing/NOTICE.md), and [QR tool license](tools/qr/LICENSE.txt). The documentation structure follows [LanLens](https://github.com/AlexRosbach/LanLens); this does not transfer its license or product commitments to HAgoesQuest.
