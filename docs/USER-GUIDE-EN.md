@@ -47,4 +47,4 @@ Camera frames show repeatedly refreshed snapshots, with at least half a second b
 
 ## Validation status
 
-Version 0.6.3 is a development APK. Build, signature and desktop tests are recorded in [BUILD-STATUS.md](BUILD-STATUS.md). Actual Quest startup, hand tracking, room localization, Android Keystore persistence and update behavior still require the [hardware checklist](QUEST-TEST.md). See [COMMERCIAL-READINESS.md](COMMERCIAL-READINESS.md) for the existing licensing and production-release assessment.
+Version 0.6.3 is a development APK. Build, signature and desktop tests are recorded in [BUILD-STATUS.md](BUILD-STATUS.md). The maintainer reports successful testing on Meta Quest. The [hardware checklist](QUEST-TEST.md) remains available for recording future device checks.

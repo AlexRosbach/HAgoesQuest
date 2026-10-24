@@ -36,6 +36,6 @@ Install the APK over the existing installation. Do not uninstall or clear app da
 
 ## Documentation and acceptance
 
-[Research](DESIGN-RESEARCH.md) · [Multi-room and Quest acceptance](QUEST-TEST.md) · [Commercial readiness and licensing](COMMERCIAL-READINESS.md) · [Build status](BUILD-STATUS.md).
+[Research](DESIGN-RESEARCH.md) · [Multi-room and Quest acceptance](QUEST-TEST.md) · [Build status](BUILD-STATUS.md).
 
 Automated checks can verify state logic, HA commands, UI structure, and stored mappings. They do not establish that Quest correctly relocalizes in a real building, recognizes all gestures reliably, or maintains the required frame rate. Device tests remain necessary before approval for sale.
